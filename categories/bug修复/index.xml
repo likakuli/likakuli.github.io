@@ -1,22 +1,22 @@
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
         <title>bug修复 - 分类 - kaku&#39;s blog</title>
-        <link>https//www.likakuli.com/categories/bug%E4%BF%AE%E5%A4%8D/</link>
+        <link>https//likakuli.github.io/categories/bug%E4%BF%AE%E5%A4%8D/</link>
         <description>bug修复 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</lastBuildDate><atom:link href="https//www.likakuli.com/categories/bug%E4%BF%AE%E5%A4%8D/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</lastBuildDate><atom:link href="https//likakuli.github.io/categories/bug%E4%BF%AE%E5%A4%8D/" rel="self" type="application/rss+xml" /><item>
     <title>Kube-controller-manager同步数据慢</title>
-    <link>https//www.likakuli.com/kubernetes-controllerrevisionhistory-bug/</link>
+    <link>https//likakuli.github.io/kubernetes-controllerrevisionhistory-bug/</link>
     <pubDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https//www.likakuli.com/kubernetes-controllerrevisionhistory-bug/</guid>
+    <guid>https//likakuli.github.io/kubernetes-controllerrevisionhistory-bug/</guid>
     <description><![CDATA[背景 版本1.12.4 线上遇到kube-controller-manager重启慢的问题，具体表现为进程重启虽然速度快，但是重启完所有数据都同]]></description>
 </item><item>
     <title>Kube-apiserver重启导致产生全量的update event</title>
-    <link>https//www.likakuli.com/kubernetes-apiserver-refused/</link>
+    <link>https//likakuli.github.io/kubernetes-apiserver-refused/</link>
     <pubDate>Wed, 21 Aug 2019 14:34:37 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https//www.likakuli.com/kubernetes-apiserver-refused/</guid>
+    <guid>https//likakuli.github.io/kubernetes-apiserver-refused/</guid>
     <description><![CDATA[现象 k8s master进行线上升级，notifier利用client-go提供的informer机制注册了EndPoint的Update Hand]]></description>
 </item></channel>
 </rss>
