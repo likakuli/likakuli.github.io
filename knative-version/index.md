@@ -53,14 +53,16 @@ func makeIngressRule(domains []string, ns string, visibility netv1alpha1.Ingress
 		Hosts:      domains,
 		Visibility: visibility,
 		HTTP: &v1alpha1.HTTPIngressRuleValue{
-			Paths: []v1alpha1.HTTPIngressPath{{
+			Paths: []v1alpha1.HTTPIngressPath{
+                               {
 				Splits: splits,
 				// TODO(lichuqiang): #2201, plumbing to config timeout and retries.
         // 把tag name保存下来，传递给vs，用来区分是否需要设置header
 				AppendHeaders: map[string]string{
 					"RevisionName": name,
 				},
-			}},
+			},
+                    },
 		},
 	}
 }
@@ -90,3 +92,4 @@ func makeVirtualServiceRoute(hosts sets.String, usn string, http *v1alpha1.HTTPI
 ### 总结
 
 至此，已经实现了通过统一域名访问集群内服务，且根据Path转发请求，并且可以通过在访问时添加指定的header来把流量打到指定版本上，这在灰度或者测试时是一个非常实用的功能。
+

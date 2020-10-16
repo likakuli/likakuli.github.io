@@ -29,7 +29,7 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https\/\/likakuli.github.io\/knative-version\/"
-        },"genre": "posts","keywords": "knative","wordcount":  979 ,
+        },"genre": "posts","keywords": "knative","wordcount":  983 ,
         "url": "https\/\/likakuli.github.io\/knative-version\/","datePublished": "2020-08-19T17:26:47+08:00","dateModified": "2020-10-16T18:17:42+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
@@ -111,7 +111,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">Knative通过header访问指定版本</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="https/likakuli.github.io/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="https/likakuli.github.io/categories/%E5%AE%9A%E5%88%B6%E5%BC%80%E5%8F%91/"><i class="far fa-folder fa-fw"></i>定制开发</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-08-19">2020-08-19</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 979 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-08-19">2020-08-19</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 983 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 2 分钟&nbsp;<span id="https/likakuli.github.io/knative-version/" class="leancloud_visitors" data-flag-title="Knative通过header访问指定版本">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
@@ -216,6 +216,8 @@
 </span><span class="lnt">69
 </span><span class="lnt">70
 </span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
 </span></code></pre></td>
 <td class="lntd">
 <pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// MakeIngressSpec creates a new IngressSpec
@@ -257,14 +259,16 @@
 		<span class="nx">Hosts</span><span class="p">:</span>      <span class="nx">domains</span><span class="p">,</span>
 		<span class="nx">Visibility</span><span class="p">:</span> <span class="nx">visibility</span><span class="p">,</span>
 		<span class="nx">HTTP</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">v1alpha1</span><span class="p">.</span><span class="nx">HTTPIngressRuleValue</span><span class="p">{</span>
-			<span class="nx">Paths</span><span class="p">:</span> <span class="p">[]</span><span class="nx">v1alpha1</span><span class="p">.</span><span class="nx">HTTPIngressPath</span><span class="p">{{</span>
+			<span class="nx">Paths</span><span class="p">:</span> <span class="p">[]</span><span class="nx">v1alpha1</span><span class="p">.</span><span class="nx">HTTPIngressPath</span><span class="p">{</span>
+                               <span class="p">{</span>
 				<span class="nx">Splits</span><span class="p">:</span> <span class="nx">splits</span><span class="p">,</span>
 				<span class="c1">// TODO(lichuqiang): #2201, plumbing to config timeout and retries.
 </span><span class="c1"></span>        <span class="c1">// 把tag name保存下来，传递给vs，用来区分是否需要设置header
 </span><span class="c1"></span>				<span class="nx">AppendHeaders</span><span class="p">:</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">{</span>
 					<span class="s">&#34;RevisionName&#34;</span><span class="p">:</span> <span class="nx">name</span><span class="p">,</span>
 				<span class="p">},</span>
-			<span class="p">}},</span>
+			<span class="p">},</span>
+                    <span class="p">},</span>
 		<span class="p">},</span>
 	<span class="p">}</span>
 <span class="p">}</span>
