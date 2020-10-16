@@ -1,43 +1,43 @@
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
         <title>knative - 标签 - kaku&#39;s blog</title>
-        <link>https//likakuli.github.io/tags/knative/</link>
+        <link>https://likakuli.github.io/tags/knative/</link>
         <description>knative - 标签 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 20 Aug 2020 13:26:19 &#43;0800</lastBuildDate><atom:link href="https//likakuli.github.io/tags/knative/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 20 Aug 2020 13:26:19 &#43;0800</lastBuildDate><atom:link href="https://likakuli.github.io/tags/knative/" rel="self" type="application/rss+xml" /><item>
     <title>Knative健康检查</title>
-    <link>https//likakuli.github.io/knative-healthcheck/</link>
+    <link>https://likakuli.github.io/knative-healthcheck/</link>
     <pubDate>Thu, 20 Aug 2020 13:26:19 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https//likakuli.github.io/knative-healthcheck/</guid>
+    <guid>https://likakuli.github.io/knative-healthcheck/</guid>
     <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 在支持了前面的定制功能后，集群中部署ksvc服务时会报Ingre]]></description>
 </item><item>
     <title>Knative通过header访问指定版本</title>
-    <link>https//likakuli.github.io/knative-version/</link>
+    <link>https://likakuli.github.io/knative-version/</link>
     <pubDate>Wed, 19 Aug 2020 17:26:47 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https//likakuli.github.io/knative-version/</guid>
+    <guid>https://likakuli.github.io/knative-version/</guid>
     <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
 </item><item>
     <title>Knative根据Path转发请求</title>
-    <link>https//likakuli.github.io/knative-pathfilter/</link>
+    <link>https://likakuli.github.io/knative-pathfilter/</link>
     <pubDate>Wed, 19 Aug 2020 17:26:18 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https//likakuli.github.io/knative-pathfilter/</guid>
+    <guid>https://likakuli.github.io/knative-pathfilter/</guid>
     <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
 </item><item>
     <title>Knative组件镜像制作</title>
-    <link>https//likakuli.github.io/knative-build/</link>
+    <link>https://likakuli.github.io/knative-build/</link>
     <pubDate>Thu, 09 Jul 2020 21:00:16 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https//likakuli.github.io/knative-build/</guid>
+    <guid>https://likakuli.github.io/knative-build/</guid>
     <description><![CDATA[背景 knative 0.14.0 最近在搭建公司级的serverless平台，遇到某些问题，看了源码发现无法通过其扩展机制来解决，遂决定修改源码来解决 过程 源码很快修改]]></description>
 </item><item>
     <title>Knative通过外部域名访问集群内服务</title>
-    <link>https//likakuli.github.io/knative-ingress-gateway/</link>
+    <link>https://likakuli.github.io/knative-ingress-gateway/</link>
     <pubDate>Thu, 09 Jul 2020 21:00:07 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https//likakuli.github.io/knative-ingress-gateway/</guid>
+    <guid>https://likakuli.github.io/knative-ingress-gateway/</guid>
     <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
 </item></channel>
 </rss>
