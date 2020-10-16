@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Golang netpoll源码分析 - kaku&#39;s blog</title><meta name="Description" content="golang netpoll 源码分析"><meta property="og:title" content="Golang netpoll源码分析" />
+<meta property="og:description" content="golang netpoll 源码分析" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https//www.likakuli.com/golang-netpoll/" />
+<meta property="og:image" content="/logo.png"/>
+<meta property="article:published_time" content="2018-06-10T13:59:38+08:00" />
+<meta property="article:modified_time" content="2020-10-16T18:17:42+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="/logo.png"/>
+
+<meta name="twitter:title" content="Golang netpoll源码分析"/>
+<meta name="twitter:description" content="golang netpoll 源码分析"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https//www.likakuli.com/golang-netpoll/" /><link rel="prev" href="https//www.likakuli.com/kubernetes-ep-bug/" /><link rel="next" href="https//www.likakuli.com/prometheus/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/https/www.likakuli.com/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Golang netpoll源码分析",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https\/\/www.likakuli.com\/golang-netpoll\/"
+        },"genre": "posts","keywords": "golang, netpoll","wordcount":  7076 ,
+        "url": "https\/\/www.likakuli.com\/golang-netpoll\/","datePublished": "2018-06-10T13:59:38+08:00","dateModified": "2020-10-16T18:17:42+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "\/https\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": "golang netpoll 源码分析"
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="https/www.likakuli.com/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="https/www.likakuli.com/posts/"> 文章 </a><a class="menu-item" href="https/www.likakuli.com/tags/"> 标签 </a><a class="menu-item" href="https/www.likakuli.com/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="https/www.likakuli.com/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="https/www.likakuli.com/posts/" title="">文章</a><a class="menu-item" href="https/www.likakuli.com/tags/" title="">标签</a><a class="menu-item" href="https/www.likakuli.com/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Golang netpoll源码分析</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https/www.likakuli.com/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="https/www.likakuli.com/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2018-06-10">2018-06-10</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 7076 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 15 分钟&nbsp;<span id="https/www.likakuli.com/golang-netpoll/" class="leancloud_visitors" data-flag-title="Golang netpoll源码分析">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#简介">简介</a></li>
+        <li><a href="#源码分析v1102">源码分析（v1.10.2）</a>
+          <ul>
+            <li><a href="#netfd">netFD</a></li>
+            <li><a href="#polldesc">pollDesc</a></li>
+            <li><a href="#listen">Listen</a></li>
+            <li><a href="#accept">Accept</a></li>
+          </ul>
+        </li>
+        <li><a href="#总结">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="简介">简介</h2>
+<p>go针对不同的操作系统，其网络io模型不同，可以从go源码目录结构和对应内容清楚的看到各平台的io模型，如针对linux系统实现的<code>epoll</code>，针对windows操作系统实现的<code>iocp</code>等，这里主要看针对linux系统的实现，涉及到的文件大体如下：</p>
+<ul>
+<li><a href="https://github.com/golang/go/blob/release-branch.go1.10/src/runtime/netpoll.go" target="_blank" rel="noopener noreffer">runtime/netpoll.go</a></li>
+<li><a href="https://github.com/golang/go/blob/release-branch.go1.10/src/runtime/netpoll_epoll.go" target="_blank" rel="noopener noreffer">runtime/netpoll_epoll.go</a></li>
+<li><a href="https://github.com/golang/go/blob/release-branch.go1.10/src/runtime/proc.go" target="_blank" rel="noopener noreffer">runtime/proc.go</a></li>
+<li><a href="https://github.com/golang/go/blob/release-branch.go1.10/src/net/fd_unix.go" target="_blank" rel="noopener noreffer">net/fd_unix.go</a></li>
+<li><a href="https://github.com/golang/go/blob/release-branch.go1.10/src/internal/poll/fd_poll_runtime.go" target="_blank" rel="noopener noreffer">internal/poll/fd_poll_runtime.go</a></li>
+<li><a href="https://github.com/golang/go/blob/release-branch.go1.10/src/internal/poll/fd_unix.go" target="_blank" rel="noopener noreffer">internal/poll/fd_unix.go</a></li>
+</ul>
+<p>在开始正式看源码之前需要具备一些基础知识，如<code>同步</code>、<code>异步</code>、<code>阻塞</code>、<code>非阻塞</code>、<code>io多路复用</code>、<code>go调度模型</code>等，不了解的话可以参考下面的链接：</p>
+<ul>
+<li><a href="https://blog.csdn.net/historyasamirror/article/details/5778378" target="_blank" rel="noopener noreffer">同步异步阻塞非阻塞</a></li>
+<li><a href="https://blog.csdn.net/tennysonsky/article/details/45745887" target="_blank" rel="noopener noreffer">io多路复用select poll epoll</a></li>
+<li><a href="http://www.cnblogs.com/zkweb/p/7815600.html" target="_blank" rel="noopener noreffer">goroutine实现原理</a></li>
+</ul>
+<p>也可以网上自行搜索，文章很多</p>
+<h2 id="源码分析v1102">源码分析（v1.10.2）</h2>
+<p>golang通过对<code>epoll</code>的封装来取得使用同步编程达异步执行的效果。总结来说，所有的网络操作都以网络描述符<code>netFD</code>为中心实现，netFD通过将<code>Sysfd</code>与<code>pollDesc</code>结构绑定，当在一个netFD上读写遇到<code>EAGAIN</code>错误时，就将<strong>当前goroutine</strong>存储到这个netFD对应的pollDesc中，同时将goroutine给park住，直到这个netFD上再次发生读写事件，才将此goroutine设置为ready放入待运行队列等待重新运行，在底层通知goroutine再次发生读写等事件的方式就是靠的epoll事件驱动机制。</p>
+<h3 id="netfd">netFD</h3>
+<p>服务端通过Listen方法返回的<code>Listener</code>接口的实现和通过listener的<code>Accept</code>方法返回的Conn接口的实现都包含一个网络文件描述符netFD，netFD中包含一个poll.FD数据结构，而poll.FD中包含两个重要的数据结构Sysfd和pollDesc，前者是真正的系统文件描述符，后者对是底层事件驱动的封装，所有的读写超时等操作都是通过调用后者的对应方法实现的。</p>
+<ol>
+<li>服务端的netFD在<code>listen</code>时会创建epoll的实例，并将listenFD加入epoll的事件队列</li>
+<li>netFD在<code>accept</code>时将返回的connFD也加入epoll的事件队列</li>
+<li>netFD在读写时出现<code>syscall.EAGAIN</code>错误，通过pollDesc将当前的goroutine park住，直到ready，从pollDesc的<code>waitRead</code>中返回</li>
+</ol>
+<p>涉及到的一些结构：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">TCPListener</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span>
+<span class="p">}</span>
+
+<span class="kd">type</span> <span class="nx">conn</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span>
+<span class="p">}</span>
+
+<span class="c1">// Network file descriptor.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">netFD</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">pfd</span> <span class="nx">poll</span><span class="p">.</span><span class="nx">FD</span>
+
+	<span class="c1">// immutable until Close
+</span><span class="c1"></span>	<span class="nx">family</span>      <span class="kt">int</span>
+	<span class="nx">sotype</span>      <span class="kt">int</span>
+	<span class="nx">isConnected</span> <span class="kt">bool</span>
+	<span class="nx">net</span>         <span class="kt">string</span>
+	<span class="nx">laddr</span>       <span class="nx">Addr</span>
+	<span class="nx">raddr</span>       <span class="nx">Addr</span>
+<span class="p">}</span>
+
+<span class="c1">// FD is a file descriptor. The net and os packages use this type as a
+</span><span class="c1">// field of a larger type representing a network connection or OS file.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">FD</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// Lock sysfd and serialize access to Read and Write methods.
+</span><span class="c1"></span>	<span class="nx">fdmu</span> <span class="nx">fdMutex</span>
+
+	<span class="c1">// System file descriptor. Immutable until Close.
+</span><span class="c1"></span>    <span class="c1">// 系统文件描述符
+</span><span class="c1"></span>	<span class="nx">Sysfd</span> <span class="kt">int</span>
+
+	<span class="c1">// I/O poller.
+</span><span class="c1"></span>	<span class="nx">pd</span> <span class="nx">pollDesc</span>
+
+	<span class="c1">// Writev cache.
+</span><span class="c1"></span>	<span class="nx">iovecs</span> <span class="o">*</span><span class="p">[]</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">Iovec</span>
+
+	<span class="c1">// Semaphore signaled when file is closed.
+</span><span class="c1"></span>	<span class="nx">csema</span> <span class="kt">uint32</span>
+
+	<span class="c1">// Whether this is a streaming descriptor, as opposed to a
+</span><span class="c1"></span>	<span class="c1">// packet-based descriptor like a UDP socket. Immutable.
+</span><span class="c1"></span>	<span class="nx">IsStream</span> <span class="kt">bool</span>
+
+	<span class="c1">// Whether a zero byte read indicates EOF. This is false for a
+</span><span class="c1"></span>	<span class="c1">// message based socket connection.
+</span><span class="c1"></span>	<span class="nx">ZeroReadIsEOF</span> <span class="kt">bool</span>
+
+	<span class="c1">// Whether this is a file rather than a network socket.
+</span><span class="c1"></span>	<span class="nx">isFile</span> <span class="kt">bool</span>
+
+	<span class="c1">// Whether this file has been set to blocking mode.
+</span><span class="c1"></span>	<span class="nx">isBlocking</span> <span class="kt">bool</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="polldesc">pollDesc</h3>
+<p>上面提到的<code>net.conn</code>的读写等操作实际上就是调用的<code>poll.FD</code>对应的方法，<code>poll.FD</code>中包含一个重要结构<code>poll.pollDesc</code>，其定义如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">pollDesc</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">runtimeCtx</span> <span class="kt">uintptr</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到其中只包含一个指针，这个指针具体代表的其实是另一个同名不同包的结构<code>runtime.pollDesc</code>，定义如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Network poller descriptor.
+</span><span class="c1">//
+</span><span class="c1">// No heap pointers.
+</span><span class="c1">//
+</span><span class="c1">//go:notinheap
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">pollDesc</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">link</span> <span class="o">*</span><span class="nx">pollDesc</span> <span class="c1">// in pollcache, protected by pollcache.lock
+</span><span class="c1"></span>
+	<span class="c1">// The lock protects pollOpen, pollSetDeadline, pollUnblock and deadlineimpl operations.
+</span><span class="c1"></span>	<span class="c1">// This fully covers seq, rt and wt variables. fd is constant throughout the PollDesc lifetime.
+</span><span class="c1"></span>	<span class="c1">// pollReset, pollWait, pollWaitCanceled and runtime·netpollready (IO readiness notification)
+</span><span class="c1"></span>	<span class="c1">// proceed w/o taking the lock. So closing, rg, rd, wg and wd are manipulated
+</span><span class="c1"></span>	<span class="c1">// in a lock-free way by all operations.
+</span><span class="c1"></span>	<span class="c1">// NOTE(dvyukov): the following code uses uintptr to store *g (rg/wg),
+</span><span class="c1"></span>	<span class="c1">// that will blow up when GC starts moving objects.
+</span><span class="c1"></span>	<span class="nx">lock</span>    <span class="nx">mutex</span> <span class="c1">// protects the following fields
+</span><span class="c1"></span>	<span class="nx">fd</span>      <span class="kt">uintptr</span>
+	<span class="nx">closing</span> <span class="kt">bool</span>
+	<span class="nx">seq</span>     <span class="kt">uintptr</span> <span class="c1">// protects from stale timers and ready notifications
+</span><span class="c1"></span>	<span class="nx">rg</span>      <span class="kt">uintptr</span> <span class="c1">// pdReady, pdWait, G waiting for read or nil
+</span><span class="c1"></span>	<span class="nx">rt</span>      <span class="nx">timer</span>   <span class="c1">// read deadline timer (set if rt.f != nil)
+</span><span class="c1"></span>	<span class="nx">rd</span>      <span class="kt">int64</span>   <span class="c1">// read deadline
+</span><span class="c1"></span>	<span class="nx">wg</span>      <span class="kt">uintptr</span> <span class="c1">// pdReady, pdWait, G waiting for write or nil
+</span><span class="c1"></span>	<span class="nx">wt</span>      <span class="nx">timer</span>   <span class="c1">// write deadline timer
+</span><span class="c1"></span>	<span class="nx">wd</span>      <span class="kt">int64</span>   <span class="c1">// write deadline
+</span><span class="c1"></span>	<span class="nx">user</span>    <span class="kt">uint32</span>  <span class="c1">// user settable cookie
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>runtime.pollDesc</code>包含自身类型的一个指针，用来保存下一个<code>runtime.pollDesc</code>的地址，go中有很多类似的实现，用来实现链表，可以减少数据结构的大小，所有的<code>runtime.pollDesc</code>保存在<code>runtime.pollCache</code>结构中，定义如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">pollCache</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">lock</span>  <span class="nx">mutex</span>
+	<span class="nx">first</span> <span class="o">*</span><span class="nx">pollDesc</span>
+	<span class="c1">// PollDesc objects must be type-stable,
+</span><span class="c1"></span>	<span class="c1">// because we can get ready notification from epoll/kqueue
+</span><span class="c1"></span>	<span class="c1">// after the descriptor is closed/reused.
+</span><span class="c1"></span>	<span class="c1">// Stale notifications are detected using seq variable,
+</span><span class="c1"></span>	<span class="c1">// seq is incremented when deadlines are changed or descriptor is reused.
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>以tcp连接为例，分析一下Listen和Accept调用过程：</p>
+<h3 id="listen">Listen</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">Listen</span><span class="p">(</span><span class="nx">network</span><span class="p">,</span> <span class="nx">address</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">Listener</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">addrs</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">DefaultResolver</span><span class="p">.</span><span class="nf">resolveAddrList</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="s">&#34;listen&#34;</span><span class="p">,</span> <span class="nx">network</span><span class="p">,</span> <span class="nx">address</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">OpError</span><span class="p">{</span><span class="nx">Op</span><span class="p">:</span> <span class="s">&#34;listen&#34;</span><span class="p">,</span> <span class="nx">Net</span><span class="p">:</span> <span class="nx">network</span><span class="p">,</span> <span class="nx">Source</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">Addr</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">Err</span><span class="p">:</span> <span class="nx">err</span><span class="p">}</span>
+	<span class="p">}</span>
+	<span class="kd">var</span> <span class="nx">l</span> <span class="nx">Listener</span>
+	<span class="k">switch</span> <span class="nx">la</span> <span class="o">:=</span> <span class="nx">addrs</span><span class="p">.</span><span class="nf">first</span><span class="p">(</span><span class="nx">isIPv4</span><span class="p">).(</span><span class="kd">type</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="o">*</span><span class="nx">TCPAddr</span><span class="p">:</span>
+		<span class="nx">l</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">ListenTCP</span><span class="p">(</span><span class="nx">network</span><span class="p">,</span> <span class="nx">la</span><span class="p">)</span>
+	<span class="k">case</span> <span class="o">*</span><span class="nx">UnixAddr</span><span class="p">:</span>
+		<span class="nx">l</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">ListenUnix</span><span class="p">(</span><span class="nx">network</span><span class="p">,</span> <span class="nx">la</span><span class="p">)</span>
+	<span class="k">default</span><span class="p">:</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">OpError</span><span class="p">{</span><span class="nx">Op</span><span class="p">:</span> <span class="s">&#34;listen&#34;</span><span class="p">,</span> <span class="nx">Net</span><span class="p">:</span> <span class="nx">network</span><span class="p">,</span> <span class="nx">Source</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">Addr</span><span class="p">:</span> <span class="nx">la</span><span class="p">,</span> <span class="nx">Err</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">AddrError</span><span class="p">{</span><span class="nx">Err</span><span class="p">:</span> <span class="s">&#34;unexpected address type&#34;</span><span class="p">,</span> <span class="nx">Addr</span><span class="p">:</span> <span class="nx">address</span><span class="p">}}</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span> <span class="c1">// l is non-nil interface containing nil pointer
+</span><span class="c1"></span>	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">l</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// ListenTCP acts like Listen for TCP networks.
+</span><span class="c1">//
+</span><span class="c1">// The network must be a TCP network name; see func Dial for details.
+</span><span class="c1">//
+</span><span class="c1">// If the IP field of laddr is nil or an unspecified IP address,
+</span><span class="c1">// ListenTCP listens on all available unicast and anycast IP addresses
+</span><span class="c1">// of the local system.
+</span><span class="c1">// If the Port field of laddr is 0, a port number is automatically
+</span><span class="c1">// chosen.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">ListenTCP</span><span class="p">(</span><span class="nx">network</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">laddr</span> <span class="o">*</span><span class="nx">TCPAddr</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">TCPListener</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">switch</span> <span class="nx">network</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="s">&#34;tcp&#34;</span><span class="p">,</span> <span class="s">&#34;tcp4&#34;</span><span class="p">,</span> <span class="s">&#34;tcp6&#34;</span><span class="p">:</span>
+	<span class="k">default</span><span class="p">:</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">OpError</span><span class="p">{</span><span class="nx">Op</span><span class="p">:</span> <span class="s">&#34;listen&#34;</span><span class="p">,</span> <span class="nx">Net</span><span class="p">:</span> <span class="nx">network</span><span class="p">,</span> <span class="nx">Source</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">Addr</span><span class="p">:</span> <span class="nx">laddr</span><span class="p">.</span><span class="nf">opAddr</span><span class="p">(),</span> <span class="nx">Err</span><span class="p">:</span> <span class="nf">UnknownNetworkError</span><span class="p">(</span><span class="nx">network</span><span class="p">)}</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">laddr</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">laddr</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">TCPAddr</span><span class="p">{}</span>
+	<span class="p">}</span>
+	<span class="nx">ln</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">listenTCP</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="nx">network</span><span class="p">,</span> <span class="nx">laddr</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">OpError</span><span class="p">{</span><span class="nx">Op</span><span class="p">:</span> <span class="s">&#34;listen&#34;</span><span class="p">,</span> <span class="nx">Net</span><span class="p">:</span> <span class="nx">network</span><span class="p">,</span> <span class="nx">Source</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">Addr</span><span class="p">:</span> <span class="nx">laddr</span><span class="p">.</span><span class="nf">opAddr</span><span class="p">(),</span> <span class="nx">Err</span><span class="p">:</span> <span class="nx">err</span><span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">ln</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>当我们调用net.Listen(&ldquo;tcp&rdquo;,addr)时，根据address类型会命中ListenTCP函数去执行，ListenTCP函数很简单，基本处理逻辑都在listenTCP函数中，往下看</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">listenTCP</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">network</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">laddr</span> <span class="o">*</span><span class="nx">TCPAddr</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">TCPListener</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">fd</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">internetSocket</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">network</span><span class="p">,</span> <span class="nx">laddr</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_STREAM</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#34;listen&#34;</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">TCPListener</span><span class="p">{</span><span class="nx">fd</span><span class="p">},</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">internetSocket</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">net</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">laddr</span><span class="p">,</span> <span class="nx">raddr</span> <span class="nx">sockaddr</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">,</span> <span class="nx">proto</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">mode</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="p">(</span><span class="nx">runtime</span><span class="p">.</span><span class="nx">GOOS</span> <span class="o">==</span> <span class="s">&#34;windows&#34;</span> <span class="o">||</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">GOOS</span> <span class="o">==</span> <span class="s">&#34;openbsd&#34;</span> <span class="o">||</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">GOOS</span> <span class="o">==</span> <span class="s">&#34;nacl&#34;</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">mode</span> <span class="o">==</span> <span class="s">&#34;dial&#34;</span> <span class="o">&amp;&amp;</span> <span class="nx">raddr</span><span class="p">.</span><span class="nf">isWildcard</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">raddr</span> <span class="p">=</span> <span class="nx">raddr</span><span class="p">.</span><span class="nf">toLocal</span><span class="p">(</span><span class="nx">net</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">family</span><span class="p">,</span> <span class="nx">ipv6only</span> <span class="o">:=</span> <span class="nf">favoriteAddrFamily</span><span class="p">(</span><span class="nx">net</span><span class="p">,</span> <span class="nx">laddr</span><span class="p">,</span> <span class="nx">raddr</span><span class="p">,</span> <span class="nx">mode</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nf">socket</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">net</span><span class="p">,</span> <span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">,</span> <span class="nx">proto</span><span class="p">,</span> <span class="nx">ipv6only</span><span class="p">,</span> <span class="nx">laddr</span><span class="p">,</span> <span class="nx">raddr</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>listenTCP函数，在此函数中终于见到了期望看到的fd字眼，跳到internetSocket函数，可以看到最终的fd是由socket函数产生的，继续</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// socket returns a network file descriptor that is ready for
+</span><span class="c1">// asynchronous I/O using the network poller.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">socket</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">net</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">,</span> <span class="nx">proto</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">ipv6only</span> <span class="kt">bool</span><span class="p">,</span> <span class="nx">laddr</span><span class="p">,</span> <span class="nx">raddr</span> <span class="nx">sockaddr</span><span class="p">)</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">s</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">sysSocket</span><span class="p">(</span><span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">,</span> <span class="nx">proto</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">setDefaultSockopts</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">,</span> <span class="nx">ipv6only</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">poll</span><span class="p">.</span><span class="nf">CloseFunc</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">fd</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">newFD</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">,</span> <span class="nx">net</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">poll</span><span class="p">.</span><span class="nf">CloseFunc</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="c1">// This function makes a network file descriptor for the
+</span><span class="c1"></span>	<span class="c1">// following applications:
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// - An endpoint holder that opens a passive stream
+</span><span class="c1"></span>	<span class="c1">//   connection, known as a stream listener
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// - An endpoint holder that opens a destination-unspecific
+</span><span class="c1"></span>	<span class="c1">//   datagram connection, known as a datagram listener
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// - An endpoint holder that opens an active stream or a
+</span><span class="c1"></span>	<span class="c1">//   destination-specific datagram connection, known as a
+</span><span class="c1"></span>	<span class="c1">//   dialer
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// - An endpoint holder that opens the other connection, such
+</span><span class="c1"></span>	<span class="c1">//   as talking to the protocol stack inside the kernel
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// For stream and datagram listeners, they will only require
+</span><span class="c1"></span>	<span class="c1">// named sockets, so we can assume that it&#39;s just a request
+</span><span class="c1"></span>	<span class="c1">// from stream or datagram listeners when laddr is not nil but
+</span><span class="c1"></span>	<span class="c1">// raddr is nil. Otherwise we assume it&#39;s just for dialers or
+</span><span class="c1"></span>	<span class="c1">// the other connection holders.
+</span><span class="c1"></span>
+	<span class="k">if</span> <span class="nx">laddr</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">raddr</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">switch</span> <span class="nx">sotype</span> <span class="p">{</span>
+		<span class="k">case</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_STREAM</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_SEQPACKET</span><span class="p">:</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">fd</span><span class="p">.</span><span class="nf">listenStream</span><span class="p">(</span><span class="nx">laddr</span><span class="p">,</span> <span class="nx">listenerBacklog</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">fd</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+				<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+			<span class="p">}</span>
+			<span class="k">return</span> <span class="nx">fd</span><span class="p">,</span> <span class="kc">nil</span>
+		<span class="k">case</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_DGRAM</span><span class="p">:</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">fd</span><span class="p">.</span><span class="nf">listenDatagram</span><span class="p">(</span><span class="nx">laddr</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">fd</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+				<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+			<span class="p">}</span>
+			<span class="k">return</span> <span class="nx">fd</span><span class="p">,</span> <span class="kc">nil</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">fd</span><span class="p">.</span><span class="nf">dial</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">laddr</span><span class="p">,</span> <span class="nx">raddr</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fd</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">fd</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>首先调用sysSocket函数生成一个非阻塞的socket，并且设置<a href="https://blog.csdn.net/justmeloo/article/details/40184039" target="_blank" rel="noopener noreffer">close-on-exec</a>标志，生成过程如下首先调用socketFunc，也就是Socket函数，再调用socket函数，继续调用RawSyscall，RawSyscall是由<a href="http://blog.rootk.com/post/golang-asm.html" target="_blank" rel="noopener noreffer">汇编</a>实现的，上述过程最终返回生成的socket对应的系统文件描述符（并不是netFD）。涉及到的代码如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Wrapper around the socket system call that marks the returned file
+</span><span class="c1">// descriptor as nonblocking and close-on-exec.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">sysSocket</span><span class="p">(</span><span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">,</span> <span class="nx">proto</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">s</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">socketFunc</span><span class="p">(</span><span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">|</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_NONBLOCK</span><span class="p">|</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_CLOEXEC</span><span class="p">,</span> <span class="nx">proto</span><span class="p">)</span>
+	<span class="c1">// On Linux the SOCK_NONBLOCK and SOCK_CLOEXEC flags were
+</span><span class="c1"></span>	<span class="c1">// introduced in 2.6.27 kernel and on FreeBSD both flags were
+</span><span class="c1"></span>	<span class="c1">// introduced in 10 kernel. If we get an EINVAL error on Linux
+</span><span class="c1"></span>	<span class="c1">// or EPROTONOSUPPORT error on FreeBSD, fall back to using
+</span><span class="c1"></span>	<span class="c1">// socket without them.
+</span><span class="c1"></span>	<span class="k">switch</span> <span class="nx">err</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="kc">nil</span><span class="p">:</span>
+		<span class="k">return</span> <span class="nx">s</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="k">default</span><span class="p">:</span>
+		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nx">os</span><span class="p">.</span><span class="nf">NewSyscallError</span><span class="p">(</span><span class="s">&#34;socket&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="k">case</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">EPROTONOSUPPORT</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">EINVAL</span><span class="p">:</span>
+	<span class="p">}</span>
+
+	<span class="c1">// See ../syscall/exec_unix.go for description of ForkLock.
+</span><span class="c1"></span>	<span class="nx">syscall</span><span class="p">.</span><span class="nx">ForkLock</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span>
+	<span class="nx">s</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">socketFunc</span><span class="p">(</span><span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">,</span> <span class="nx">proto</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">syscall</span><span class="p">.</span><span class="nf">CloseOnExec</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">syscall</span><span class="p">.</span><span class="nx">ForkLock</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nx">os</span><span class="p">.</span><span class="nf">NewSyscallError</span><span class="p">(</span><span class="s">&#34;socket&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nf">SetNonblock</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">poll</span><span class="p">.</span><span class="nf">CloseFunc</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nx">os</span><span class="p">.</span><span class="nf">NewSyscallError</span><span class="p">(</span><span class="s">&#34;setnonblock&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">s</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="nx">socketFunc</span> <span class="kd">func</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>  <span class="p">=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">Socket</span>
+
+<span class="kd">func</span> <span class="nf">Socket</span><span class="p">(</span><span class="nx">domain</span><span class="p">,</span> <span class="nx">typ</span><span class="p">,</span> <span class="nx">proto</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">fd</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">domain</span> <span class="o">==</span> <span class="nx">AF_INET6</span> <span class="o">&amp;&amp;</span> <span class="nx">SocketDisableIPv6</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nx">EAFNOSUPPORT</span>
+	<span class="p">}</span>
+	<span class="nx">fd</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">socket</span><span class="p">(</span><span class="nx">domain</span><span class="p">,</span> <span class="nx">typ</span><span class="p">,</span> <span class="nx">proto</span><span class="p">)</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">socket</span><span class="p">(</span><span class="nx">domain</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">typ</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">proto</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">fd</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">r0</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">e1</span> <span class="o">:=</span> <span class="nf">RawSyscall</span><span class="p">(</span><span class="nx">SYS_SOCKET</span><span class="p">,</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">domain</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">typ</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">proto</span><span class="p">))</span>
+	<span class="nx">fd</span> <span class="p">=</span> <span class="nb">int</span><span class="p">(</span><span class="nx">r0</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">e1</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nx">err</span> <span class="p">=</span> <span class="nf">errnoErr</span><span class="p">(</span><span class="nx">e1</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">RawSyscall</span><span class="p">(</span><span class="nx">trap</span><span class="p">,</span> <span class="nx">a1</span><span class="p">,</span> <span class="nx">a2</span><span class="p">,</span> <span class="nx">a3</span> <span class="kt">uintptr</span><span class="p">)</span> <span class="p">(</span><span class="nx">r1</span><span class="p">,</span> <span class="nx">r2</span> <span class="kt">uintptr</span><span class="p">,</span> <span class="nx">err</span> <span class="nx">Errno</span><span class="p">)</span>
+
+<span class="c1">// func RawSyscall(trap, a1, a2, a3 uintptr) (r1, r2, err uintptr)
+</span><span class="c1"></span><span class="nx">TEXT</span> <span class="err">·</span><span class="nf">RawSyscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">),</span><span class="nx">NOSPLIT</span><span class="p">,</span><span class="err">$</span><span class="mi">0</span><span class="o">-</span><span class="mi">56</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a1</span><span class="o">+</span><span class="mi">8</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">DI</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a2</span><span class="o">+</span><span class="mi">16</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">SI</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a3</span><span class="o">+</span><span class="mi">24</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">DX</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">R10</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">R8</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">R9</span>
+	<span class="nx">MOVQ</span>	<span class="nx">trap</span><span class="o">+</span><span class="mi">0</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">AX</span>	<span class="c1">// syscall entry
+</span><span class="c1"></span>	<span class="nx">SYSCALL</span>
+	<span class="nx">CMPQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="err">$</span><span class="mh">0xfffffffffffff001</span>
+	<span class="nx">JLS</span>	<span class="nx">ok1</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nx">r1</span><span class="o">+</span><span class="mi">32</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">r2</span><span class="o">+</span><span class="mi">40</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">NEGQ</span>	<span class="nx">AX</span>
+	<span class="nx">MOVQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="nx">err</span><span class="o">+</span><span class="mi">48</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">RET</span>
+<span class="nx">ok1</span><span class="p">:</span>
+	<span class="nx">MOVQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="nx">r1</span><span class="o">+</span><span class="mi">32</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="nx">DX</span><span class="p">,</span> <span class="nx">r2</span><span class="o">+</span><span class="mi">40</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">err</span><span class="o">+</span><span class="mi">48</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">RET</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>有了真正的系统文件描述符之后紧接着通过newFD函数来初始化一个netFD</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">newFD</span><span class="p">(</span><span class="nx">sysfd</span><span class="p">,</span> <span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">net</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">netFD</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ret</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">netFD</span><span class="p">{</span>
+		<span class="nx">pfd</span><span class="p">:</span> <span class="nx">poll</span><span class="p">.</span><span class="nx">FD</span><span class="p">{</span>
+			<span class="nx">Sysfd</span><span class="p">:</span>         <span class="nx">sysfd</span><span class="p">,</span>
+			<span class="nx">IsStream</span><span class="p">:</span>      <span class="nx">sotype</span> <span class="o">==</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_STREAM</span><span class="p">,</span>
+			<span class="nx">ZeroReadIsEOF</span><span class="p">:</span> <span class="nx">sotype</span> <span class="o">!=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_DGRAM</span> <span class="o">&amp;&amp;</span> <span class="nx">sotype</span> <span class="o">!=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_RAW</span><span class="p">,</span>
+		<span class="p">},</span>
+		<span class="nx">family</span><span class="p">:</span> <span class="nx">family</span><span class="p">,</span>
+		<span class="nx">sotype</span><span class="p">:</span> <span class="nx">sotype</span><span class="p">,</span>
+		<span class="nx">net</span><span class="p">:</span>    <span class="nx">net</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">ret</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>netFD创建好之后调用其listenStream方法，此方法中实现了socket的bind和listen，bind和listen最终也是走汇编代码，经过系统调用实现的。涉及到的代码如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span><span class="lnt">116
+</span><span class="lnt">117
+</span><span class="lnt">118
+</span><span class="lnt">119
+</span><span class="lnt">120
+</span><span class="lnt">121
+</span><span class="lnt">122
+</span><span class="lnt">123
+</span><span class="lnt">124
+</span><span class="lnt">125
+</span><span class="lnt">126
+</span><span class="lnt">127
+</span><span class="lnt">128
+</span><span class="lnt">129
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">)</span> <span class="nf">listenStream</span><span class="p">(</span><span class="nx">laddr</span> <span class="nx">sockaddr</span><span class="p">,</span> <span class="nx">backlog</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">setDefaultListenerSockopts</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">lsa</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">laddr</span><span class="p">.</span><span class="nf">sockaddr</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">family</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">lsa</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nf">Bind</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">,</span> <span class="nx">lsa</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">os</span><span class="p">.</span><span class="nf">NewSyscallError</span><span class="p">(</span><span class="s">&#34;bind&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">listenFunc</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">,</span> <span class="nx">backlog</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">os</span><span class="p">.</span><span class="nf">NewSyscallError</span><span class="p">(</span><span class="s">&#34;listen&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">fd</span><span class="p">.</span><span class="nf">init</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">lsa</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nf">Getsockname</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">)</span>
+	<span class="nx">fd</span><span class="p">.</span><span class="nf">setAddr</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nf">addrFunc</span><span class="p">()(</span><span class="nx">lsa</span><span class="p">),</span> <span class="kc">nil</span><span class="p">)</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">)</span> <span class="nf">listenStream</span><span class="p">(</span><span class="nx">laddr</span> <span class="nx">sockaddr</span><span class="p">,</span> <span class="nx">backlog</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">setDefaultListenerSockopts</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">lsa</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">laddr</span><span class="p">.</span><span class="nf">sockaddr</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">family</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">lsa</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nf">Bind</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">,</span> <span class="nx">lsa</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">os</span><span class="p">.</span><span class="nf">NewSyscallError</span><span class="p">(</span><span class="s">&#34;bind&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">listenFunc</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">,</span> <span class="nx">backlog</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">os</span><span class="p">.</span><span class="nf">NewSyscallError</span><span class="p">(</span><span class="s">&#34;listen&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">fd</span><span class="p">.</span><span class="nf">init</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">lsa</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nf">Getsockname</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">)</span>
+	<span class="nx">fd</span><span class="p">.</span><span class="nf">setAddr</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nf">addrFunc</span><span class="p">()(</span><span class="nx">lsa</span><span class="p">),</span> <span class="kc">nil</span><span class="p">)</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">//bind
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Bind</span><span class="p">(</span><span class="nx">fd</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">sa</span> <span class="nx">Sockaddr</span><span class="p">)</span> <span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ptr</span><span class="p">,</span> <span class="nx">n</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">sa</span><span class="p">.</span><span class="nf">sockaddr</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nf">bind</span><span class="p">(</span><span class="nx">fd</span><span class="p">,</span> <span class="nx">ptr</span><span class="p">,</span> <span class="nx">n</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">bind</span><span class="p">(</span><span class="nx">s</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">addr</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span><span class="p">,</span> <span class="nx">addrlen</span> <span class="nx">_Socklen</span><span class="p">)</span> <span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">_</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">e1</span> <span class="o">:=</span> <span class="nf">Syscall</span><span class="p">(</span><span class="nx">SYS_BIND</span><span class="p">,</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">s</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">addr</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">addrlen</span><span class="p">))</span>
+	<span class="k">if</span> <span class="nx">e1</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nx">err</span> <span class="p">=</span> <span class="nf">errnoErr</span><span class="p">(</span><span class="nx">e1</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+
+<span class="c1">// func Syscall(trap int64, a1, a2, a3 int64) (r1, r2, err int64);
+</span><span class="c1">// Trap # in AX, args in DI SI DX R10 R8 R9, return in AX DX
+</span><span class="c1">// Note that this differs from &#34;standard&#34; ABI convention, which
+</span><span class="c1">// would pass 4th arg in CX, not R10.
+</span><span class="c1"></span><span class="nx">TEXT</span>	<span class="err">·</span><span class="nf">Syscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">),</span><span class="nx">NOSPLIT</span><span class="p">,</span><span class="err">$</span><span class="mi">0</span><span class="o">-</span><span class="mi">56</span>
+	<span class="nx">CALL</span>	<span class="nx">runtime</span><span class="err">·</span><span class="nf">entersyscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a1</span><span class="o">+</span><span class="mi">8</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">DI</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a2</span><span class="o">+</span><span class="mi">16</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">SI</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a3</span><span class="o">+</span><span class="mi">24</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">DX</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">R10</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">R8</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">R9</span>
+	<span class="nx">MOVQ</span>	<span class="nx">trap</span><span class="o">+</span><span class="mi">0</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">AX</span>	<span class="c1">// syscall entry
+</span><span class="c1"></span>	<span class="nx">SYSCALL</span>
+	<span class="nx">CMPQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="err">$</span><span class="mh">0xfffffffffffff001</span>
+	<span class="nx">JLS</span>	<span class="nx">ok</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nx">r1</span><span class="o">+</span><span class="mi">32</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">r2</span><span class="o">+</span><span class="mi">40</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">NEGQ</span>	<span class="nx">AX</span>
+	<span class="nx">MOVQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="nx">err</span><span class="o">+</span><span class="mi">48</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">CALL</span>	<span class="nx">runtime</span><span class="err">·</span><span class="nf">exitsyscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">)</span>
+	<span class="nx">RET</span>
+<span class="nx">ok</span><span class="p">:</span>
+	<span class="nx">MOVQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="nx">r1</span><span class="o">+</span><span class="mi">32</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="nx">DX</span><span class="p">,</span> <span class="nx">r2</span><span class="o">+</span><span class="mi">40</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">err</span><span class="o">+</span><span class="mi">48</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">CALL</span>	<span class="nx">runtime</span><span class="err">·</span><span class="nf">exitsyscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">)</span>
+	<span class="nx">RET</span>
+
+<span class="c1">//listen
+</span><span class="c1"></span><span class="nx">listenFunc</span>        <span class="kd">func</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">error</span>              <span class="p">=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">Listen</span>
+
+<span class="kd">func</span> <span class="nf">Listen</span><span class="p">(</span><span class="nx">s</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">n</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">_</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">e1</span> <span class="o">:=</span> <span class="nf">Syscall</span><span class="p">(</span><span class="nx">SYS_LISTEN</span><span class="p">,</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">s</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">e1</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nx">err</span> <span class="p">=</span> <span class="nf">errnoErr</span><span class="p">(</span><span class="nx">e1</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+
+<span class="c1">// func Syscall(trap int64, a1, a2, a3 int64) (r1, r2, err int64);
+</span><span class="c1">// Trap # in AX, args in DI SI DX R10 R8 R9, return in AX DX
+</span><span class="c1">// Note that this differs from &#34;standard&#34; ABI convention, which
+</span><span class="c1">// would pass 4th arg in CX, not R10.
+</span><span class="c1"></span><span class="nx">TEXT</span>	<span class="err">·</span><span class="nf">Syscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">),</span><span class="nx">NOSPLIT</span><span class="p">,</span><span class="err">$</span><span class="mi">0</span><span class="o">-</span><span class="mi">56</span>
+	<span class="nx">CALL</span>	<span class="nx">runtime</span><span class="err">·</span><span class="nf">entersyscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a1</span><span class="o">+</span><span class="mi">8</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">DI</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a2</span><span class="o">+</span><span class="mi">16</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">SI</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a3</span><span class="o">+</span><span class="mi">24</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">DX</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">R10</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">R8</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">R9</span>
+	<span class="nx">MOVQ</span>	<span class="nx">trap</span><span class="o">+</span><span class="mi">0</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">AX</span>	<span class="c1">// syscall entry
+</span><span class="c1"></span>	<span class="nx">SYSCALL</span>
+	<span class="nx">CMPQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="err">$</span><span class="mh">0xfffffffffffff001</span>
+	<span class="nx">JLS</span>	<span class="nx">ok</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nx">r1</span><span class="o">+</span><span class="mi">32</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">r2</span><span class="o">+</span><span class="mi">40</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">NEGQ</span>	<span class="nx">AX</span>
+	<span class="nx">MOVQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="nx">err</span><span class="o">+</span><span class="mi">48</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">CALL</span>	<span class="nx">runtime</span><span class="err">·</span><span class="nf">exitsyscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">)</span>
+	<span class="nx">RET</span>
+<span class="nx">ok</span><span class="p">:</span>
+	<span class="nx">MOVQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="nx">r1</span><span class="o">+</span><span class="mi">32</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="nx">DX</span><span class="p">,</span> <span class="nx">r2</span><span class="o">+</span><span class="mi">40</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">err</span><span class="o">+</span><span class="mi">48</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">CALL</span>	<span class="nx">runtime</span><span class="err">·</span><span class="nf">exitsyscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">)</span>
+	<span class="nx">RET</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>bind和listen执行完之后，netFD的init函数执行，初始化底层的epoll实例，并将fd添加到了epoll的事件队列中，最后设置析构函数供gc阶段调用，至此完成了整个Listen过程。代码如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span><span class="lnt">87
+</span><span class="lnt">88
+</span><span class="lnt">89
+</span><span class="lnt">90
+</span><span class="lnt">91
+</span><span class="lnt">92
+</span><span class="lnt">93
+</span><span class="lnt">94
+</span><span class="lnt">95
+</span><span class="lnt">96
+</span><span class="lnt">97
+</span><span class="lnt">98
+</span><span class="lnt">99
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">)</span> <span class="nf">init</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nf">Init</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">net</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// Init initializes the FD. The Sysfd field should already be set.
+</span><span class="c1">// This can be called multiple times on a single FD.
+</span><span class="c1">// The net argument is a network name from the net package (e.g., &#34;tcp&#34;),
+</span><span class="c1">// or &#34;file&#34;.
+</span><span class="c1">// Set pollable to true if fd should be managed by runtime netpoll.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">FD</span><span class="p">)</span> <span class="nf">Init</span><span class="p">(</span><span class="nx">net</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">pollable</span> <span class="kt">bool</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="c1">// We don&#39;t actually care about the various network types.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">net</span> <span class="o">==</span> <span class="s">&#34;file&#34;</span> <span class="p">{</span>
+		<span class="nx">fd</span><span class="p">.</span><span class="nx">isFile</span> <span class="p">=</span> <span class="kc">true</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">pollable</span> <span class="p">{</span>
+		<span class="nx">fd</span><span class="p">.</span><span class="nx">isBlocking</span> <span class="p">=</span> <span class="kc">true</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">fd</span><span class="p">.</span><span class="nx">pd</span><span class="p">.</span><span class="nf">init</span><span class="p">(</span><span class="nx">fd</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">serverInit</span> <span class="nx">sync</span><span class="p">.</span><span class="nx">Once</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">pd</span> <span class="o">*</span><span class="nx">pollDesc</span><span class="p">)</span> <span class="nf">init</span><span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">FD</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">serverInit</span><span class="p">.</span><span class="nf">Do</span><span class="p">(</span><span class="nx">runtime_pollServerInit</span><span class="p">)</span>
+	<span class="nx">ctx</span><span class="p">,</span> <span class="nx">errno</span> <span class="o">:=</span> <span class="nf">runtime_pollOpen</span><span class="p">(</span><span class="nb">uintptr</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">))</span>
+	<span class="k">if</span> <span class="nx">errno</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">ctx</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="nf">runtime_pollUnblock</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+			<span class="nf">runtime_pollClose</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="nx">syscall</span><span class="p">.</span><span class="nf">Errno</span><span class="p">(</span><span class="nx">errno</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">pd</span><span class="p">.</span><span class="nx">runtimeCtx</span> <span class="p">=</span> <span class="nx">ctx</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">//文件位置：internal/poll/fd_poll_runtime.go
+</span><span class="c1">//此函数在此文件处只有函数声明，一般这种类型的要么对应一个汇编，要么对应go:linkname
+</span><span class="c1">//此处对应后者
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">runtime_pollOpen</span><span class="p">(</span><span class="nx">fd</span> <span class="kt">uintptr</span><span class="p">)</span> <span class="p">(</span><span class="kt">uintptr</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span>
+
+<span class="c1">//文件位置：runtime/netpoll.go
+</span><span class="c1">//go:linkname poll_runtime_pollOpen internal/poll.runtime_pollOpen
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">poll_runtime_pollOpen</span><span class="p">(</span><span class="nx">fd</span> <span class="kt">uintptr</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">pollDesc</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">pd</span> <span class="o">:=</span> <span class="nx">pollcache</span><span class="p">.</span><span class="nf">alloc</span><span class="p">()</span>
+	<span class="nf">lock</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">pd</span><span class="p">.</span><span class="nx">lock</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">pd</span><span class="p">.</span><span class="nx">wg</span> <span class="o">!=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">pd</span><span class="p">.</span><span class="nx">wg</span> <span class="o">!=</span> <span class="nx">pdReady</span> <span class="p">{</span>
+		<span class="nf">throw</span><span class="p">(</span><span class="s">&#34;runtime: blocked write on free polldesc&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">pd</span><span class="p">.</span><span class="nx">rg</span> <span class="o">!=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">pd</span><span class="p">.</span><span class="nx">rg</span> <span class="o">!=</span> <span class="nx">pdReady</span> <span class="p">{</span>
+		<span class="nf">throw</span><span class="p">(</span><span class="s">&#34;runtime: blocked read on free polldesc&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">pd</span><span class="p">.</span><span class="nx">fd</span> <span class="p">=</span> <span class="nx">fd</span>
+	<span class="nx">pd</span><span class="p">.</span><span class="nx">closing</span> <span class="p">=</span> <span class="kc">false</span>
+	<span class="nx">pd</span><span class="p">.</span><span class="nx">seq</span><span class="o">++</span>
+	<span class="nx">pd</span><span class="p">.</span><span class="nx">rg</span> <span class="p">=</span> <span class="mi">0</span>
+	<span class="nx">pd</span><span class="p">.</span><span class="nx">rd</span> <span class="p">=</span> <span class="mi">0</span>
+	<span class="nx">pd</span><span class="p">.</span><span class="nx">wg</span> <span class="p">=</span> <span class="mi">0</span>
+	<span class="nx">pd</span><span class="p">.</span><span class="nx">wd</span> <span class="p">=</span> <span class="mi">0</span>
+	<span class="nf">unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">pd</span><span class="p">.</span><span class="nx">lock</span><span class="p">)</span>
+
+	<span class="kd">var</span> <span class="nx">errno</span> <span class="kt">int32</span>
+	<span class="nx">errno</span> <span class="p">=</span> <span class="nf">netpollopen</span><span class="p">(</span><span class="nx">fd</span><span class="p">,</span> <span class="nx">pd</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nx">pd</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nx">errno</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">//文件位置：runtime/netpoll.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">pollCache</span><span class="p">)</span> <span class="nf">alloc</span><span class="p">()</span> <span class="o">*</span><span class="nx">pollDesc</span> <span class="p">{</span>
+	<span class="nf">lock</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">c</span><span class="p">.</span><span class="nx">lock</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">c</span><span class="p">.</span><span class="nx">first</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="kd">const</span> <span class="nx">pdSize</span> <span class="p">=</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Sizeof</span><span class="p">(</span><span class="nx">pollDesc</span><span class="p">{})</span>
+		<span class="nx">n</span> <span class="o">:=</span> <span class="nx">pollBlockSize</span> <span class="o">/</span> <span class="nx">pdSize</span>
+		<span class="k">if</span> <span class="nx">n</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="nx">n</span> <span class="p">=</span> <span class="mi">1</span>
+		<span class="p">}</span>
+		<span class="c1">// Must be in non-GC memory because can be referenced
+</span><span class="c1"></span>		<span class="c1">// only from epoll/kqueue internals.
+</span><span class="c1"></span>		<span class="nx">mem</span> <span class="o">:=</span> <span class="nf">persistentalloc</span><span class="p">(</span><span class="nx">n</span><span class="o">*</span><span class="nx">pdSize</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">memstats</span><span class="p">.</span><span class="nx">other_sys</span><span class="p">)</span>
+		<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="nb">uintptr</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">n</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+			<span class="nx">pd</span> <span class="o">:=</span> <span class="p">(</span><span class="o">*</span><span class="nx">pollDesc</span><span class="p">)(</span><span class="nf">add</span><span class="p">(</span><span class="nx">mem</span><span class="p">,</span> <span class="nx">i</span><span class="o">*</span><span class="nx">pdSize</span><span class="p">))</span>
+			<span class="nx">pd</span><span class="p">.</span><span class="nx">link</span> <span class="p">=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">first</span>
+			<span class="nx">c</span><span class="p">.</span><span class="nx">first</span> <span class="p">=</span> <span class="nx">pd</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="nx">pd</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">first</span>
+	<span class="nx">c</span><span class="p">.</span><span class="nx">first</span> <span class="p">=</span> <span class="nx">pd</span><span class="p">.</span><span class="nx">link</span>
+	<span class="nf">unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">c</span><span class="p">.</span><span class="nx">lock</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nx">pd</span>
+<span class="p">}</span>
+
+<span class="c1">//文件位置：runtime/netpoll_epoll.go
+</span><span class="c1">//epoll事件注册
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">netpollopen</span><span class="p">(</span><span class="nx">fd</span> <span class="kt">uintptr</span><span class="p">,</span> <span class="nx">pd</span> <span class="o">*</span><span class="nx">pollDesc</span><span class="p">)</span> <span class="kt">int32</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">ev</span> <span class="nx">epollevent</span>
+	<span class="nx">ev</span><span class="p">.</span><span class="nx">events</span> <span class="p">=</span> <span class="nx">_EPOLLIN</span> <span class="p">|</span> <span class="nx">_EPOLLOUT</span> <span class="p">|</span> <span class="nx">_EPOLLRDHUP</span> <span class="p">|</span> <span class="nx">_EPOLLET</span>
+	<span class="o">*</span><span class="p">(</span><span class="o">**</span><span class="nx">pollDesc</span><span class="p">)(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ev</span><span class="p">.</span><span class="nx">data</span><span class="p">))</span> <span class="p">=</span> <span class="nx">pd</span>
+	<span class="k">return</span> <span class="o">-</span><span class="nf">epollctl</span><span class="p">(</span><span class="nx">epfd</span><span class="p">,</span> <span class="nx">_EPOLL_CTL_ADD</span><span class="p">,</span> <span class="nb">int32</span><span class="p">(</span><span class="nx">fd</span><span class="p">),</span> <span class="o">&amp;</span><span class="nx">ev</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="accept">Accept</h3>
+<p>TCPListner有两个暴露出来的Accept相关的函数，分别为Accept和AcceptTCP，这里主要从AcceptTCP分析，因为后者被tcpKeepAliveListener的Accept函数调用，而tcpKeepAliveListener的Accept方法就是常用的建立web项目时，http.ListenAndServe中会用到的Accept方法，如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">TCPListener</span><span class="p">)</span> <span class="nf">AcceptTCP</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><span class="nx">TCPConn</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">l</span><span class="p">.</span><span class="nf">ok</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">EINVAL</span>
+	<span class="p">}</span>
+	<span class="nx">c</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">l</span><span class="p">.</span><span class="nf">accept</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">OpError</span><span class="p">{</span><span class="nx">Op</span><span class="p">:</span> <span class="s">&#34;accept&#34;</span><span class="p">,</span> <span class="nx">Net</span><span class="p">:</span> <span class="nx">l</span><span class="p">.</span><span class="nx">fd</span><span class="p">.</span><span class="nx">net</span><span class="p">,</span> <span class="nx">Source</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">Addr</span><span class="p">:</span> <span class="nx">l</span><span class="p">.</span><span class="nx">fd</span><span class="p">.</span><span class="nx">laddr</span><span class="p">,</span> <span class="nx">Err</span><span class="p">:</span> <span class="nx">err</span><span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">c</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到实现逻辑基本都在accept方法内</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">ln</span> <span class="o">*</span><span class="nx">TCPListener</span><span class="p">)</span> <span class="nf">accept</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><span class="nx">TCPConn</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">fd</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ln</span><span class="p">.</span><span class="nx">fd</span><span class="p">.</span><span class="nf">accept</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nf">newTCPConn</span><span class="p">(</span><span class="nx">fd</span><span class="p">),</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">)</span> <span class="nf">accept</span><span class="p">()</span> <span class="p">(</span><span class="nx">netfd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">d</span><span class="p">,</span> <span class="nx">rsa</span><span class="p">,</span> <span class="nx">errcall</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nf">Accept</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">errcall</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+			<span class="nx">err</span> <span class="p">=</span> <span class="nf">wrapSyscallError</span><span class="p">(</span><span class="nx">errcall</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">netfd</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">newFD</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span> <span class="nx">fd</span><span class="p">.</span><span class="nx">family</span><span class="p">,</span> <span class="nx">fd</span><span class="p">.</span><span class="nx">sotype</span><span class="p">,</span> <span class="nx">fd</span><span class="p">.</span><span class="nx">net</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">poll</span><span class="p">.</span><span class="nf">CloseFunc</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">netfd</span><span class="p">.</span><span class="nf">init</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fd</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">lsa</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nf">Getsockname</span><span class="p">(</span><span class="nx">netfd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">)</span>
+	<span class="nx">netfd</span><span class="p">.</span><span class="nf">setAddr</span><span class="p">(</span><span class="nx">netfd</span><span class="p">.</span><span class="nf">addrFunc</span><span class="p">()(</span><span class="nx">lsa</span><span class="p">),</span> <span class="nx">netfd</span><span class="p">.</span><span class="nf">addrFunc</span><span class="p">()(</span><span class="nx">rsa</span><span class="p">))</span>
+	<span class="k">return</span> <span class="nx">netfd</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// Accept wraps the accept network call.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">FD</span><span class="p">)</span> <span class="nf">Accept</span><span class="p">()</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">Sockaddr</span><span class="p">,</span> <span class="kt">string</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">fd</span><span class="p">.</span><span class="nf">readLock</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">defer</span> <span class="nx">fd</span><span class="p">.</span><span class="nf">readUnlock</span><span class="p">()</span>
+
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">fd</span><span class="p">.</span><span class="nx">pd</span><span class="p">.</span><span class="nf">prepareRead</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">isFile</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">for</span> <span class="p">{</span>
+		<span class="nx">s</span><span class="p">,</span> <span class="nx">rsa</span><span class="p">,</span> <span class="nx">errcall</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">accept</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">s</span><span class="p">,</span> <span class="nx">rsa</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+		<span class="k">switch</span> <span class="nx">err</span> <span class="p">{</span>
+		<span class="k">case</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">EAGAIN</span><span class="p">:</span>
+			<span class="k">if</span> <span class="nx">fd</span><span class="p">.</span><span class="nx">pd</span><span class="p">.</span><span class="nf">pollable</span><span class="p">()</span> <span class="p">{</span>
+				<span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">fd</span><span class="p">.</span><span class="nx">pd</span><span class="p">.</span><span class="nf">waitRead</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">isFile</span><span class="p">);</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+					<span class="k">continue</span>
+				<span class="p">}</span>
+			<span class="p">}</span>
+		<span class="k">case</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">ECONNABORTED</span><span class="p">:</span>
+			<span class="c1">// This means that a socket on the listen
+</span><span class="c1"></span>			<span class="c1">// queue was closed before we Accept()ed it;
+</span><span class="c1"></span>			<span class="c1">// it&#39;s a silly error, so try again.
+</span><span class="c1"></span>			<span class="k">continue</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">errcall</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里有两个函数比较重要，一个是accept，一个是fd.pd.waitRead，首先看accept的实现，最终还是会通过汇编进行系统调用。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span><span class="lnt">87
+</span><span class="lnt">88
+</span><span class="lnt">89
+</span><span class="lnt">90
+</span><span class="lnt">91
+</span><span class="lnt">92
+</span><span class="lnt">93
+</span><span class="lnt">94
+</span><span class="lnt">95
+</span><span class="lnt">96
+</span><span class="lnt">97
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Wrapper around the accept system call that marks the returned file
+</span><span class="c1">// descriptor as nonblocking and close-on-exec.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">accept</span><span class="p">(</span><span class="nx">s</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">Sockaddr</span><span class="p">,</span> <span class="kt">string</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ns</span><span class="p">,</span> <span class="nx">sa</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">Accept4Func</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_NONBLOCK</span><span class="p">|</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_CLOEXEC</span><span class="p">)</span>
+	<span class="c1">// On Linux the accept4 system call was introduced in 2.6.28
+</span><span class="c1"></span>	<span class="c1">// kernel and on FreeBSD it was introduced in 10 kernel. If we
+</span><span class="c1"></span>	<span class="c1">// get an ENOSYS error on both Linux and FreeBSD, or EINVAL
+</span><span class="c1"></span>	<span class="c1">// error on Linux, fall back to using accept.
+</span><span class="c1"></span>	<span class="k">switch</span> <span class="nx">err</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="kc">nil</span><span class="p">:</span>
+		<span class="k">return</span> <span class="nx">ns</span><span class="p">,</span> <span class="nx">sa</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="k">default</span><span class="p">:</span> <span class="c1">// errors other than the ones listed
+</span><span class="c1"></span>		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nx">sa</span><span class="p">,</span> <span class="s">&#34;accept4&#34;</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="k">case</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">ENOSYS</span><span class="p">:</span> <span class="c1">// syscall missing
+</span><span class="c1"></span>	<span class="k">case</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">EINVAL</span><span class="p">:</span> <span class="c1">// some Linux use this instead of ENOSYS
+</span><span class="c1"></span>	<span class="k">case</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">EACCES</span><span class="p">:</span> <span class="c1">// some Linux use this instead of ENOSYS
+</span><span class="c1"></span>	<span class="k">case</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">EFAULT</span><span class="p">:</span> <span class="c1">// some Linux use this instead of ENOSYS
+</span><span class="c1"></span>	<span class="p">}</span>
+
+	<span class="c1">// See ../syscall/exec_unix.go for description of ForkLock.
+</span><span class="c1"></span>	<span class="c1">// It is probably okay to hold the lock across syscall.Accept
+</span><span class="c1"></span>	<span class="c1">// because we have put fd.sysfd into non-blocking mode.
+</span><span class="c1"></span>	<span class="c1">// However, a call to the File method will put it back into
+</span><span class="c1"></span>	<span class="c1">// blocking mode. We can&#39;t take that risk, so no use of ForkLock here.
+</span><span class="c1"></span>	<span class="nx">ns</span><span class="p">,</span> <span class="nx">sa</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">AcceptFunc</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">syscall</span><span class="p">.</span><span class="nf">CloseOnExec</span><span class="p">(</span><span class="nx">ns</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="s">&#34;accept&#34;</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nf">SetNonblock</span><span class="p">(</span><span class="nx">ns</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nf">CloseFunc</span><span class="p">(</span><span class="nx">ns</span><span class="p">)</span>
+		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="s">&#34;setnonblock&#34;</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">ns</span><span class="p">,</span> <span class="nx">sa</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// Accept4Func is used to hook the accept4 call.
+</span><span class="c1"></span><span class="kd">var</span> <span class="nx">Accept4Func</span> <span class="kd">func</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">Sockaddr</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">Accept4</span>
+
+<span class="kd">func</span> <span class="nf">Accept4</span><span class="p">(</span><span class="nx">fd</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">flags</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">nfd</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">sa</span> <span class="nx">Sockaddr</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">rsa</span> <span class="nx">RawSockaddrAny</span>
+	<span class="kd">var</span> <span class="nx">len</span> <span class="nx">_Socklen</span> <span class="p">=</span> <span class="nx">SizeofSockaddrAny</span>
+	<span class="nx">nfd</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">accept4</span><span class="p">(</span><span class="nx">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">rsa</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">len</span><span class="p">,</span> <span class="nx">flags</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">len</span> <span class="p">&gt;</span> <span class="nx">SizeofSockaddrAny</span> <span class="p">{</span>
+		<span class="nb">panic</span><span class="p">(</span><span class="s">&#34;RawSockaddrAny too small&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">sa</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">anyToSockaddr</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rsa</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nf">Close</span><span class="p">(</span><span class="nx">nfd</span><span class="p">)</span>
+		<span class="nx">nfd</span> <span class="p">=</span> <span class="mi">0</span>
+	<span class="p">}</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+
+<span class="c1">// THIS FILE IS GENERATED BY THE COMMAND AT THE TOP; DO NOT EDIT
+</span><span class="c1"></span>
+<span class="kd">func</span> <span class="nf">accept4</span><span class="p">(</span><span class="nx">s</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">rsa</span> <span class="o">*</span><span class="nx">RawSockaddrAny</span><span class="p">,</span> <span class="nx">addrlen</span> <span class="o">*</span><span class="nx">_Socklen</span><span class="p">,</span> <span class="nx">flags</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">fd</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">r0</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">e1</span> <span class="o">:=</span> <span class="nf">Syscall6</span><span class="p">(</span><span class="nx">SYS_ACCEPT4</span><span class="p">,</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">s</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">rsa</span><span class="p">)),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">addrlen</span><span class="p">)),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">flags</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+	<span class="nx">fd</span> <span class="p">=</span> <span class="nb">int</span><span class="p">(</span><span class="nx">r0</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">e1</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nx">err</span> <span class="p">=</span> <span class="nf">errnoErr</span><span class="p">(</span><span class="nx">e1</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Syscall6</span><span class="p">(</span><span class="nx">trap</span><span class="p">,</span> <span class="nx">a1</span><span class="p">,</span> <span class="nx">a2</span><span class="p">,</span> <span class="nx">a3</span><span class="p">,</span> <span class="nx">a4</span><span class="p">,</span> <span class="nx">a5</span><span class="p">,</span> <span class="nx">a6</span> <span class="kt">uintptr</span><span class="p">)</span> <span class="p">(</span><span class="nx">r1</span><span class="p">,</span> <span class="nx">r2</span> <span class="kt">uintptr</span><span class="p">,</span> <span class="nx">err</span> <span class="nx">Errno</span><span class="p">)</span>
+
+<span class="c1">// func Syscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2, err uintptr)
+</span><span class="c1"></span><span class="nx">TEXT</span> <span class="err">·</span><span class="nf">Syscall6</span><span class="p">(</span><span class="nx">SB</span><span class="p">),</span><span class="nx">NOSPLIT</span><span class="p">,</span><span class="err">$</span><span class="mi">0</span><span class="o">-</span><span class="mi">80</span>
+	<span class="nx">CALL</span>	<span class="nx">runtime</span><span class="err">·</span><span class="nf">entersyscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a1</span><span class="o">+</span><span class="mi">8</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">DI</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a2</span><span class="o">+</span><span class="mi">16</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">SI</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a3</span><span class="o">+</span><span class="mi">24</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">DX</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a4</span><span class="o">+</span><span class="mi">32</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">R10</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a5</span><span class="o">+</span><span class="mi">40</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">R8</span>
+	<span class="nx">MOVQ</span>	<span class="nx">a6</span><span class="o">+</span><span class="mi">48</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">R9</span>
+	<span class="nx">MOVQ</span>	<span class="nx">trap</span><span class="o">+</span><span class="mi">0</span><span class="p">(</span><span class="nx">FP</span><span class="p">),</span> <span class="nx">AX</span>	<span class="c1">// syscall entry
+</span><span class="c1"></span>	<span class="nx">SYSCALL</span>
+	<span class="nx">CMPQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="err">$</span><span class="mh">0xfffffffffffff001</span>
+	<span class="nx">JLS</span>	<span class="nx">ok6</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nx">r1</span><span class="o">+</span><span class="mi">56</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">r2</span><span class="o">+</span><span class="mi">64</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">NEGQ</span>	<span class="nx">AX</span>
+	<span class="nx">MOVQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="nx">err</span><span class="o">+</span><span class="mi">72</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">CALL</span>	<span class="nx">runtime</span><span class="err">·</span><span class="nf">exitsyscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">)</span>
+	<span class="nx">RET</span>
+<span class="nx">ok6</span><span class="p">:</span>
+	<span class="nx">MOVQ</span>	<span class="nx">AX</span><span class="p">,</span> <span class="nx">r1</span><span class="o">+</span><span class="mi">56</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="nx">DX</span><span class="p">,</span> <span class="nx">r2</span><span class="o">+</span><span class="mi">64</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">MOVQ</span>	<span class="err">$</span><span class="mi">0</span><span class="p">,</span> <span class="nx">err</span><span class="o">+</span><span class="mi">72</span><span class="p">(</span><span class="nx">FP</span><span class="p">)</span>
+	<span class="nx">CALL</span>	<span class="nx">runtime</span><span class="err">·</span><span class="nf">exitsyscall</span><span class="p">(</span><span class="nx">SB</span><span class="p">)</span>
+	<span class="nx">RET</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>再看waitRead方法</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">pd</span> <span class="o">*</span><span class="nx">pollDesc</span><span class="p">)</span> <span class="nf">waitRead</span><span class="p">(</span><span class="nx">isFile</span> <span class="kt">bool</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">pd</span><span class="p">.</span><span class="nf">wait</span><span class="p">(</span><span class="sc">&#39;r&#39;</span><span class="p">,</span> <span class="nx">isFile</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">pd</span> <span class="o">*</span><span class="nx">pollDesc</span><span class="p">)</span> <span class="nf">wait</span><span class="p">(</span><span class="nx">mode</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">isFile</span> <span class="kt">bool</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">pd</span><span class="p">.</span><span class="nx">runtimeCtx</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">errors</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;waiting for unsupported file type&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">res</span> <span class="o">:=</span> <span class="nf">runtime_pollWait</span><span class="p">(</span><span class="nx">pd</span><span class="p">.</span><span class="nx">runtimeCtx</span><span class="p">,</span> <span class="nx">mode</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nf">convertErr</span><span class="p">(</span><span class="nx">res</span><span class="p">,</span> <span class="nx">isFile</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">runtime_pollWait</span><span class="p">(</span><span class="nx">ctx</span> <span class="kt">uintptr</span><span class="p">,</span> <span class="nx">mode</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">int</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>又出现一个只有函数声明的函数，和上面出现过的一样，可以通过go:linkname找到具体实现，如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">//go:linkname poll_runtime_pollWait internal/poll.runtime_pollWait
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">poll_runtime_pollWait</span><span class="p">(</span><span class="nx">pd</span> <span class="o">*</span><span class="nx">pollDesc</span><span class="p">,</span> <span class="nx">mode</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">int</span> <span class="p">{</span>
+	<span class="nx">err</span> <span class="o">:=</span> <span class="nf">netpollcheckerr</span><span class="p">(</span><span class="nx">pd</span><span class="p">,</span> <span class="nb">int32</span><span class="p">(</span><span class="nx">mode</span><span class="p">))</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="c1">// As for now only Solaris uses level-triggered IO.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">GOOS</span> <span class="o">==</span> <span class="s">&#34;solaris&#34;</span> <span class="p">{</span>
+		<span class="nf">netpollarm</span><span class="p">(</span><span class="nx">pd</span><span class="p">,</span> <span class="nx">mode</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">for</span> <span class="p">!</span><span class="nf">netpollblock</span><span class="p">(</span><span class="nx">pd</span><span class="p">,</span> <span class="nb">int32</span><span class="p">(</span><span class="nx">mode</span><span class="p">),</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">err</span> <span class="p">=</span> <span class="nf">netpollcheckerr</span><span class="p">(</span><span class="nx">pd</span><span class="p">,</span> <span class="nb">int32</span><span class="p">(</span><span class="nx">mode</span><span class="p">))</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">err</span>
+		<span class="p">}</span>
+		<span class="c1">// Can happen if timeout has fired and unblocked us,
+</span><span class="c1"></span>		<span class="c1">// but before we had a chance to run, timeout has been reset.
+</span><span class="c1"></span>		<span class="c1">// Pretend it has not happened and retry.
+</span><span class="c1"></span>	<span class="p">}</span>
+	<span class="k">return</span> <span class="mi">0</span>
+<span class="p">}</span>
+
+<span class="c1">// returns true if IO is ready, or false if timedout or closed
+</span><span class="c1">// waitio - wait only for completed IO, ignore errors
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">netpollblock</span><span class="p">(</span><span class="nx">pd</span> <span class="o">*</span><span class="nx">pollDesc</span><span class="p">,</span> <span class="nx">mode</span> <span class="kt">int32</span><span class="p">,</span> <span class="nx">waitio</span> <span class="kt">bool</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="nx">gpp</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">pd</span><span class="p">.</span><span class="nx">rg</span>
+	<span class="k">if</span> <span class="nx">mode</span> <span class="o">==</span> <span class="sc">&#39;w&#39;</span> <span class="p">{</span>
+		<span class="nx">gpp</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">pd</span><span class="p">.</span><span class="nx">wg</span>
+	<span class="p">}</span>
+
+	<span class="c1">// set the gpp semaphore to WAIT
+</span><span class="c1"></span>	<span class="k">for</span> <span class="p">{</span>
+		<span class="nx">old</span> <span class="o">:=</span> <span class="o">*</span><span class="nx">gpp</span>
+		<span class="k">if</span> <span class="nx">old</span> <span class="o">==</span> <span class="nx">pdReady</span> <span class="p">{</span>
+			<span class="o">*</span><span class="nx">gpp</span> <span class="p">=</span> <span class="mi">0</span>
+			<span class="k">return</span> <span class="kc">true</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">old</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="nf">throw</span><span class="p">(</span><span class="s">&#34;runtime: double wait&#34;</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">Casuintptr</span><span class="p">(</span><span class="nx">gpp</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">pdWait</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">break</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="c1">// need to recheck error states after setting gpp to WAIT
+</span><span class="c1"></span>	<span class="c1">// this is necessary because runtime_pollUnblock/runtime_pollSetDeadline/deadlineimpl
+</span><span class="c1"></span>	<span class="c1">// do the opposite: store to closing/rd/wd, membarrier, load of rg/wg
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">waitio</span> <span class="o">||</span> <span class="nf">netpollcheckerr</span><span class="p">(</span><span class="nx">pd</span><span class="p">,</span> <span class="nx">mode</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nf">gopark</span><span class="p">(</span><span class="nx">netpollblockcommit</span><span class="p">,</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">gpp</span><span class="p">),</span> <span class="s">&#34;IO wait&#34;</span><span class="p">,</span> <span class="nx">traceEvGoBlockNet</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="c1">// be careful to not lose concurrent READY notification
+</span><span class="c1"></span>	<span class="nx">old</span> <span class="o">:=</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">Xchguintptr</span><span class="p">(</span><span class="nx">gpp</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">old</span> <span class="p">&gt;</span> <span class="nx">pdWait</span> <span class="p">{</span>
+		<span class="nf">throw</span><span class="p">(</span><span class="s">&#34;runtime: corrupted polldesc&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">old</span> <span class="o">==</span> <span class="nx">pdReady</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里用了两个for循环，分别在调用netpollblock函数和netpollblock函数中，第一个for循环好理解，就是要一直等到io ready，第二个for循环用来等待io ready或者io wait，gpp为0，则会跳出循环，因为waitio在这里为true，所以会执行gopark函数，停靠当前G，设为当前G为waiting状态，并将G与M解绑，等到ioready后G讲重新变为Runnable状态并放入待运行队列等待被调度执行。</p>
+<h2 id="总结">总结</h2>
+<p>通过上面的简单分析，我们大致可以理解整个流程，里面还涉及到很多具体细节以及go调度器相关的内容无法一一介绍，有兴趣的话可以直接查看源码。剩下的read，write大致相同，这里不再分析，最终都是通过netpoll的相关函数实现的，可以说整个核心实现都在netpoll.go这个文件中，外面只是进行了一些封装和状态的处理，至于G状态的变化的相关代码，可以自行搜索go调度器，已经有相当多博客进行过讲解了。</p>
+<p>其实我们可以看到，知识就是个圈，缺少哪一块都串不起来，让我们一起努力，填补我们所缺失的部分吧，加油！</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-10-16</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https//www.likakuli.com/golang-netpoll/" data-title="Golang netpoll源码分析" data-hashtags="golang,netpoll"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https//www.likakuli.com/golang-netpoll/" data-hashtag="golang"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https//www.likakuli.com/golang-netpoll/" data-title="Golang netpoll源码分析" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https//www.likakuli.com/golang-netpoll/" data-title="Golang netpoll源码分析"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https//www.likakuli.com/golang-netpoll/" data-title="Golang netpoll源码分析"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https//www.likakuli.com/golang-netpoll/" data-title="Golang netpoll源码分析" data-description="golang netpoll 源码分析"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https//www.likakuli.com/golang-netpoll/" data-title="Golang netpoll源码分析" data-description="golang netpoll 源码分析"><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https//www.likakuli.com/golang-netpoll/" data-title="Golang netpoll源码分析"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="https/www.likakuli.com/tags/golang/">golang</a>,&nbsp;<a href="https/www.likakuli.com/tags/netpoll/">netpoll</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="https/www.likakuli.com/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="https/www.likakuli.com/kubernetes-ep-bug/" class="prev" rel="prev" title="Kubernetes惊天地泣鬼神之大bug"><i class="fas fa-angle-left fa-fw"></i>Kubernetes惊天地泣鬼神之大bug</a>
+            <a href="https/www.likakuli.com/prometheus/" class="next" rel="next" title="Prometheus">Prometheus<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https/www.likakuli.com/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/https/www.likakuli.com/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/https/www.likakuli.com/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

@@ -1,0 +1,78 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>kubernetes - 标签 - kaku&#39;s blog</title>
+        <link>https//www.likakuli.com/tags/kubernetes/</link>
+        <description>kubernetes - 标签 - kaku&#39;s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 23 Jun 2020 19:53:31 &#43;0800</lastBuildDate><atom:link href="https//www.likakuli.com/tags/kubernetes/" rel="self" type="application/rss+xml" /><item>
+    <title>Endpoint异常变化</title>
+    <link>https//www.likakuli.com/kubernetes-ep-event/</link>
+    <pubDate>Tue, 23 Jun 2020 19:53:31 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https//www.likakuli.com/kubernetes-ep-event/</guid>
+    <description><![CDATA[背景 k8s 1.12.4 包含自定义功能 线上集群在批量原地升级时出现流量异常问题，大体流程如下： 批量摘流，并等待7秒 批量删除容器 watch到Endpoint ready]]></description>
+</item><item>
+    <title>Sidecar优雅退出</title>
+    <link>https//www.likakuli.com/kubernetes-graceful-shutdown/</link>
+    <pubDate>Tue, 23 Jun 2020 19:46:45 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https//www.likakuli.com/kubernetes-graceful-shutdown/</guid>
+    <description><![CDATA[背景 codis集群在接入弹性云测试时发现容器漂移失败，通过集群日志看，提示 调度超时，去界面查看，已经调度成功了（调度成功的标志就是已经有宿主]]></description>
+</item><item>
+    <title>Kube-controller-manager同步数据慢</title>
+    <link>https//www.likakuli.com/kubernetes-controllerrevisionhistory-bug/</link>
+    <pubDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https//www.likakuli.com/kubernetes-controllerrevisionhistory-bug/</guid>
+    <description><![CDATA[背景 版本1.12.4 线上遇到kube-controller-manager重启慢的问题，具体表现为进程重启虽然速度快，但是重启完所有数据都同]]></description>
+</item><item>
+    <title>Flannel key not found</title>
+    <link>https//www.likakuli.com/kubernetes-flannel/</link>
+    <pubDate>Mon, 16 Dec 2019 17:58:20 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https//www.likakuli.com/kubernetes-flannel/</guid>
+    <description><![CDATA[问题描述 etcd 3.3.1 flannel 0.11.0 flannel启动时报错，启动参数如下 1 ./flannel -etcd-keyfile=/etc/kubernetes/ssl/etcd-client-key.pem -etcd-cafile=/etc/kubernetes/ssl/ca.pem -etcd-endpoints=https://ip:port -etcd-certfile=/etc/kubernetes/ssl/etcd-client.pem -etcd-prefix=/coreos.com/network 错误信息如下： 1 2 3 4 5 E0908 20:27:17.671602 2331 main.go:382] Couldn&#39;t fetch network config: 100: Key not found (/coreos.com) [22] timed out E0908 20:27:18.680096 2331 main.go:382] Couldn&#39;t fetch network config:]]></description>
+</item><item>
+    <title>Kube-apiserver goroutine leak</title>
+    <link>https//www.likakuli.com/kubernetes-apiserver-goroutine-leak/</link>
+    <pubDate>Fri, 06 Dec 2019 17:15:45 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https//www.likakuli.com/kubernetes-apiserver-goroutine-leak/</guid>
+    <description><![CDATA[背景 线上master的apiserver组件内存报警，内存使用量持续增长，监控如下 排查过程 从监控上看和另外一个程序（管理员平台）的内存使用情]]></description>
+</item><item>
+    <title>Kube-apiserver watch实现</title>
+    <link>https//www.likakuli.com/kubernetes-apiserver-watch/</link>
+    <pubDate>Wed, 21 Aug 2019 19:25:13 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https//www.likakuli.com/kubernetes-apiserver-watch/</guid>
+    <description><![CDATA[List-Watch是kubernetes的核心机制。组件kubelet、kube-controller-manager、kube-sche]]></description>
+</item><item>
+    <title>Kube-apiserver重启导致产生全量的update event</title>
+    <link>https//www.likakuli.com/kubernetes-apiserver-refused/</link>
+    <pubDate>Wed, 21 Aug 2019 14:34:37 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https//www.likakuli.com/kubernetes-apiserver-refused/</guid>
+    <description><![CDATA[现象 k8s master进行线上升级，notifier利用client-go提供的informer机制注册了EndPoint的Update Hand]]></description>
+</item><item>
+    <title>Pod创建流程</title>
+    <link>https//www.likakuli.com/kubernetes-pod-create/</link>
+    <pubDate>Tue, 06 Aug 2019 20:41:24 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https//www.likakuli.com/kubernetes-pod-create/</guid>
+    <description><![CDATA[kubernetes 版本： v1.12 kubelet 工作原理 kubelet 的工作核心就是在围绕着不同的生产者生产出来的不同的有关 pod 的消息来调用相应的消费者（不同的子模块）完成不同的行为(创建和]]></description>
+</item><item>
+    <title>Kubelet与CNI交互源码</title>
+    <link>https//www.likakuli.com/kubernetes-cni/</link>
+    <pubDate>Tue, 16 Jul 2019 13:53:02 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https//www.likakuli.com/kubernetes-cni/</guid>
+    <description><![CDATA[转载自：https://www.cnblogs.com/haoqingchuan/p/8668746.html，有修改 代码版本1.12.4 整]]></description>
+</item><item>
+    <title>Statefulset创建pod慢</title>
+    <link>https//www.likakuli.com/kubernetes-statefulset-sync/</link>
+    <pubDate>Tue, 26 Mar 2019 11:16:03 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https//www.likakuli.com/kubernetes-statefulset-sync/</guid>
+    <description><![CDATA[背景 线上kubernetes集群从创建sts到创建pod需要时间很长，分钟级别，但是调度却很快。偶尔还会出现导致kube-odin任务失败（]]></description>
+</item></channel>
+</rss>

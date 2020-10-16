@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Prometheus - kaku&#39;s blog</title><meta name="Description" content="Prometheus"><meta property="og:title" content="Prometheus" />
+<meta property="og:description" content="Prometheus" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https//www.likakuli.com/prometheus/" />
+<meta property="og:image" content="/logo.png"/>
+<meta property="article:published_time" content="2018-06-21T23:10:36+08:00" />
+<meta property="article:modified_time" content="2020-10-16T18:17:42+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="/logo.png"/>
+
+<meta name="twitter:title" content="Prometheus"/>
+<meta name="twitter:description" content="Prometheus"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https//www.likakuli.com/prometheus/" /><link rel="prev" href="https//www.likakuli.com/golang-netpoll/" /><link rel="next" href="https//www.likakuli.com/golang-monitor/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/https/www.likakuli.com/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Prometheus",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https\/\/www.likakuli.com\/prometheus\/"
+        },"genre": "posts","keywords": "prometheus","wordcount":  4844 ,
+        "url": "https\/\/www.likakuli.com\/prometheus\/","datePublished": "2018-06-21T23:10:36+08:00","dateModified": "2020-10-16T18:17:42+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "\/https\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": "Prometheus"
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="https/www.likakuli.com/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="https/www.likakuli.com/posts/"> 文章 </a><a class="menu-item" href="https/www.likakuli.com/tags/"> 标签 </a><a class="menu-item" href="https/www.likakuli.com/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="https/www.likakuli.com/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="https/www.likakuli.com/posts/" title="">文章</a><a class="menu-item" href="https/www.likakuli.com/tags/" title="">标签</a><a class="menu-item" href="https/www.likakuli.com/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Prometheus</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https/www.likakuli.com/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="https/www.likakuli.com/categories/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/"><i class="far fa-folder fa-fw"></i>使用说明</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2018-06-21">2018-06-21</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 4844 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 10 分钟&nbsp;<span id="https/www.likakuli.com/prometheus/" class="leancloud_visitors" data-flag-title="Prometheus">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#原理">原理</a>
+          <ul>
+            <li><a href="#特征">特征</a></li>
+            <li><a href="#组件">组件</a></li>
+          </ul>
+        </li>
+        <li><a href="#部署">部署</a>
+          <ul>
+            <li><a href="#prometheusconfigyaml">prometheus.config.yaml</a></li>
+            <li><a href="#prometheusdeployyaml">Prometheus.deploy.yaml</a></li>
+            <li><a href="#alertmanagerconfigyaml">alertmanager.config.yaml</a></li>
+            <li><a href="#alertmanagerdeployyaml">alertmanager.deploy.yaml</a></li>
+            <li><a href="#prometheus-rules">prometheus-rules</a></li>
+            <li><a href="#alertmanager-templates">alertmanager-templates</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>公司采用<code>Prometheus</code>来采集<code>Kubernetes</code>集群的性能指标数据，之前对性能数据采集这方面没有关注过，但是实际生产环境下有很多此类需求，因此重点学习了一下Prometheus采集数据的原理以及如何部署，接下来分别介绍。</p>
+<blockquote>
+<p>Prometheus版本 2.3.0</p>
+<p>AlertManager版本 1.4.0</p>
+<p>因为两者的配置对旧版本的兼容不是很好，在按照网上搜索的资料进行部署时遇到了不少坑，所以当你看到这篇文章，根据文章进行部署时，可能我现在使用的版本已经很旧，您可能需要按需修改配置</p>
+</blockquote>
+<h2 id="原理">原理</h2>
+<p><img
+        class="lazyload"
+        src="/https/www.likakuli.com/svg/loading.min.svg"
+        data-src="architecture.svg"
+        data-srcset="/https/www.likakuli.com/prometheus/architecture.svg, architecture.svg 1.5x, /https/www.likakuli.com/prometheus/architecture.svg 2x"
+        data-sizes="auto"
+        alt="/https/www.likakuli.com/prometheus/architecture.svg"
+        title="/https/www.likakuli.com/prometheus/architecture.svg" /></p>
+<p>这张图大家应该不陌生，没错，就是从官网偷来的图片，下面特征和组件也是偷来的，哈哈。</p>
+<h3 id="特征">特征</h3>
+<p>Prometheus的主要特点是：</p>
+<ul>
+<li>一个具有由metric名称和键/值对标识的多维时间序列的<a href="https://prometheus.io/docs/concepts/data_model/" target="_blank" rel="noopener noreffer">数据模型</a></li>
+<li>一种<a href="https://prometheus.io/docs/prometheus/latest/querying/basics/" target="_blank" rel="noopener noreffer">灵活的查询语言</a> 来利用这种维度</li>
+<li>不依赖分布式存储; 单个服务器节点是自治的（这点真不能认同，没有HA让人很难受）</li>
+<li>时间序列收集通过HTTP上的拉式模型进行</li>
+<li><a href="https://prometheus.io/docs/instrumenting/pushing/" target="_blank" rel="noopener noreffer">推送时间序列</a>通过中间网关支持</li>
+<li>通过服务发现或静态配置来发现目标</li>
+<li>多种模式的图形和仪表盘支持</li>
+</ul>
+<p>AlertManager的主要特点：</p>
+<ul>
+<li>Grouping 分组</li>
+<li>Inhibition 抑制</li>
+<li>Silences</li>
+<li>HA (配置方式有限制，只能罗列出所有的实例，不能通过负载均衡方式配置)</li>
+</ul>
+<h3 id="组件">组件</h3>
+<p>普罗米修斯生态系统由多个组件组成，其中许多组件是可选的：</p>
+<ul>
+<li><a href="https://github.com/prometheus/prometheus" target="_blank" rel="noopener noreffer">Prometheus服务器</a>用来收集和存储时间序列数据</li>
+<li>用于检测应用程序代码的<a href="https://prometheus.io/docs/instrumenting/clientlibs/" target="_blank" rel="noopener noreffer">客户端库</a></li>
+<li>支持Short-lived job的<a href="https://github.com/prometheus/pushgateway" target="_blank" rel="noopener noreffer">Pushgateway</a></li>
+<li>专门用于HAProxy，StatsD，Graphite等服务的<a href="https://prometheus.io/docs/instrumenting/exporters/" target="_blank" rel="noopener noreffer">exporter</a></li>
+<li>一个警报处理器<a href="https://github.com/prometheus/alertmanager" target="_blank" rel="noopener noreffer">alertmanager</a></li>
+<li>各种支持工具</li>
+</ul>
+<p>大多数Prometheus组件都是用<a href="https://golang.org/" target="_blank" rel="noopener noreffer">Go</a>编写的，因此它们很容易构建和部署为静态二进制文件。</p>
+<h2 id="部署">部署</h2>
+<p>这里主要通过Kubernetes部署Prometheus和AlertManager，实例数都只开1，原因也很好理解，Prometheus不支持HA，实例开多了也没有用，而且每个实例存的数据因为采集时间的原因会不一致，AlertManager只开一个实例的原因是虽然支持HA，但是只能在配置Prometheus时罗列出所有的实例，显然通过Kubernetes部署时无法获取到所有AlertManager的Pod实例，只能获得对应的Service，但是service就属于负载均衡了，如果AlertManager选在在集群外通过Docker或者二进制文件直接部署的话，可以开启多个实例，这里暂时在集群内部署，下面将列出所用到的Yaml文件。</p>
+<p>首先，给出Prometheus相关的文件</p>
+<h3 id="prometheusconfigyaml">prometheus.config.yaml</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span><span class="lnt">116
+</span><span class="lnt">117
+</span><span class="lnt">118
+</span><span class="lnt">119
+</span><span class="lnt">120
+</span><span class="lnt">121
+</span><span class="lnt">122
+</span><span class="lnt">123
+</span><span class="lnt">124
+</span><span class="lnt">125
+</span><span class="lnt">126
+</span><span class="lnt">127
+</span><span class="lnt">128
+</span><span class="lnt">129
+</span><span class="lnt">130
+</span><span class="lnt">131
+</span><span class="lnt">132
+</span><span class="lnt">133
+</span><span class="lnt">134
+</span><span class="lnt">135
+</span><span class="lnt">136
+</span><span class="lnt">137
+</span><span class="lnt">138
+</span><span class="lnt">139
+</span><span class="lnt">140
+</span><span class="lnt">141
+</span><span class="lnt">142
+</span><span class="lnt">143
+</span><span class="lnt">144
+</span><span class="lnt">145
+</span><span class="lnt">146
+</span><span class="lnt">147
+</span><span class="lnt">148
+</span><span class="lnt">149
+</span><span class="lnt">150
+</span><span class="lnt">151
+</span><span class="lnt">152
+</span><span class="lnt">153
+</span><span class="lnt">154
+</span><span class="lnt">155
+</span><span class="lnt">156
+</span><span class="lnt">157
+</span><span class="lnt">158
+</span><span class="lnt">159
+</span><span class="lnt">160
+</span><span class="lnt">161
+</span><span class="lnt">162
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v2</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ConfigMap</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus-config</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">kube-system</span><span class="w">
+</span><span class="w"></span><span class="nt">data</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">prometheus.yml</span><span class="p">:</span><span class="w"> </span><span class="p">|</span><span class="sd">
+</span><span class="sd">    global:
+</span><span class="sd">      scrape_interval:     15s
+</span><span class="sd">      evaluation_interval: 15s
+</span><span class="sd">    rule_files:
+</span><span class="sd">      - /etc/prometheus-rules/*.rules
+</span><span class="sd">    alerting:
+</span><span class="sd">      alertmanagers:
+</span><span class="sd">      - static_configs:
+</span><span class="sd">        - targets:
+</span><span class="sd">          - alertmanager:9093
+</span><span class="sd">    scrape_configs:
+</span><span class="sd">    - job_name: &#39;kubernetes-apiservers&#39;
+</span><span class="sd">      kubernetes_sd_configs:
+</span><span class="sd">      - role: endpoints
+</span><span class="sd">      scheme: https
+</span><span class="sd">      tls_config:
+</span><span class="sd">        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+</span><span class="sd">      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+</span><span class="sd">      relabel_configs:
+</span><span class="sd">      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+</span><span class="sd">        action: keep
+</span><span class="sd">        regex: default;kubernetes;https
+</span><span class="sd">
+</span><span class="sd">    - job_name: &#39;kubernetes-nodes&#39;
+</span><span class="sd">      kubernetes_sd_configs:
+</span><span class="sd">      - role: node
+</span><span class="sd">      scheme: https
+</span><span class="sd">      tls_config:
+</span><span class="sd">        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+</span><span class="sd">      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+</span><span class="sd">      relabel_configs:
+</span><span class="sd">      - action: labelmap
+</span><span class="sd">        regex: __meta_kubernetes_node_label_(.+)
+</span><span class="sd">      - target_label: __address__
+</span><span class="sd">        replacement: kubernetes.default.svc:443
+</span><span class="sd">      - source_labels: [__meta_kubernetes_node_name]
+</span><span class="sd">        regex: (.+)
+</span><span class="sd">        target_label: __metrics_path__
+</span><span class="sd">        replacement: /api/v1/nodes/${1}/proxy/metrics
+</span><span class="sd">
+</span><span class="sd">    - job_name: &#39;kubernetes-cadvisor&#39;
+</span><span class="sd">      kubernetes_sd_configs:
+</span><span class="sd">      - role: node
+</span><span class="sd">      scheme: https
+</span><span class="sd">      tls_config:
+</span><span class="sd">        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+</span><span class="sd">      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+</span><span class="sd">      relabel_configs:
+</span><span class="sd">      - action: labelmap
+</span><span class="sd">        regex: __meta_kubernetes_node_label_(.+)
+</span><span class="sd">      - target_label: __address__
+</span><span class="sd">        replacement: kubernetes.default.svc:443
+</span><span class="sd">      - source_labels: [__meta_kubernetes_node_name]
+</span><span class="sd">        regex: (.+)</span><span class="w">    
+</span><span class="w">		</span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">__metrics_path__</span><span class="w">
+</span><span class="w">        </span><span class="nt">replacement</span><span class="p">:</span><span class="w"> </span><span class="l">/api/v1/nodes/${1}/proxy/metrics/cadvisor</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;kubernetes-service-endpoints&#39;</span><span class="w">
+</span><span class="w">      </span><span class="nt">kubernetes_sd_configs</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l">endpoints</span><span class="w">
+</span><span class="w">      </span><span class="nt">relabel_configs</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_service_annotation_prometheus_io_scrape]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">keep</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_service_annotation_prometheus_io_scheme]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">replace</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">__scheme__</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l">(https?)</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_service_annotation_prometheus_io_path]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">replace</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">__metrics_path__</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l">(.+)</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__address__, __meta_kubernetes_service_annotation_prometheus_io_port]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">replace</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">__address__</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l">([^:]+)(?::\d+)?;(\d+)</span><span class="w">
+</span><span class="w">        </span><span class="nt">replacement</span><span class="p">:</span><span class="w"> </span><span class="l">$1:$2</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">labelmap</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l">__meta_kubernetes_service_label_(.+)</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_namespace]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">replace</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">kubernetes_namespace</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_service_name]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">replace</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">kubernetes_name</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;kubernetes-services&#39;</span><span class="w">
+</span><span class="w">      </span><span class="nt">kubernetes_sd_configs</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l">service</span><span class="w">
+</span><span class="w">      </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="l">/probe</span><span class="w">
+</span><span class="w">      </span><span class="nt">params</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">module</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">http_2xx]</span><span class="w">
+</span><span class="w">      </span><span class="nt">relabel_configs</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_service_annotation_prometheus_io_probe]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">keep</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__address__]</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">__param_target</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">__address__</span><span class="w">
+</span><span class="w">        </span><span class="nt">replacement</span><span class="p">:</span><span class="w"> </span><span class="l">blackbox-exporter.example.com:9115</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__param_target]</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">instance</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">labelmap</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l">__meta_kubernetes_service_label_(.+)</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_namespace]</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">kubernetes_namespace</span><span class="w">
+</span><span class="w">	  </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_service_name]</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">kubernetes_name</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;kubernetes-ingresses&#39;</span><span class="w">
+</span><span class="w">      </span><span class="nt">kubernetes_sd_configs</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l">ingress</span><span class="w">
+</span><span class="w">      </span><span class="nt">relabel_configs</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_ingress_annotation_prometheus_io_probe]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">keep</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_ingress_scheme,__address__,__meta_kubernetes_ingress_path]</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l">(.+);(.+);(.+)</span><span class="w">
+</span><span class="w">        </span><span class="nt">replacement</span><span class="p">:</span><span class="w"> </span><span class="l">${1}://${2}${3}</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">__param_target</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">__address__</span><span class="w">
+</span><span class="w">        </span><span class="nt">replacement</span><span class="p">:</span><span class="w"> </span><span class="l">blackbox-exporter.example.com:9115</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__param_target]</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">instance</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">labelmap</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l">__meta_kubernetes_ingress_label_(.+)</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_namespace]</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">kubernetes_namespace</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_ingress_name]</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">kubernetes_name</span><span class="w">
+</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;kubernetes-pods&#39;</span><span class="w">
+</span><span class="w">      </span><span class="nt">kubernetes_sd_configs</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l">pod</span><span class="w">
+</span><span class="w">      </span><span class="nt">relabel_configs</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_pod_annotation_prometheus_io_scrape]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">keep</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_pod_annotation_prometheus_io_path]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">replace</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">__metrics_path__</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l">(.+)</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">replace</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l">([^:]+)(?::\d+)?;(\d+)</span><span class="w">
+</span><span class="w">        </span><span class="nt">replacement</span><span class="p">:</span><span class="w"> </span><span class="l">$1:$2</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">__address__</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">labelmap</span><span class="w">
+</span><span class="w">        </span><span class="nt">regex</span><span class="p">:</span><span class="w"> </span><span class="l">__meta_kubernetes_pod_label_(.+)</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_namespace]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">replace</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">kubernetes_namespace</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">__meta_kubernetes_pod_name]</span><span class="w">
+</span><span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="l">replace</span><span class="w">
+</span><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="l">kubernetes_pod_name</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>此文件主要将Prometheus用到的配置存储为ConfigMap，关于Prometheus的配置，请参考<a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/" target="_blank" rel="noopener noreffer">这里</a>，这里配置了rule_files，rule_files里可以存放通知规则和抓取规则，此处主要用来存放通知规则，还配置了抓取的Target，当然抓取的Target可以根据自己需要进行修改和替换，同时配置了alerting，这里需要注意一下，要配合AlertManager一起使用的话，此处必须添加此配置，否则的话可以忽略此配置。有了配置文件后剩下的就是Prometheus的部署了，如下</p>
+<h3 id="prometheusdeployyaml">Prometheus.deploy.yaml</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w"> 
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apps/v1beta2 </span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Deployment </span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w"> 
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w"> 
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus-deployment </span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus </span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">kube-system </span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w"> 
+</span><span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w"> 
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"> 
+</span><span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"> 
+</span><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus </span><span class="w">
+</span><span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w"> 
+</span><span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w"> 
+</span><span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w"> 
+</span><span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus </span><span class="w">
+</span><span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w"> 
+</span><span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w"> 
+</span><span class="w">      </span>- <span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">quay.io/prometheus/prometheus </span><span class="w">
+</span><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus </span><span class="w">
+</span><span class="w">        </span><span class="nt">command</span><span class="p">:</span><span class="w"> 
+</span><span class="w">        </span>- <span class="s2">&#34;/bin/prometheus&#34;</span><span class="w"> 
+</span><span class="w">        </span><span class="nt">args</span><span class="p">:</span><span class="w"> 
+</span><span class="w">        </span>- <span class="s2">&#34;--config.file=/etc/prometheus/prometheus.yml&#34;</span><span class="w"> 
+</span><span class="w">        </span>- <span class="s2">&#34;--storage.tsdb.path=/prometheus&#34;</span><span class="w"> 
+</span><span class="w">        </span>- <span class="s2">&#34;--storage.tsdb.retention=24h&#34;</span><span class="w"> 
+</span><span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w"> 
+</span><span class="w">        </span>- <span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="m">9090</span><span class="w"> 
+</span><span class="w">          </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP </span><span class="w">
+</span><span class="w">        </span><span class="nt">volumeMounts</span><span class="p">:</span><span class="w"> 
+</span><span class="w">        </span>- <span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;/prometheus&#34;</span><span class="w"> 
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">data </span><span class="w">
+</span><span class="w">        </span>- <span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;/etc/prometheus&#34;</span><span class="w"> 
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">config-volume </span><span class="w">
+</span><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">rules-volume </span><span class="w">
+</span><span class="w">          </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l">/etc/prometheus-rules </span><span class="w">
+</span><span class="w">        </span><span class="nt">resources</span><span class="p">:</span><span class="w"> 
+</span><span class="w">          </span><span class="nt">requests</span><span class="p">:</span><span class="w"> 
+</span><span class="w">            </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="l">100m </span><span class="w">
+</span><span class="w">            </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l">100Mi </span><span class="w">
+</span><span class="w">          </span><span class="nt">limits</span><span class="p">:</span><span class="w"> 
+</span><span class="w">            </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="l">500m </span><span class="w">
+</span><span class="w">            </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l">2500Mi </span><span class="w">
+</span><span class="w">      </span><span class="nt">serviceAccountName</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus </span><span class="w">
+</span><span class="w">      </span><span class="nt">volumes</span><span class="p">:</span><span class="w"> 
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">data </span><span class="w">
+</span><span class="w">        </span><span class="nt">emptyDir</span><span class="p">:</span><span class="w"> </span>{}<span class="w"> 
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">config-volume </span><span class="w">
+</span><span class="w">        </span><span class="nt">configMap</span><span class="p">:</span><span class="w"> 
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus-config        </span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">rules-volume </span><span class="w">
+</span><span class="w">        </span><span class="nt">configMap</span><span class="p">:</span><span class="w"> 
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus-rules</span><span class="w">
+</span><span class="w"></span>--<span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Service</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">kube-system</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l">NodePort</span><span class="w">
+</span><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">9090</span><span class="w">
+</span><span class="w">    </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">9090</span><span class="w">
+</span><span class="w">    </span><span class="nt">nodePort</span><span class="p">:</span><span class="w"> </span><span class="m">30003</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>成功部署后，通过http://nodeIP:30003就可以访问Prometheus的页面了，如下图</p>
+<p><img
+        class="lazyload"
+        src="/https/www.likakuli.com/svg/loading.min.svg"
+        data-src="target.png"
+        data-srcset="/https/www.likakuli.com/prometheus/target.png, target.png 1.5x, /https/www.likakuli.com/prometheus/target.png 2x"
+        data-sizes="auto"
+        alt="/https/www.likakuli.com/prometheus/target.png"
+        title="/https/www.likakuli.com/prometheus/target.png" /></p>
+<p>scrape_configs中配置的kubernetes-pods、kubernetes-services等Job，可能在target界面看不到，因为需要添加对应的Annotation，例如Pod添加如下的Annotation后，就会在上面的界面中出现，注意这里是在Pod的annotation里添加，而不是在Deploy的annotation</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">prometheus.io/scrape</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>service的话按照上述配置中写的，则需要添加如下的Annotation</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">prometheus.io/probe</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>我们可以在Graph界面进行查询，可以以Console或者Graph的形式展示查询的结果，Prometheus提供了强大的查询语法，参考<a href="https://prometheus.io/docs/prometheus/latest/querying/basics/" target="_blank" rel="noopener noreffer">这里</a>，下图为查询每个Node的CPU使用率</p>
+<p><img
+        class="lazyload"
+        src="/https/www.likakuli.com/svg/loading.min.svg"
+        data-src="graph.png"
+        data-srcset="/https/www.likakuli.com/prometheus/graph.png, graph.png 1.5x, /https/www.likakuli.com/prometheus/graph.png 2x"
+        data-sizes="auto"
+        alt="/https/www.likakuli.com/prometheus/graph.png"
+        title="/https/www.likakuli.com/prometheus/graph.png" /></p>
+<p>此时还没有进行AlertManager的相关配置，在Alerts页面看不到任何内容，接下来我们部署AlertManager</p>
+<h3 id="alertmanagerconfigyaml">alertmanager.config.yaml</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ConfigMap</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">kube-system</span><span class="w">
+</span><span class="w"></span><span class="nt">data</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">config.yml</span><span class="p">:</span><span class="w"> </span><span class="p">|-</span><span class="sd">
+</span><span class="sd">    global:
+</span><span class="sd">      resolve_timeout: 5m
+</span><span class="sd">      smtp_smarthost: &#39;mailhost:port&#39;
+</span><span class="sd">      smtp_from: &#39;sender@example.com&#39;
+</span><span class="sd">      smtp_auth_username: &#39;sender@example.com&#39;
+</span><span class="sd">      smtp_auth_password: &#39;password&#39;
+</span><span class="sd">      slack_api_url: &#39;https://hooks.slack.com/services/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&#39;
+</span><span class="sd">    templates:
+</span><span class="sd">    - &#39;/etc/alertmanager-templates/*.tmpl&#39;
+</span><span class="sd">    route:
+</span><span class="sd">      group_by: [&#39;alertname&#39;, &#39;cluster&#39;, &#39;service&#39;]
+</span><span class="sd">      group_wait: 30s
+</span><span class="sd">      group_interval: 5m
+</span><span class="sd">      repeat_interval: 15m
+</span><span class="sd">      receiver: slack-notifications
+</span><span class="sd">      receiver: email_alert
+</span><span class="sd">      routes:
+</span><span class="sd">      - match:
+</span><span class="sd">          severity: email
+</span><span class="sd">        receiver: email_alert
+</span><span class="sd">    receivers:
+</span><span class="sd">    - name: &#39;email_alert&#39;
+</span><span class="sd">      email_configs:
+</span><span class="sd">      - to: &#39;to@example.com&#39;
+</span><span class="sd">    - name: &#39;slack-notifications&#39;
+</span><span class="sd">      slack_configs:
+</span><span class="sd">      - channel: &#39;#alert&#39;
+</span><span class="sd">        send_resolved: true</span><span class="w">    
+</span></code></pre></td></tr></table>
+</div>
+</div><p>类似Prometheus，我们把AlertManager的配置同样保存为ConfigMap，部署时修改邮箱、slack等对应配置为自己的值，也可以添加自己的接收途径，具体参考<a href="https://prometheus.io/docs/alerting/configuration/" target="_blank" rel="noopener noreffer">这里</a>，上述配置的意思是告诉AlertManager按照alertname、cluster、service对收到的通知进行分组，每隔大约5+15分钟发送一次报警信息，报警信息默认通过发送到slack，如果信息中包含<code>severity: email</code>的label，那么警报还会同时再发送到接收邮箱。</p>
+<h3 id="alertmanagerdeployyaml">alertmanager.deploy.yaml</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">extensions/v1beta1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Deployment</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">kube-system</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">prom/alertmanager:latest</span><span class="w">
+</span><span class="w">        </span><span class="nt">args</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- <span class="s1">&#39;--config.file=/etc/alertmanager/config.yml&#39;</span><span class="w">
+</span><span class="w">          </span>- <span class="s1">&#39;--storage.path=/alertmanager&#39;</span><span class="w">
+</span><span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">          </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="m">9093</span><span class="w">
+</span><span class="w">        </span><span class="nt">volumeMounts</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">config-volume</span><span class="w">
+</span><span class="w">          </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l">/etc/alertmanager</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">templates-volume</span><span class="w">
+</span><span class="w">          </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l">/etc/alertmanager-templates</span><span class="w">
+</span><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">          </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l">/alertmanager</span><span class="w">
+</span><span class="w">      </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">config-volume</span><span class="w">
+</span><span class="w">        </span><span class="nt">configMap</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">templates-volume</span><span class="w">
+</span><span class="w">        </span><span class="nt">configMap</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager-templates</span><span class="w">
+</span><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">        </span><span class="nt">emptyDir</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Service</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">prometheus.io/scrape</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;true&#39;</span><span class="w">
+</span><span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">kube-system</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
+</span><span class="w">    </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l">TCP</span><span class="w">
+</span><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="m">9093</span><span class="w">
+</span><span class="w">    </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="m">9093</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="prometheus-rules">prometheus-rules</h3>
+<p><strong>node-cpu-usage.rules</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">groups</span><span class="p">:</span><span class="w">
+</span><span class="w"></span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">node-cpu-usage</span><span class="w">
+</span><span class="w">  </span><span class="nt">rules</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span>- <span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l">HighRateError</span><span class="w">
+</span><span class="w">    </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l">(100 - (avg by (instance) (irate(node_cpu{name=&#34;node-exporter&#34;,mode=&#34;idle&#34;}[5m])) * 100)) &gt; 75</span><span class="w">
+</span><span class="w">    </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l">2m</span><span class="w">
+</span><span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l">page</span><span class="w">
+</span><span class="w">    </span><span class="nt">annotations</span><span class="p">:</span><span class="w">
+</span><span class="w">      </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;{{$labels.instance}}: High CPU usage detected&#34;</span><span class="w">
+</span><span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;{{$labels.instance}}: CPU usage is above 75% (current value is: {{ $value }})&#34;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>prometheus-rules为文件夹，所有的通知规则都放在此文件夹下面，有关rule文件配置，可以参考<a href="https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" target="_blank" rel="noopener noreffer">这里</a></p>
+<p>通过如下命令创建rule对应的ConfigMap</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">kubectl create cm prometheus-rules --from-file<span class="o">=</span>prometheus-rules -o yaml --dry-run <span class="p">|</span> kubectl create -n kube-system -f -
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="alertmanager-templates">alertmanager-templates</h3>
+<p><strong>default.tmpl</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span><span class="lnt">116
+</span><span class="lnt">117
+</span><span class="lnt">118
+</span><span class="lnt">119
+</span><span class="lnt">120
+</span><span class="lnt">121
+</span><span class="lnt">122
+</span><span class="lnt">123
+</span><span class="lnt">124
+</span><span class="lnt">125
+</span><span class="lnt">126
+</span><span class="lnt">127
+</span><span class="lnt">128
+</span><span class="lnt">129
+</span><span class="lnt">130
+</span><span class="lnt">131
+</span><span class="lnt">132
+</span><span class="lnt">133
+</span><span class="lnt">134
+</span><span class="lnt">135
+</span><span class="lnt">136
+</span><span class="lnt">137
+</span><span class="lnt">138
+</span><span class="lnt">139
+</span><span class="lnt">140
+</span><span class="lnt">141
+</span><span class="lnt">142
+</span><span class="lnt">143
+</span><span class="lnt">144
+</span><span class="lnt">145
+</span><span class="lnt">146
+</span><span class="lnt">147
+</span><span class="lnt">148
+</span><span class="lnt">149
+</span><span class="lnt">150
+</span><span class="lnt">151
+</span><span class="lnt">152
+</span><span class="lnt">153
+</span><span class="lnt">154
+</span><span class="lnt">155
+</span><span class="lnt">156
+</span><span class="lnt">157
+</span><span class="lnt">158
+</span><span class="lnt">159
+</span><span class="lnt">160
+</span><span class="lnt">161
+</span><span class="lnt">162
+</span><span class="lnt">163
+</span><span class="lnt">164
+</span><span class="lnt">165
+</span><span class="lnt">166
+</span><span class="lnt">167
+</span><span class="lnt">168
+</span><span class="lnt">169
+</span><span class="lnt">170
+</span><span class="lnt">171
+</span><span class="lnt">172
+</span><span class="lnt">173
+</span><span class="lnt">174
+</span><span class="lnt">175
+</span><span class="lnt">176
+</span><span class="lnt">177
+</span><span class="lnt">178
+</span><span class="lnt">179
+</span><span class="lnt">180
+</span><span class="lnt">181
+</span><span class="lnt">182
+</span><span class="lnt">183
+</span><span class="lnt">184
+</span><span class="lnt">185
+</span><span class="lnt">186
+</span><span class="lnt">187
+</span><span class="lnt">188
+</span><span class="lnt">189
+</span><span class="lnt">190
+</span><span class="lnt">191
+</span><span class="lnt">192
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-html" data-lang="html">{{ define &#34;__alertmanager&#34; }}AlertManager{{ end }}
+{{ define &#34;__alertmanagerURL&#34; }}{{ .ExternalURL }}/#/alerts?receiver={{ .Receiver }}{{ end }}
+
+{{ define &#34;__subject&#34; }}[{{ .Status | toUpper }}{{ if eq .Status &#34;firing&#34; }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join &#34; &#34; }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join &#34; &#34; }}{{ end }}){{ end }}{{ end }}
+{{ define &#34;__description&#34; }}{{ end }}
+
+{{ define &#34;__text_alert_list&#34; }}{{ range . }}Labels:
+{{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}Annotations:
+{{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}Source: {{ .GeneratorURL }}
+{{ end }}{{ end }}
+
+
+{{ define &#34;slack.default.title&#34; }}{{ template &#34;__subject&#34; . }}{{ end }}
+{{ define &#34;slack.default.username&#34; }}{{ template &#34;__alertmanager&#34; . }}{{ end }}
+{{ define &#34;slack.default.fallback&#34; }}{{ template &#34;slack.default.title&#34; . }} | {{ template &#34;slack.default.titlelink&#34; . }}{{ end }}
+{{ define &#34;slack.default.pretext&#34; }}{{ end }}
+{{ define &#34;slack.default.titlelink&#34; }}{{ template &#34;__alertmanagerURL&#34; . }}{{ end }}
+{{ define &#34;slack.default.iconemoji&#34; }}{{ end }}
+{{ define &#34;slack.default.iconurl&#34; }}{{ end }}
+{{ define &#34;slack.default.text&#34; }}{{ end }}
+
+
+{{ define &#34;hipchat.default.from&#34; }}{{ template &#34;__alertmanager&#34; . }}{{ end }}
+{{ define &#34;hipchat.default.message&#34; }}{{ template &#34;__subject&#34; . }}{{ end }}
+
+
+{{ define &#34;pagerduty.default.description&#34; }}{{ template &#34;__subject&#34; . }}{{ end }}
+{{ define &#34;pagerduty.default.client&#34; }}{{ template &#34;__alertmanager&#34; . }}{{ end }}
+{{ define &#34;pagerduty.default.clientURL&#34; }}{{ template &#34;__alertmanagerURL&#34; . }}{{ end }}
+{{ define &#34;pagerduty.default.instances&#34; }}{{ template &#34;__text_alert_list&#34; . }}{{ end }}
+
+
+{{ define &#34;opsgenie.default.message&#34; }}{{ template &#34;__subject&#34; . }}{{ end }}
+{{ define &#34;opsgenie.default.description&#34; }}{{ .CommonAnnotations.SortedPairs.Values | join &#34; &#34; }}
+{{ if gt (len .Alerts.Firing) 0 -}}
+Alerts Firing:
+{{ template &#34;__text_alert_list&#34; .Alerts.Firing }}
+{{- end }}
+{{ if gt (len .Alerts.Resolved) 0 -}}
+Alerts Resolved:
+{{ template &#34;__text_alert_list&#34; .Alerts.Resolved }}
+{{- end }}
+{{- end }}
+{{ define &#34;opsgenie.default.source&#34; }}{{ template &#34;__alertmanagerURL&#34; . }}{{ end }}
+
+
+{{ define &#34;victorops.default.message&#34; }}{{ template &#34;__subject&#34; . }} | {{ template &#34;__alertmanagerURL&#34; . }}{{ end }}
+{{ define &#34;victorops.default.from&#34; }}{{ template &#34;__alertmanager&#34; . }}{{ end }}
+
+
+{{ define &#34;email.default.subject&#34; }}{{ template &#34;__subject&#34; . }}{{ end }}
+{{ define &#34;email.default.html&#34; }}
+<span class="cp">&lt;!DOCTYPE html PUBLIC &#34;-//W3C//DTD XHTML 1.0 Transitional//EN&#34; &#34;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&#34;&gt;</span>
+<span class="c">&lt;!--
+</span><span class="c">Style and HTML derived from https://github.com/mailgun/transactional-email-templates
+</span><span class="c">
+</span><span class="c">
+</span><span class="c">The MIT License (MIT)
+</span><span class="c">
+</span><span class="c">Copyright (c) 2014 Mailgun
+</span><span class="c">
+</span><span class="c">Permission is hereby granted, free of charge, to any person obtaining a copy
+</span><span class="c">of this software and associated documentation files (the &#34;Software&#34;), to deal
+</span><span class="c">in the Software without restriction, including without limitation the rights
+</span><span class="c">to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+</span><span class="c">copies of the Software, and to permit persons to whom the Software is
+</span><span class="c">furnished to do so, subject to the following conditions:
+</span><span class="c">
+</span><span class="c">The above copyright notice and this permission notice shall be included in all
+</span><span class="c">copies or substantial portions of the Software.
+</span><span class="c">
+</span><span class="c">THE SOFTWARE IS PROVIDED &#34;AS IS&#34;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+</span><span class="c">IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+</span><span class="c">FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+</span><span class="c">AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+</span><span class="c">LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+</span><span class="c">OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+</span><span class="c">SOFTWARE.
+</span><span class="c">--&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">xmlns</span><span class="o">=</span><span class="s">&#34;http://www.w3.org/1999/xhtml&#34;</span> <span class="na">xmlns</span><span class="o">=</span><span class="s">&#34;http://www.w3.org/1999/xhtml&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&#34;viewport&#34;</span> <span class="na">content</span><span class="o">=</span><span class="s">&#34;width=device-width&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="nt">meta</span> <span class="na">http-equiv</span><span class="o">=</span><span class="s">&#34;Content-Type&#34;</span> <span class="na">content</span><span class="o">=</span><span class="s">&#34;text/html; charset=UTF-8&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="nt">title</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>{{ template &#34;__subject&#34; . }}<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">body</span> <span class="na">itemscope</span><span class="o">=</span><span class="s">&#34;&#34;</span> <span class="na">itemtype</span><span class="o">=</span><span class="s">&#34;http://schema.org/EmailMessage&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; height: 100%; line-height: 1.6em; width: 100% !important; background-color: #f6f6f6; margin: 0; padding: 0;&#34;</span> <span class="na">bgcolor</span><span class="o">=</span><span class="s">&#34;#f6f6f6&#34;</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">table</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; width: 100%; background-color: #f6f6f6; margin: 0;&#34;</span> <span class="na">bgcolor</span><span class="o">=</span><span class="s">&#34;#f6f6f6&#34;</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">tr</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">td</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0;&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">td</span> <span class="na">width</span><span class="o">=</span><span class="s">&#34;600&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; display: block !important; max-width: 600px !important; clear: both !important; width: 100% !important; margin: 0 auto; padding: 0;&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">div</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; max-width: 600px; display: block; margin: 0 auto; padding: 0;&#34;</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">table</span> <span class="na">width</span><span class="o">=</span><span class="s">&#34;100%&#34;</span> <span class="na">cellpadding</span><span class="o">=</span><span class="s">&#34;0&#34;</span> <span class="na">cellspacing</span><span class="o">=</span><span class="s">&#34;0&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; border-radius: 3px; background-color: #fff; margin: 0; border: 1px solid #e9e9e9;&#34;</span> <span class="na">bgcolor</span><span class="o">=</span><span class="s">&#34;#fff&#34;</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">tr</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">td</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 16px; vertical-align: top; color: #fff; font-weight: 500; text-align: center; border-radius: 3px 3px 0 0; background-color: #E6522C; margin: 0; padding: 20px;&#34;</span> <span class="na">align</span><span class="o">=</span><span class="s">&#34;center&#34;</span> <span class="na">bgcolor</span><span class="o">=</span><span class="s">&#34;#E6522C&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;</span>
+              {{ .Alerts | len }} alert{{ if gt (len .Alerts) 1 }}s{{ end }} for {{ range .GroupLabels.SortedPairs }}
+                {{ .Name }}={{ .Value }}
+              {{ end }}
+            <span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">tr</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">td</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 10px;&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">table</span> <span class="na">width</span><span class="o">=</span><span class="s">&#34;100%&#34;</span> <span class="na">cellpadding</span><span class="o">=</span><span class="s">&#34;0&#34;</span> <span class="na">cellspacing</span><span class="o">=</span><span class="s">&#34;0&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="nt">tr</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">td</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px;&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&#34;{{ template &#34;</span><span class="na">__alertmanagerURL</span><span class="err">&#34;</span> <span class="err">.</span> <span class="err">}}&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; color: #FFF; text-decoration: none; line-height: 2em; font-weight: bold; text-align: center; cursor: pointer; display: inline-block; border-radius: 5px; text-transform: capitalize; background-color: #348eda; margin: 0; border-color: #348eda; border-style: solid; border-width: 10px 20px;&#34;</span><span class="p">&gt;</span>View in {{ template &#34;__alertmanager&#34; . }}<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {{ if gt (len .Alerts.Firing) 0 }}
+                <span class="p">&lt;</span><span class="nt">tr</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">td</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px;&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">strong</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>[{{ .Alerts.Firing | len }}] Firing<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {{ end }}
+                {{ range .Alerts.Firing }}
+                <span class="p">&lt;</span><span class="nt">tr</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">td</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px;&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">strong</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>Labels<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>
+                    {{ range .Labels.SortedPairs }}{{ .Name }} = {{ .Value }}<span class="p">&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>{{ end }}
+                    {{ if gt (len .Annotations) 0 }}<span class="p">&lt;</span><span class="nt">strong</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>Annotations<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>{{ end }}
+                    {{ range .Annotations.SortedPairs }}{{ .Name }} = {{ .Value }}<span class="p">&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>{{ end }}
+                    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&#34;{{ .GeneratorURL }}&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; color: #348eda; text-decoration: underline; margin: 0;&#34;</span><span class="p">&gt;</span>Source<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {{ end }}
+
+                {{ if gt (len .Alerts.Resolved) 0 }}
+                  {{ if gt (len .Alerts.Firing) 0 }}
+                <span class="p">&lt;</span><span class="nt">tr</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">td</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px;&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">hr</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                  {{ end }}
+                <span class="p">&lt;</span><span class="nt">tr</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">td</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px;&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">strong</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>[{{ .Alerts.Resolved | len }}] Resolved<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {{ end }}
+                {{ range .Alerts.Resolved }}
+                <span class="p">&lt;</span><span class="nt">tr</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+                  <span class="p">&lt;</span><span class="nt">td</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px;&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="nt">strong</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>Labels<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>
+                    {{ range .Labels.SortedPairs }}{{ .Name }} = {{ .Value }}<span class="p">&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>{{ end }}
+                    {{ if gt (len .Annotations) 0 }}<span class="p">&lt;</span><span class="nt">strong</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>Annotations<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>{{ end }}
+                    {{ range .Annotations.SortedPairs }}{{ .Name }} = {{ .Value }}<span class="p">&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>{{ end }}
+                    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&#34;{{ .GeneratorURL }}&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; color: #348eda; text-decoration: underline; margin: 0;&#34;</span><span class="p">&gt;</span>Source<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;</span><span class="nt">br</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span> <span class="p">/&gt;</span>
+                  <span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+                {{ end }}
+              <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; width: 100%; clear: both; color: #999; margin: 0; padding: 20px;&#34;</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">table</span> <span class="na">width</span><span class="o">=</span><span class="s">&#34;100%&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="nt">tr</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;&#34;</span><span class="p">&gt;</span>
+              <span class="p">&lt;</span><span class="nt">td</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 12px; vertical-align: top; text-align: center; color: #999; margin: 0; padding: 0 0 20px;&#34;</span> <span class="na">align</span><span class="o">=</span><span class="s">&#34;center&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&#34;{{ .ExternalURL }}&#34;</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 12px; color: #999; text-decoration: underline; margin: 0;&#34;</span><span class="p">&gt;</span>Sent by {{ template &#34;__alertmanager&#34; . }}<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">td</span> <span class="na">style</span><span class="o">=</span><span class="s">&#34;font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0;&#34;</span> <span class="na">valign</span><span class="o">=</span><span class="s">&#34;top&#34;</span><span class="p">&gt;&lt;/</span><span class="nt">td</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">tr</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">table</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+
+{{ end }}
+
+{{ define &#34;pushover.default.title&#34; }}{{ template &#34;__subject&#34; . }}{{ end }}
+{{ define &#34;pushover.default.message&#34; }}{{ .CommonAnnotations.SortedPairs.Values | join &#34; &#34; }}
+{{ if gt (len .Alerts.Firing) 0 }}
+Alerts Firing:
+{{ template &#34;__text_alert_list&#34; .Alerts.Firing }}
+{{ end }}
+{{ if gt (len .Alerts.Resolved) 0 }}
+Alerts Resolved:
+{{ template &#34;__text_alert_list&#34; .Alerts.Resolved }}
+{{ end }}
+{{ end }}
+{{ define &#34;pushover.default.url&#34; }}{{ template &#34;__alertmanagerURL&#34; . }}{{ end }}
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>slack.tmpl</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-html" data-lang="html">{{ define &#34;slack.devops.text&#34; }}
+{{range .Alerts}}{{.Annotations.DESCRIPTION}}
+{{end}}
+{{ end }}
+</code></pre></td></tr></table>
+</div>
+</div><p>同alertmanager-rules，alertmanager-templates也是一个文件夹，里面有两个文件，通过如下命令在集群内创建对应的ConfigMap</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">kubectl create configmap alertmanager-templates --from-file<span class="o">=</span>alertmanager-templates -o json --dry-run <span class="p">|</span> kubectl apply --namespace<span class="o">=</span>kube-system -f -
+</code></pre></td></tr></table>
+</div>
+</div><p>到这里就完成了所有的部署，部署成功后，切换到Alert页面可以看到如下</p>
+<p><img
+        class="lazyload"
+        src="/https/www.likakuli.com/svg/loading.min.svg"
+        data-src="alert.png"
+        data-srcset="/https/www.likakuli.com/prometheus/alert.png, alert.png 1.5x, /https/www.likakuli.com/prometheus/alert.png 2x"
+        data-sizes="auto"
+        alt="/https/www.likakuli.com/prometheus/alert.png"
+        title="/https/www.likakuli.com/prometheus/alert.png" /></p>
+<p>为了能收到报警，我这里特意将报警条件设置为了cpu实用率超过10%，一会就会收到报警邮件了，想要收到slack的报警信息的话，alertmanager所在的pod必须可以科学上网才行。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-10-16</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https//www.likakuli.com/prometheus/" data-title="Prometheus" data-hashtags="prometheus"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https//www.likakuli.com/prometheus/" data-hashtag="prometheus"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https//www.likakuli.com/prometheus/" data-title="Prometheus" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https//www.likakuli.com/prometheus/" data-title="Prometheus"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https//www.likakuli.com/prometheus/" data-title="Prometheus"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https//www.likakuli.com/prometheus/" data-title="Prometheus" data-description="Prometheus"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https//www.likakuli.com/prometheus/" data-title="Prometheus" data-description="Prometheus"><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https//www.likakuli.com/prometheus/" data-title="Prometheus"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="https/www.likakuli.com/tags/prometheus/">prometheus</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="https/www.likakuli.com/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="https/www.likakuli.com/golang-netpoll/" class="prev" rel="prev" title="Golang netpoll源码分析"><i class="fas fa-angle-left fa-fw"></i>Golang netpoll源码分析</a>
+            <a href="https/www.likakuli.com/golang-monitor/" class="next" rel="next" title="Golang监控">Golang监控<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https/www.likakuli.com/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/https/www.likakuli.com/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/https/www.likakuli.com/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

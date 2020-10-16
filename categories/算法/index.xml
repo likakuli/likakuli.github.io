@@ -1,0 +1,15 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>算法 - 分类 - kaku&#39;s blog</title>
+        <link>https//www.likakuli.com/categories/%E7%AE%97%E6%B3%95/</link>
+        <description>算法 - 分类 - kaku&#39;s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 07 Nov 2019 23:35:20 &#43;0800</lastBuildDate><atom:link href="https//www.likakuli.com/categories/%E7%AE%97%E6%B3%95/" rel="self" type="application/rss+xml" /><item>
+    <title>背包问题golang</title>
+    <link>https//www.likakuli.com/backpack/</link>
+    <pubDate>Thu, 07 Nov 2019 23:35:20 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https//www.likakuli.com/backpack/</guid>
+    <description><![CDATA[最近的工作都跟集群调度有关，一直在为了满足用户需求添加各种调度策略，现在也暂时告一段落了，抽时间总结思考了之前的工作，调度本质上就是背包问题]]></description>
+</item></channel>
+</rss>
