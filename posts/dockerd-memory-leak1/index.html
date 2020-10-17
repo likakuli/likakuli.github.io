@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Dockerd内存泄露 - kaku&#39;s blog</title><meta name="Description" content="dockerd内存泄露"><meta property="og:title" content="Dockerd内存泄露" />
+<meta property="og:description" content="dockerd内存泄露" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://likakuli.github.io/posts/dockerd-memory-leak1/" />
+<meta property="og:image" content="https://likakuli.github.io/logo.png"/>
+<meta property="article:published_time" content="2019-07-09T20:06:53+08:00" />
+<meta property="article:modified_time" content="2020-10-16T18:17:42+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://likakuli.github.io/logo.png"/>
+
+<meta name="twitter:title" content="Dockerd内存泄露"/>
+<meta name="twitter:description" content="dockerd内存泄露"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://likakuli.github.io/posts/dockerd-memory-leak1/" /><link rel="prev" href="https://likakuli.github.io/posts/kubernetes-statefulset-sync/" /><link rel="next" href="https://likakuli.github.io/posts/cgroup-leak/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Dockerd内存泄露",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/likakuli.github.io\/posts\/dockerd-memory-leak1\/"
+        },"genre": "posts","keywords": "docker","wordcount":  5613 ,
+        "url": "https:\/\/likakuli.github.io\/posts\/dockerd-memory-leak1\/","datePublished": "2019-07-09T20:06:53+08:00","dateModified": "2020-10-16T18:17:42+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/likakuli.github.io\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": "dockerd内存泄露"
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Dockerd内存泄露</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-07-09">2019-07-09</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5613 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 12 分钟&nbsp;<span id="/posts/dockerd-memory-leak1/" class="leancloud_visitors" data-flag-title="Dockerd内存泄露">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#背景">背景</a></li>
+            <li><a href="#dockerd日志">dockerd日志</a></li>
+            <li><a href="#步骤">步骤</a>
+              <ul>
+                <li><a href="#pprof分析">pprof分析</a></li>
+                <li><a href="#源码分析">源码分析</a></li>
+                <li><a href="#谁是调用方">谁是调用方</a></li>
+                <li><a href="#结束了吗">结束了吗</a></li>
+              </ul>
+            </li>
+            <li><a href="#总结">总结</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h3 id="背景">背景</h3>
+<p>线上部分宿主机dockerd占用内存过大，有的甚至超过100G，而整个宿主上的容器使用的内存还不如dockerd一个进程使用的多，现在的处理办法是故障自愈，检测到dockerd使用内存超过10G后会设置live-restore，然后重启dockerd，而不影响正常运行的容器，但是重启后还一直存在内存泄露的问题。可以总结为两类内存泄露情况：没有设置live-restore: true的和设置了live-restore: true且重启过dockerd的，这里是针对后者的排查，因为线上默认dockerd没有开启debug模式，要想排查前者的问题，就需要重启docker，又因为没有配置live-restore: true，就会影响到正在运行的容器。</p>
+<h3 id="dockerd日志">dockerd日志</h3>
+<p>tail -f /var/log/messages | grep dockerd，结果如下图，存在内存泄露的dockerd的日志都有如下的日志记录，且看时间规律是相同sandbox的记录每秒打印一遍</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="docker_stats_failed.png"
+        data-srcset="/posts/dockerd-memory-leak1/docker_stats_failed.png, docker_stats_failed.png 1.5x, /posts/dockerd-memory-leak1/docker_stats_failed.png 2x"
+        data-sizes="auto"
+        alt="/posts/dockerd-memory-leak1/docker_stats_failed.png"
+        title="img" /></p>
+<p>从源码中搜索日志内容，对应下面的源码分析-2里的内容。</p>
+<p>查看dockerd启动时的日志，如下</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="docker_start_sandbox_failed.png"
+        data-srcset="/posts/dockerd-memory-leak1/docker_start_sandbox_failed.png, docker_start_sandbox_failed.png 1.5x, /posts/dockerd-memory-leak1/docker_start_sandbox_failed.png 2x"
+        data-sizes="auto"
+        alt="/posts/dockerd-memory-leak1/docker_start_sandbox_failed.png"
+        title="img" /></p>
+<h3 id="步骤">步骤</h3>
+<p><strong>步骤比较长，尤其是源码那部分，不关注源码的可以直接跳过源码，直接看代码的解释</strong></p>
+<h4 id="pprof分析">pprof分析</h4>
+<ol>
+<li>
+<p>开启dockerd的debug模式，即编辑/etc/docker/daemon.json，加上debug: true的配置并重启dockerd，方便利用pprof来定位内存泄露对应的代码位置。</p>
+</li>
+<li>
+<p>执行go tool pprof <a href="http://ipport" target="_blank" rel="noopener noreffer">http://ip:port/debug/pprof/heap</a>，输入top命令查看内存分配情况，如下图
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="dockerd_stats_pprof.png"
+        data-srcset="/posts/dockerd-memory-leak1/dockerd_stats_pprof.png, dockerd_stats_pprof.png 1.5x, /posts/dockerd-memory-leak1/dockerd_stats_pprof.png 2x"
+        data-sizes="auto"
+        alt="/posts/dockerd-memory-leak1/dockerd_stats_pprof.png"
+        title="img" /></p>
+<p>可以看到占用内存较多的函数调用，但是并不是很直观，可以继续输入web命令，会生成svg图片并通过画图软件或浏览器打开，如下图</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="pprof004.svg"
+        data-srcset="/posts/dockerd-memory-leak1/pprof004.svg, pprof004.svg 1.5x, /posts/dockerd-memory-leak1/pprof004.svg 2x"
+        data-sizes="auto"
+        alt="/posts/dockerd-memory-leak1/pprof004.svg"
+        title="pprof004.svg" /></p>
+<p>这样就可以清楚地看到整个调用流程及各函数占用内存大小，可以发现是外部某程序调用了docker的api，最终调用SubscribeTopic，此函数里面存在内存泄露。</p>
+</li>
+</ol>
+<h4 id="源码分析">源码分析</h4>
+<ol>
+<li>明确了发生泄露的源码位置，接下来就是去看下源码的具体逻辑，下面贴出部分docker源码(tag v1.13.1)，省略部分不影响结果的代码</li>
+</ol>
+<p><strong>docker</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 位置github.com/docker/docker/pkg/pubsub/publisher.go
+</span><span class="c1">// SubscribeTopic adds a new subscriber that filters messages sent by a topic.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">Publisher</span><span class="p">)</span> <span class="nf">SubscribeTopic</span><span class="p">(</span><span class="nx">topic</span> <span class="nx">topicFunc</span><span class="p">)</span> <span class="kd">chan</span> <span class="kd">interface</span><span class="p">{}</span> <span class="p">{</span>
+   <span class="nx">ch</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">p</span><span class="p">.</span><span class="nx">buffer</span><span class="p">)</span>
+   <span class="nx">p</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+   <span class="nx">p</span><span class="p">.</span><span class="nx">subscribers</span><span class="p">[</span><span class="nx">ch</span><span class="p">]</span> <span class="p">=</span> <span class="nx">topic</span>
+   <span class="nx">p</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+   <span class="k">return</span> <span class="nx">ch</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这段代码很短，每次先new一个新的chan，然后把chan加入到字典中。可以看到如果发生内存泄漏，那八成就是这句p.subscribers[ch] = topic，也就是说会一直往map里添加新元素而得不到删除。为了验证，继续向上找此函数的调用方，沿着调用堆栈（svg图片里显示了具体的调用堆栈）往上找，如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Subscribe adds a new subscriber to the publisher returning the channel.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">Publisher</span><span class="p">)</span> <span class="nf">Subscribe</span><span class="p">()</span> <span class="kd">chan</span> <span class="kd">interface</span><span class="p">{}</span> <span class="p">{</span>
+   <span class="c1">// 这里调用SubscribeTopic
+</span><span class="c1"></span>   <span class="k">return</span> <span class="nx">p</span><span class="p">.</span><span class="nf">SubscribeTopic</span><span class="p">(</span><span class="kc">nil</span><span class="p">)</span>
+<span class="p">}</span>
+ 
+ 
+<span class="c1">// collect registers the container with the collector and adds it to
+</span><span class="c1">// the event loop for collection on the specified interval returning
+</span><span class="c1">// a channel for the subscriber to receive on.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">statsCollector</span><span class="p">)</span> <span class="nf">collect</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">container</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="kd">chan</span> <span class="kd">interface</span><span class="p">{}</span> <span class="p">{</span>
+   <span class="nx">s</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+   <span class="k">defer</span> <span class="nx">s</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+   <span class="nx">publisher</span><span class="p">,</span> <span class="nx">exists</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">publishers</span><span class="p">[</span><span class="nx">c</span><span class="p">]</span>
+   <span class="k">if</span> <span class="p">!</span><span class="nx">exists</span> <span class="p">{</span>
+      <span class="nx">publisher</span> <span class="p">=</span> <span class="nx">pubsub</span><span class="p">.</span><span class="nf">NewPublisher</span><span class="p">(</span><span class="mi">100</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">,</span> <span class="mi">1024</span><span class="p">)</span>
+      <span class="nx">s</span><span class="p">.</span><span class="nx">publishers</span><span class="p">[</span><span class="nx">c</span><span class="p">]</span> <span class="p">=</span> <span class="nx">publisher</span>
+   <span class="p">}</span>
+   <span class="c1">// 这里调用Subscribe
+</span><span class="c1"></span>   <span class="k">return</span> <span class="nx">publisher</span><span class="p">.</span><span class="nf">Subscribe</span><span class="p">()</span>
+<span class="p">}</span>
+ 
+ 
+<span class="kd">func</span> <span class="p">(</span><span class="nx">daemon</span> <span class="o">*</span><span class="nx">Daemon</span><span class="p">)</span> <span class="nf">subscribeToContainerStats</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">container</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="kd">chan</span> <span class="kd">interface</span><span class="p">{}</span> <span class="p">{</span>
+   <span class="k">return</span> <span class="nx">daemon</span><span class="p">.</span><span class="nx">statsCollector</span><span class="p">.</span><span class="nf">collect</span><span class="p">(</span><span class="nx">c</span><span class="p">)</span>
+<span class="p">}</span>
+ 
+ 
+<span class="c1">// ContainerStats writes information about the container to the stream
+</span><span class="c1">// given in the config object.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">daemon</span> <span class="o">*</span><span class="nx">Daemon</span><span class="p">)</span> <span class="nf">ContainerStats</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">prefixOrName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">config</span> <span class="o">*</span><span class="nx">backend</span><span class="p">.</span><span class="nx">ContainerStatsConfig</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="o">...</span>
+ 
+ 
+   <span class="c1">// subscribe
+</span><span class="c1"></span>   <span class="nx">updates</span> <span class="o">:=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nf">subscribeToContainerStats</span><span class="p">(</span><span class="nx">container</span><span class="p">)</span>
+   <span class="c1">// unsubscribe
+</span><span class="c1"></span>   <span class="k">defer</span> <span class="nx">daemon</span><span class="p">.</span><span class="nf">unsubscribeToContainerStats</span><span class="p">(</span><span class="nx">container</span><span class="p">,</span> <span class="nx">updates</span><span class="p">)</span>
+ 
+   <span class="nx">noStreamFirstFrame</span> <span class="o">:=</span> <span class="kc">true</span>
+   <span class="k">for</span> <span class="p">{</span>
+      <span class="k">select</span> <span class="p">{</span>
+      <span class="k">case</span> <span class="nx">v</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">updates</span><span class="p">:</span>
+         <span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">nil</span>
+         <span class="p">}</span>
+ 
+         <span class="o">...</span>
+ 
+         <span class="k">if</span> <span class="p">!</span><span class="nx">config</span><span class="p">.</span><span class="nx">Stream</span> <span class="o">&amp;&amp;</span> <span class="nx">noStreamFirstFrame</span> <span class="p">{</span>
+            <span class="c1">// prime the cpu stats so they aren&#39;t 0 in the final output
+</span><span class="c1"></span>            <span class="nx">noStreamFirstFrame</span> <span class="p">=</span> <span class="kc">false</span>
+            <span class="k">continue</span>
+         <span class="p">}</span>
+ 
+         <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">enc</span><span class="p">.</span><span class="nf">Encode</span><span class="p">(</span><span class="nx">statsJSON</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">err</span>
+         <span class="p">}</span>
+ 
+         <span class="k">if</span> <span class="p">!</span><span class="nx">config</span><span class="p">.</span><span class="nx">Stream</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">nil</span>
+         <span class="p">}</span>
+      <span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+         <span class="k">return</span> <span class="kc">nil</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到最终在ContainerStats中调用了subscribe并在此函数退出后调用defer里的unsubscribe。直接看代码可能看不懂，先介绍下docker stats的api，此api用来获取容器资源使用详情，包括cpu，memory，network等信息，支持两种方式，流和非流的方式，流是利用http的chunked属性实现的，非流的方式是直接返回。</p>
+<p><strong>chan****的产生</strong></p>
+<p>每次调用docker stats {container} 或者 docker stats的api的时候，都会进入到ContainerStats函数，这里使用了一个chan来达到异步的效果，即并不是每次调用stats都去实时的统计相关数据，而是有个后台goroutine在定时的stats（下面会介绍），并把数据推送到chan，每次调用api时只是去chan中获取数据而已，此chan对应的就是上面for select中的updates，即daemon.subscribeToContainerStats(container)的返回结果，也就是最终SubscribeTopic里new的chan。
+<strong>chan****的消亡</strong></p>
+<p>在ContainerStats函数结束后会调用unsubscribeToContainerStats，这里会关闭创建出来的chan并从map中删除，释放内存。</p>
+<ol start="2">
+<li>知道了chan的产生和消亡，可以排除以stream形式调用api导致的，因为这种方式不会一直调用api，也就不会导致chan一直新建。那就只剩下一种形式，即外部有程序定时的以非stream的形式调用docker stats的api。但是上面也看到了函数结束后会在defer里释放掉申请的chan，为什么还会导致内存泄露呢？稍微注意一下就可以看到释放chan的函数是在defer里调用的，而且函数里还有个for循环，所以很可能是因为函数的for循环一直没有退出，导致defer一直得不到执行，chan也就一直释放不了，而且外部还定时的调用api，会导致一直会有新的chan的创建且旧的chan加入缓存后无法被删除，最终导致占用的内存越来越大。那就看下for循环内的代码，可以看到只有一个select，两个case，分别对应从updates chan中读数据和从ctx.Done()中读数据，后者是外部程序取消此次api调用后会得到执行的，即结束此次调用，前者是从updates chan中读stats数据，所以如果想要函数不退出，那么两个case都无法满足即可，即外部程序没有主动cancel request且updates chan中始终没有数据，先不管外部程序，因为也不知道外部程序是谁，代码怎么写的，但是可以肯定的是外部程序在调用docker api时的处理有问题，没有设置超时或者超时了也没有去cancel request。重点关注下为什么updates chan中一直没有数据，那就要看下写数据相关代码，如下</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">statsCollector</span><span class="p">)</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
+   <span class="kd">type</span> <span class="nx">publishersPair</span> <span class="kd">struct</span> <span class="p">{</span>
+      <span class="nx">container</span> <span class="o">*</span><span class="nx">container</span><span class="p">.</span><span class="nx">Container</span>
+      <span class="nx">publisher</span> <span class="o">*</span><span class="nx">pubsub</span><span class="p">.</span><span class="nx">Publisher</span>
+   <span class="p">}</span>
+   <span class="c1">// we cannot determine the capacity here.
+</span><span class="c1"></span>   <span class="c1">// it will grow enough in first iteration
+</span><span class="c1"></span>   <span class="kd">var</span> <span class="nx">pairs</span> <span class="p">[]</span><span class="nx">publishersPair</span>
+ 
+   <span class="c1">// s.interval是1s，硬编码的
+</span><span class="c1"></span>   <span class="k">for</span> <span class="k">range</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Tick</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">interval</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">// it does not make sense in the first iteration,
+</span><span class="c1"></span>      <span class="c1">// but saves allocations in further iterations
+</span><span class="c1"></span>      <span class="nx">pairs</span> <span class="p">=</span> <span class="nx">pairs</span><span class="p">[:</span><span class="mi">0</span><span class="p">]</span>
+ 
+      <span class="nx">s</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+      <span class="k">for</span> <span class="nx">container</span><span class="p">,</span> <span class="nx">publisher</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">s</span><span class="p">.</span><span class="nx">publishers</span> <span class="p">{</span>
+         <span class="c1">// copy pointers here to release the lock ASAP
+</span><span class="c1"></span>         <span class="nx">pairs</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">pairs</span><span class="p">,</span> <span class="nx">publishersPair</span><span class="p">{</span><span class="nx">container</span><span class="p">,</span> <span class="nx">publisher</span><span class="p">})</span>
+      <span class="p">}</span>
+      <span class="nx">s</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">pairs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+         <span class="k">continue</span>
+      <span class="p">}</span>
+ 
+      <span class="nx">systemUsage</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">getSystemCPUUsage</span><span class="p">()</span>
+      <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="nx">logrus</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;collecting system cpu usage: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+         <span class="k">continue</span>
+      <span class="p">}</span>
+ 
+      <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">pair</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">pairs</span> <span class="p">{</span>
+         <span class="nx">stats</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">supervisor</span><span class="p">.</span><span class="nf">GetContainerStats</span><span class="p">(</span><span class="nx">pair</span><span class="p">.</span><span class="nx">container</span><span class="p">)</span>
+         <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">err</span><span class="p">.(</span><span class="nx">errNotRunning</span><span class="p">);</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+               <span class="nx">logrus</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;collecting stats for %s: %v&#34;</span><span class="p">,</span> <span class="nx">pair</span><span class="p">.</span><span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+            <span class="p">}</span>
+            <span class="k">continue</span>
+         <span class="p">}</span>
+         <span class="c1">// FIXME: move to containerd on Linux (not Windows)
+</span><span class="c1"></span>         <span class="nx">stats</span><span class="p">.</span><span class="nx">CPUStats</span><span class="p">.</span><span class="nx">SystemUsage</span> <span class="p">=</span> <span class="nx">systemUsage</span>
+         <span class="c1">// 往chan里推送数据
+</span><span class="c1"></span>         <span class="nx">pair</span><span class="p">.</span><span class="nx">publisher</span><span class="p">.</span><span class="nf">Publish</span><span class="p">(</span><span class="o">*</span><span class="nx">stats</span><span class="p">)</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到函数内有个定时器，每1秒执行一次，每次执行都遍历一遍所有注册了的container的publisher，再遍历获取对应container的stats，这里是实时的去计算的，如果获取过程中出错，且不是notRunning的错误，则会打一条日志，collecting stats for {containerID}: {err}，然后跳过往chan里推送数据的逻辑。这里日志正好和从宿主上看到的日志内容匹配，且时间间隔也相同。</p>
+<ol start="3">
+<li>接着看GetContainerStats函数代码，为什么会出错，如下</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// GetContainerStats collects all the stats published by a container
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">daemon</span> <span class="o">*</span><span class="nx">Daemon</span><span class="p">)</span> <span class="nf">GetContainerStats</span><span class="p">(</span><span class="nx">container</span> <span class="o">*</span><span class="nx">container</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">types</span><span class="p">.</span><span class="nx">StatsJSON</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="nx">stats</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nf">stats</span><span class="p">(</span><span class="nx">container</span><span class="p">)</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+   <span class="p">}</span>
+ 
+   <span class="c1">// We already have the network stats on Windows directly from HCS.
+</span><span class="c1"></span>   <span class="k">if</span> <span class="p">!</span><span class="nx">container</span><span class="p">.</span><span class="nx">Config</span><span class="p">.</span><span class="nx">NetworkDisabled</span> <span class="o">&amp;&amp;</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">GOOS</span> <span class="o">!=</span> <span class="s">&#34;windows&#34;</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="nx">stats</span><span class="p">.</span><span class="nx">Networks</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nf">getNetworkStats</span><span class="p">(</span><span class="nx">container</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+ 
+   <span class="k">return</span> <span class="nx">stats</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>从日志里可以看到sandbox字样，和网络有关，直接看getNetworkStats</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">daemon</span> <span class="o">*</span><span class="nx">Daemon</span><span class="p">)</span> <span class="nf">getNetworkStats</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">container</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">types</span><span class="p">.</span><span class="nx">NetworkStats</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="o">...</span>
+ 
+   <span class="nx">sb</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nx">netController</span><span class="p">.</span><span class="nf">SandboxByID</span><span class="p">(</span><span class="nx">sandboxID</span><span class="p">)</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+   <span class="p">}</span>
+ 
+   <span class="o">...</span>
+<span class="p">}</span>
+ 
+ 
+<span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">controller</span><span class="p">)</span> <span class="nf">SandboxByID</span><span class="p">(</span><span class="nx">id</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">Sandbox</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="k">if</span> <span class="nx">id</span> <span class="o">==</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nf">ErrInvalidID</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span>
+   <span class="p">}</span>
+   <span class="nx">c</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+   <span class="nx">s</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">sandboxes</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span>
+   <span class="nx">c</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+   <span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">types</span><span class="p">.</span><span class="nf">NotFoundErrorf</span><span class="p">(</span><span class="s">&#34;sandbox %s not found&#34;</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="nx">s</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到在根据id从字典中取sandbox时如果没有取到，则会报sandbox not found的error，和日志里的报错匹配。也就匹配上了dockerd启动时的报错，即failed to create osl sandbox while trying to restore sandbox bc51d3e: failed to create a netlink handle: failed to set into network namespace 214 while creating netlink socket: invalid argument。那这个错是从哪里报出来的呢？</p>
+<ol start="4">
+<li>继续看restore sandbox failed的错误，代码位置如下</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">func executeInNetns(newNs, curNs netns.NsHandle) (func(), error) {
+   ...
+   if newNs.IsOpen() {
+      runtime.LockOSThread()
+      unlockThd = runtime.UnlockOSThread
+      if !curNs.IsOpen() {
+         if curNs, err = netns.Get(); err != nil {
+            restore()
+            return nil, fmt.Errorf(&#34;could not get current namespace while creating netlink socket: %v&#34;, err)
+         }
+         closeNs = curNs.Close
+      }
+      if err := netns.Set(newNs); err != nil {
+         restore()
+         return nil, fmt.Errorf(&#34;failed to set into network namespace %d while creating netlink socket: %v&#34;, newNs, err)
+      }
+      moveBack = netns.Set
+   }
+   return restore, nil
+}
+ 
+ 
+// Set sets the current network namespace to the namespace represented
+// by NsHandle.
+func Set(ns NsHandle) (err error) {
+   return Setns(ns, CLONE_NEWNET)
+}
+ 
+ 
+// Setns sets namespace using syscall. Note that this should be a method
+// in syscall but it has not been added.
+func Setns(ns NsHandle, nstype int) (err error) {
+   _, _, e1 := syscall.Syscall(SYS_SETNS, uintptr(ns), uintptr(nstype), 0)
+   if e1 != 0 {
+      err = e1
+   }
+   return
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到最终是在调用系统调用进入netns时出错了，但是去宿主上操作，实际使可以执行ip netns exec命令的，这个错在网上搜也可以搜到，如<a href="https://github.com/moby/moby/issues/33656">https://github.com/moby/moby/issues/33656</a>，但是经过去宿主上查看并没有ds_agent进程，也可能是有其他病病毒扫描类的软件导致的，但是可能性不大。后续把netns操作的相关代码单独拿出来搞了个demo，到宿主上执行仍然会报此错误，而且不存是在有问题还是没问题的宿主上，后经孔飞兄排查即测试，发现只要把docker参数MountFlags=slave去掉，demo就能运行成功，dockerd启动就不会再报这个错，但是同时又发现了其他问题，相关问题简体见如下issue
+<a href="https://blog.frognew.com/2018/02/k8s-unable-delete-pod-docker-device-busy.html">https://blog.frognew.com/2018/02/k8s-unable-delete-pod-docker-device-busy.html</a></p>
+<p><a href="https://github.com/moby/moby/issues/35873">https://github.com/moby/moby/issues/35873</a></p>
+<p><a href="https://access.redhat.com/solutions/2991041">https://access.redhat.com/solutions/2991041</a></p>
+<p>其中又涉及到多个其他issue，涉及docker版本和linux版本的问题，从上面为issue里看这种问题暂时是无解的，无论怎么设置MountFlags，只要与live-restore一起使用就会存在问题。就目前线上配置看，除了内存泄露，还没有反馈其他问题。所以可以先找出来api调用方，规范api调用，及时关闭超时连接也是可以避免内存泄露的。而且辛亏现在用的物理网路，否则还可能出现把同一个ip分配给多个容器的bug。之前出现过的netns泄露的问题可能也与此有关</p>
+<h4 id="谁是调用方">谁是调用方</h4>
+<p>经过上面的排查，已经可以明确问题的原因，对应的代码逻辑。虽然还无法从根本上解决，但是找到调用方，规范调用规则也是可以避免这个问题的，如何找到调用方呢，一般找api调用方，只需要netstat找对用端口就好了，会显示出来调用方的IP和Port，但是这里并不是通过ip:port形式访问的，而是直接通过docker.sock访问，因为线上docker并没有开启tcp访问。其实这里也可以验证一下，因为每秒调用一次api，创建一个新的链接，一定会导致fd泄露的，可以直接到进入/proc/{dockerd&rsquo;s pid}/fd，看里面文件个数，确实是在一直增加的，而且增长速度与宿主上的容器数有关，这也是一个潜在的风险点。</p>
+<p>剩下的问题就是寻找unix socket的peer，目前我们已经一端是docker，只需要找到另一端就可以了，步骤如下</p>
+<ol>
+<li>
+<p>ss -a &ndash;unix -p | grep      docker，输出如下</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="dockerd_uds.png"
+        data-srcset="/posts/dockerd-memory-leak1/dockerd_uds.png, dockerd_uds.png 1.5x, /posts/dockerd-memory-leak1/dockerd_uds.png 2x"
+        data-sizes="auto"
+        alt="/posts/dockerd-memory-leak1/dockerd_uds.png"
+        title="img" /><br>
+左边红框是dockerd开的一个socket，右边的框是调用者开的socket</p>
+</li>
+<li>
+<p>在右边的红框里随意挑一个，执行ss -a &ndash;unix      -p | awk &lsquo;$6==-219386905&rsquo; ，输出如下
+u_str  ESTAB      0      0            * -219386905            *      -219569454                 users:((&ldquo;odin-agent&rdquo;,pid=1962370,fd=55416))
+可以看到另一端是odin-agent</p>
+</li>
+</ol>
+<h4 id="结束了吗">结束了吗</h4>
+<p>调用方是谁也查清楚了，按照上面的分析，只要设置了live-restore: true且设置完执行过重启的dockerd都存在内存泄露的情况，通过一个脚本批量执行了一下，结果却发现例外，例如ddcloud-underlay-kube-node288.ys就不存在内存泄露，此时心中又是万马奔腾啊，难道之前的分析是错的？</p>
+<p>登录到没问题的机器上，查看dockerd的日志，failed to create osl candbox的日志有，但是每秒一次的collecting stats的日志却没有。上面分析过，只有当前存在未关闭的连接时，每秒一次的遍历才能发现有需要执行的stats，才会打印collecting stats的日志。可以通过执行docker stats命令验证，执行之后再去看dockerd的日志就会发现出现collecting stats的日志。也正因为没有未关闭的连接，所以不会出现内存和unix socket泄露，经过查看调用方即odin-agent的版本，发现是1.18.1</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="dockerd_odinagent_version1.png"
+        data-srcset="/posts/dockerd-memory-leak1/dockerd_odinagent_version1.png, dockerd_odinagent_version1.png 1.5x, /posts/dockerd-memory-leak1/dockerd_odinagent_version1.png 2x"
+        data-sizes="auto"
+        alt="/posts/dockerd-memory-leak1/dockerd_odinagent_version1.png"
+        title="img" /></p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="dockerd_odinagent_version2.png"
+        data-srcset="/posts/dockerd-memory-leak1/dockerd_odinagent_version2.png, dockerd_odinagent_version2.png 1.5x, /posts/dockerd-memory-leak1/dockerd_odinagent_version2.png 2x"
+        data-sizes="auto"
+        alt="/posts/dockerd-memory-leak1/dockerd_odinagent_version2.png"
+        title="img" /></p>
+<p>至此，已找到问题，1.18.1版本的odin-agent还没有问题，1.20.0版本有问题。顺便去看了一眼odin-agent的代码，目前master分支的相关代码如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">//拿到容器stats
+func getContainerStats(containerID string) (threadNum int, err error) {
+        if dockerClient == nil {
+               dlog.Error(&#34;dockerClient is nil!!!&#34;)
+               return
+        }
+ 
+ 
+    // 万恶之源，context.Background()
+        resp, err := dockerClient.ContainerStats(context.Background(), containerID, false)
+        if err != nil {
+               dlog.Error(err)
+               return
+        }
+ 
+        var stats DockerStats
+        err = json.NewDecoder(resp.Body).Decode(&amp;stats)
+        if err != nil {
+               return
+        }
+ 
+        threadNum = stats.PidsStats.Current
+        return
+}
+ 
+ 
+func UpdateContainerStat() {
+        fp := &#34;/home/odin/container-host&#34;
+        if !file.IsExist(fp) {
+               return
+        }
+        dlog.Info(&#34;UpdateContainerStat start...&#34;)
+ 
+        go CleanContainerInspectMap()
+ 
+        var err error
+        ContainerType, err = file.ToString(fp)
+        if err != nil {
+               dlog.Error(&#34;read file err:&#34;, err, fp)
+               return
+        }
+ 
+        GetMajorMinor()
+ 
+        dockerClient, err = dockerclient.NewEnvClient()
+        if err != nil {
+               dlog.Error(err)
+        }
+ 
+    // 10s
+        t1 := time.NewTicker(time.Duration(common.DEFAULT_INTERVAL[common.TYPE_DOCKER]) * time.Second)
+        for {
+               updateContainerStat()
+               &lt;-t1.C
+        }
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>终于验证了问题的所在，客户端没有超时设置，服务端也没有，10s获取一次所有容器的stats信息，假如有20个容器，就会导致一天创建172800个chan（内存泄露）和172800 * 2个socket（fd泄露，dockerd和odin-agent各占一半）</p>
+<h3 id="总结">总结</h3>
+<p>出现内存和unix socket泄露的条件：odin-agent版本是1.20.0（其他版本可能也有问题） 且 live-restore: true 且 设置了live-restore之后重启过dockerd。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-10-16</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://likakuli.github.io/posts/dockerd-memory-leak1/" data-title="Dockerd内存泄露" data-hashtags="docker"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://likakuli.github.io/posts/dockerd-memory-leak1/" data-hashtag="docker"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://likakuli.github.io/posts/dockerd-memory-leak1/" data-title="Dockerd内存泄露" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://likakuli.github.io/posts/dockerd-memory-leak1/" data-title="Dockerd内存泄露"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://likakuli.github.io/posts/dockerd-memory-leak1/" data-title="Dockerd内存泄露"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://likakuli.github.io/posts/dockerd-memory-leak1/" data-title="Dockerd内存泄露" data-description="dockerd内存泄露"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://likakuli.github.io/posts/dockerd-memory-leak1/" data-title="Dockerd内存泄露" data-description="dockerd内存泄露"><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://likakuli.github.io/posts/dockerd-memory-leak1/" data-title="Dockerd内存泄露"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/kubernetes-statefulset-sync/" class="prev" rel="prev" title="Statefulset创建pod慢"><i class="fas fa-angle-left fa-fw"></i>Statefulset创建pod慢</a>
+            <a href="/posts/cgroup-leak/" class="next" rel="next" title="Cgroup泄露">Cgroup泄露<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

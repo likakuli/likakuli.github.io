@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Kubelet与CNI交互源码 - kaku&#39;s blog</title><meta name="Description" content="kubelet与cni交互流程"><meta property="og:title" content="Kubelet与CNI交互源码" />
+<meta property="og:description" content="kubelet与cni交互流程" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://likakuli.github.io/posts/kubernetes-cni/" />
+<meta property="og:image" content="https://likakuli.github.io/logo.png"/>
+<meta property="article:published_time" content="2019-07-16T13:53:02+08:00" />
+<meta property="article:modified_time" content="2020-10-16T18:17:42+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://likakuli.github.io/logo.png"/>
+
+<meta name="twitter:title" content="Kubelet与CNI交互源码"/>
+<meta name="twitter:description" content="kubelet与cni交互流程"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://likakuli.github.io/posts/kubernetes-cni/" /><link rel="prev" href="https://likakuli.github.io/posts/cgroup-leak/" /><link rel="next" href="https://likakuli.github.io/posts/kubernetes-pod-create/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Kubelet与CNI交互源码",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/likakuli.github.io\/posts\/kubernetes-cni\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  4157 ,
+        "url": "https:\/\/likakuli.github.io\/posts\/kubernetes-cni\/","datePublished": "2019-07-16T13:53:02+08:00","dateModified": "2020-10-16T18:17:42+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/likakuli.github.io\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": "kubelet与cni交互流程"
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Kubelet与CNI交互源码</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-07-16">2019-07-16</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 4157 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 9 分钟&nbsp;<span id="/posts/kubernetes-cni/" class="leancloud_visitors" data-flag-title="Kubelet与CNI交互源码">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#整体介绍">整体介绍</a></li>
+    <li><a href="#cni-插件初始化">CNI 插件初始化</a></li>
+    <li><a href="#pod-来源">POD 来源</a></li>
+    <li><a href="#pod-创建">POD 创建</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><blockquote>
+<p>转载自：https://www.cnblogs.com/haoqingchuan/p/8668746.html，有修改 代码版本1.12.4</p>
+</blockquote>
+<h1 id="整体介绍">整体介绍</h1>
+<p>kubelet通过调用 grpc 接口调用实现了 CRI 的 dockershim 完成 rpc 通信，CNI 是由 dockershim grpc server 中调用的</p>
+<p>kubelet -&gt; CRI shim -&gt; container runtime -&gt; container</p>
+<p>POD 创建过程中从 kubelet 到 docker server 到 cni 的 UML 结构如下
+<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="cni.png"
+        data-srcset="/posts/kubernetes-cni/cni.png, cni.png 1.5x, /posts/kubernetes-cni/cni.png 2x"
+        data-sizes="auto"
+        alt="/posts/kubernetes-cni/cni.png"
+        title="img" /></p>
+<h1 id="cni-插件初始化">CNI 插件初始化</h1>
+<p>kubelet 在初始化的时候如果使用containerRuntime为Docker，则会起动dockershim rpc server</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="k">case</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">DockerContainerRuntime</span><span class="p">:</span>
+		<span class="c1">// Create and start the CRI shim running as a grpc server.
+</span><span class="c1"></span>		<span class="nx">streamingConfig</span> <span class="o">:=</span> <span class="nf">getStreamingConfig</span><span class="p">(</span><span class="nx">kubeCfg</span><span class="p">,</span> <span class="nx">kubeDeps</span><span class="p">,</span> <span class="nx">crOptions</span><span class="p">)</span>
+    <span class="c1">// 主要函数
+</span><span class="c1"></span>		<span class="nx">ds</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dockershim</span><span class="p">.</span><span class="nf">NewDockerService</span><span class="p">(</span><span class="nx">kubeDeps</span><span class="p">.</span><span class="nx">DockerClientConfig</span><span class="p">,</span> <span class="nx">crOptions</span><span class="p">.</span><span class="nx">PodSandboxImage</span><span class="p">,</span> <span class="nx">streamingConfig</span><span class="p">,</span>
+			<span class="o">&amp;</span><span class="nx">pluginSettings</span><span class="p">,</span> <span class="nx">runtimeCgroups</span><span class="p">,</span> <span class="nx">kubeCfg</span><span class="p">.</span><span class="nx">CgroupDriver</span><span class="p">,</span> <span class="nx">crOptions</span><span class="p">.</span><span class="nx">DockershimRootDirectory</span><span class="p">,</span> <span class="p">!</span><span class="nx">crOptions</span><span class="p">.</span><span class="nx">RedirectContainerStreaming</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">crOptions</span><span class="p">.</span><span class="nx">RedirectContainerStreaming</span> <span class="p">{</span>
+			<span class="nx">klet</span><span class="p">.</span><span class="nx">criHandler</span> <span class="p">=</span> <span class="nx">ds</span>
+		<span class="p">}</span>
+
+		<span class="c1">// The unix socket for kubelet &lt;-&gt; dockershim communication.
+</span><span class="c1"></span>		<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;RemoteRuntimeEndpoint: %q, RemoteImageEndpoint: %q&#34;</span><span class="p">,</span>
+			<span class="nx">remoteRuntimeEndpoint</span><span class="p">,</span>
+			<span class="nx">remoteImageEndpoint</span><span class="p">)</span>
+		<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Starting the GRPC server for the docker CRI shim.&#34;</span><span class="p">)</span>
+		<span class="nx">server</span> <span class="o">:=</span> <span class="nx">dockerremote</span><span class="p">.</span><span class="nf">NewDockerServer</span><span class="p">(</span><span class="nx">remoteRuntimeEndpoint</span><span class="p">,</span> <span class="nx">ds</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">server</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+
+		<span class="c1">// Create dockerLegacyService when the logging driver is not supported.
+</span><span class="c1"></span>		<span class="nx">supported</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ds</span><span class="p">.</span><span class="nf">IsCRISupportedLogDriver</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="p">!</span><span class="nx">supported</span> <span class="p">{</span>
+			<span class="nx">klet</span><span class="p">.</span><span class="nx">dockerLegacyService</span> <span class="p">=</span> <span class="nx">ds</span>
+			<span class="nx">legacyLogProvider</span> <span class="p">=</span> <span class="nx">ds</span>
+		<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>创建 dockerservice 对象时初始化cniplugin</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// rpc server端
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewDockerService</span><span class="p">(</span><span class="nx">config</span> <span class="o">*</span><span class="nx">ClientConfig</span><span class="p">,</span> <span class="nx">podSandboxImage</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">streamingConfig</span> <span class="o">*</span><span class="nx">streaming</span><span class="p">.</span><span class="nx">Config</span><span class="p">,</span> <span class="nx">pluginSettings</span> <span class="o">*</span><span class="nx">NetworkPluginSettings</span><span class="p">,</span>
+	<span class="nx">cgroupsName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">kubeCgroupDriver</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">dockershimRootDir</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">startLocalStreamingServer</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">(</span><span class="nx">DockerService</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+  <span class="o">...</span>
+	<span class="c1">// 解析kubelet配置的pluginbindir
+</span><span class="c1"></span>	<span class="nx">pluginSettings</span><span class="p">.</span><span class="nx">PluginBinDirs</span> <span class="p">=</span> <span class="nx">cni</span><span class="p">.</span><span class="nf">SplitDirs</span><span class="p">(</span><span class="nx">pluginSettings</span><span class="p">.</span><span class="nx">PluginBinDirString</span><span class="p">)</span>
+	<span class="nx">cniPlugins</span> <span class="o">:=</span> <span class="nx">cni</span><span class="p">.</span><span class="nf">ProbeNetworkPlugins</span><span class="p">(</span><span class="nx">pluginSettings</span><span class="p">.</span><span class="nx">PluginConfDir</span><span class="p">,</span> 		     <span class="nx">pluginSettings</span><span class="p">.</span><span class="nx">PluginBinDirs</span><span class="p">)</span>
+	<span class="nx">cniPlugins</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">cniPlugins</span><span class="p">,</span> <span class="nx">kubenet</span><span class="p">.</span><span class="nf">NewPlugin</span><span class="p">(</span><span class="nx">pluginSettings</span><span class="p">.</span><span class="nx">PluginBinDirs</span><span class="p">))</span>
+	<span class="nx">netHost</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">dockerNetworkHost</span><span class="p">{</span>
+		<span class="o">&amp;</span><span class="nx">namespaceGetter</span><span class="p">{</span><span class="nx">ds</span><span class="p">},</span>
+		<span class="o">&amp;</span><span class="nx">portMappingGetter</span><span class="p">{</span><span class="nx">ds</span><span class="p">},</span>
+	<span class="p">}</span>
+	<span class="nx">plug</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">network</span><span class="p">.</span><span class="nf">InitNetworkPlugin</span><span class="p">(</span><span class="nx">cniPlugins</span><span class="p">,</span> <span class="nx">pluginSettings</span><span class="p">.</span><span class="nx">PluginName</span><span class="p">,</span> <span class="nx">netHost</span><span class="p">,</span> <span class="nx">pluginSettings</span><span class="p">.</span><span class="nx">HairpinMode</span><span class="p">,</span> <span class="nx">pluginSettings</span><span class="p">.</span><span class="nx">NonMasqueradeCIDR</span><span class="p">,</span> <span class="nx">pluginSettings</span><span class="p">.</span><span class="nx">MTU</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;didn&#39;t find compatible CNI plugin with given settings %+v: 	%v&#34;</span><span class="p">,</span> <span class="nx">pluginSettings</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">ds</span><span class="p">.</span><span class="nx">network</span> <span class="p">=</span> <span class="nx">network</span><span class="p">.</span><span class="nf">NewPluginManager</span><span class="p">(</span><span class="nx">plug</span><span class="p">)</span>
+	<span class="nx">glog</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Docker cri networking managed by %v&#34;</span><span class="p">,</span> <span class="nx">plug</span><span class="p">.</span><span class="nf">Name</span><span class="p">())</span>
+<span class="o">...</span>
+<span class="p">}</span>
+
+<span class="c1">// 根据指定confdir 和 bindir获取networkplugin
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">ProbeNetworkPlugins</span><span class="p">(</span><span class="nx">confDir</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">binDirs</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="p">[]</span><span class="nx">network</span><span class="p">.</span><span class="nx">NetworkPlugin</span> <span class="p">{</span>
+	<span class="nx">old</span> <span class="o">:=</span> <span class="nx">binDirs</span>
+	<span class="nx">binDirs</span> <span class="p">=</span> <span class="nb">make</span><span class="p">([]</span><span class="kt">string</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">binDirs</span><span class="p">))</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">dir</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">old</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">dir</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+			<span class="nx">binDirs</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">binDirs</span><span class="p">,</span> <span class="nx">dir</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="nx">plugin</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">cniNetworkPlugin</span><span class="p">{</span>
+		<span class="nx">defaultNetwork</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span>
+		<span class="nx">loNetwork</span><span class="p">:</span>      <span class="nf">getLoNetwork</span><span class="p">(</span><span class="nx">binDirs</span><span class="p">),</span>
+		<span class="nx">execer</span><span class="p">:</span>         <span class="nx">utilexec</span><span class="p">.</span><span class="nf">New</span><span class="p">(),</span>
+		<span class="nx">confDir</span><span class="p">:</span>        <span class="nx">confDir</span><span class="p">,</span>
+		<span class="nx">binDirs</span><span class="p">:</span>        <span class="nx">binDirs</span><span class="p">,</span>
+	<span class="p">}</span>
+
+	<span class="c1">// sync NetworkConfig in best effort during probing.
+</span><span class="c1"></span>	<span class="nx">plugin</span><span class="p">.</span><span class="nf">syncNetworkConfig</span><span class="p">()</span>
+	<span class="k">return</span> <span class="p">[]</span><span class="nx">network</span><span class="p">.</span><span class="nx">NetworkPlugin</span><span class="p">{</span><span class="nx">plugin</span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>初始化cniplugin，会根据pluginDir<strong>查找符合条件的第一个 CNI config 文件</strong>，并以此 config 文件查找到对应的 CNI bin</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// InitNetworkPlugin inits the plugin that matches networkPluginName. Plugins must have unique names.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">InitNetworkPlugin</span><span class="p">(</span><span class="nx">plugins</span> <span class="p">[]</span><span class="nx">NetworkPlugin</span><span class="p">,</span> <span class="nx">networkPluginName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">host</span> <span class="nx">Host</span><span class="p">,</span> <span class="nx">hairpinMode</span> <span class="nx">kubeletconfig</span><span class="p">.</span><span class="nx">HairpinMode</span><span class="p">,</span> <span class="nx">nonMasqueradeCIDR</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">mtu</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">NetworkPlugin</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">networkPluginName</span> <span class="o">==</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+		<span class="c1">// default to the no_op plugin
+</span><span class="c1"></span>		<span class="nx">plug</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">NoopNetworkPlugin</span><span class="p">{}</span>
+		<span class="nx">plug</span><span class="p">.</span><span class="nx">Sysctl</span> <span class="p">=</span> <span class="nx">utilsysctl</span><span class="p">.</span><span class="nf">New</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">plug</span><span class="p">.</span><span class="nf">Init</span><span class="p">(</span><span class="nx">host</span><span class="p">,</span> <span class="nx">hairpinMode</span><span class="p">,</span> <span class="nx">nonMasqueradeCIDR</span><span class="p">,</span> <span class="nx">mtu</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="nx">plug</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+	<span class="nx">pluginMap</span> <span class="o">:=</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">NetworkPlugin</span><span class="p">{}</span>
+
+	<span class="nx">allErrs</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">error</span><span class="p">{}</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">plugin</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">plugins</span> <span class="p">{</span>
+		<span class="nx">name</span> <span class="o">:=</span> <span class="nx">plugin</span><span class="p">.</span><span class="nf">Name</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">errs</span> <span class="o">:=</span> <span class="nx">validation</span><span class="p">.</span><span class="nf">IsQualifiedName</span><span class="p">(</span><span class="nx">name</span><span class="p">);</span> <span class="nb">len</span><span class="p">(</span><span class="nx">errs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="nx">allErrs</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">allErrs</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;network plugin has invalid name: %q: %s&#34;</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">errs</span><span class="p">,</span> <span class="s">&#34;;&#34;</span><span class="p">)))</span>
+			<span class="k">continue</span>
+		<span class="p">}</span>
+
+		<span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">found</span> <span class="o">:=</span> <span class="nx">pluginMap</span><span class="p">[</span><span class="nx">name</span><span class="p">];</span> <span class="nx">found</span> <span class="p">{</span>
+			<span class="nx">allErrs</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">allErrs</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;network plugin %q was registered more than once&#34;</span><span class="p">,</span> <span class="nx">name</span><span class="p">))</span>
+			<span class="k">continue</span>
+		<span class="p">}</span>
+		<span class="nx">pluginMap</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="p">=</span> <span class="nx">plugin</span>
+	<span class="p">}</span>
+
+	<span class="nx">chosenPlugin</span> <span class="o">:=</span> <span class="nx">pluginMap</span><span class="p">[</span><span class="nx">networkPluginName</span><span class="p">]</span>
+	<span class="k">if</span> <span class="nx">chosenPlugin</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">err</span> <span class="o">:=</span> <span class="nx">chosenPlugin</span><span class="p">.</span><span class="nf">Init</span><span class="p">(</span><span class="nx">host</span><span class="p">,</span> <span class="nx">hairpinMode</span><span class="p">,</span> <span class="nx">nonMasqueradeCIDR</span><span class="p">,</span> <span class="nx">mtu</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">allErrs</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">allErrs</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Network plugin %q failed init: %v&#34;</span><span class="p">,</span> <span class="nx">networkPluginName</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Loaded network plugin %q&#34;</span><span class="p">,</span> <span class="nx">networkPluginName</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">allErrs</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">allErrs</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Network plugin %q not found.&#34;</span><span class="p">,</span> <span class="nx">networkPluginName</span><span class="p">))</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="nx">chosenPlugin</span><span class="p">,</span> <span class="nx">utilerrors</span><span class="p">.</span><span class="nf">NewAggregate</span><span class="p">(</span><span class="nx">allErrs</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">plugin</span> <span class="o">*</span><span class="nx">cniNetworkPlugin</span><span class="p">)</span> <span class="nf">Init</span><span class="p">(</span><span class="nx">host</span> <span class="nx">network</span><span class="p">.</span><span class="nx">Host</span><span class="p">,</span> <span class="nx">hairpinMode</span> <span class="nx">kubeletconfig</span><span class="p">.</span><span class="nx">HairpinMode</span><span class="p">,</span> <span class="nx">nonMasqueradeCIDR</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">mtu</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">err</span> <span class="o">:=</span> <span class="nx">plugin</span><span class="p">.</span><span class="nf">platformInit</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="nx">plugin</span><span class="p">.</span><span class="nx">host</span> <span class="p">=</span> <span class="nx">host</span>
+
+	<span class="nx">plugin</span><span class="p">.</span><span class="nf">syncNetworkConfig</span><span class="p">()</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">plugin</span> <span class="o">*</span><span class="nx">cniNetworkPlugin</span><span class="p">)</span> <span class="nf">syncNetworkConfig</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">network</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">getDefaultCNINetwork</span><span class="p">(</span><span class="nx">plugin</span><span class="p">.</span><span class="nx">confDir</span><span class="p">,</span> <span class="nx">plugin</span><span class="p">.</span><span class="nx">binDirs</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">glog</span><span class="p">.</span><span class="nf">Warningf</span><span class="p">(</span><span class="s">&#34;Unable to update cni config: %s&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">plugin</span><span class="p">.</span><span class="nf">setDefaultNetwork</span><span class="p">(</span><span class="nx">network</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// plugin目录中找到符合.conf，.conflist，.json为后缀的文件，用文件名来排序，并从文件
+</span><span class="c1">// 名列表中找到符合cni 配置规则的plugin配置文件并返回，找到一个立即返回
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">getDefaultCNINetwork</span><span class="p">(</span><span class="nx">confDir</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">binDirs</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">cniNetwork</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">files</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">libcni</span><span class="p">.</span><span class="nf">ConfFiles</span><span class="p">(</span><span class="nx">confDir</span><span class="p">,</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;.conf&#34;</span><span class="p">,</span> <span class="s">&#34;.conflist&#34;</span><span class="p">,</span> <span class="s">&#34;.json&#34;</span><span class="p">})</span>
+	<span class="k">switch</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span><span class="p">:</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="k">case</span> <span class="nb">len</span><span class="p">(</span><span class="nx">files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;No networks found in %s&#34;</span><span class="p">,</span> <span class="nx">confDir</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="nx">sort</span><span class="p">.</span><span class="nf">Strings</span><span class="p">(</span><span class="nx">files</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">confFile</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">files</span> <span class="p">{</span>
+		<span class="kd">var</span> <span class="nx">confList</span> <span class="o">*</span><span class="nx">libcni</span><span class="p">.</span><span class="nx">NetworkConfigList</span>
+		<span class="k">if</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">HasSuffix</span><span class="p">(</span><span class="nx">confFile</span><span class="p">,</span> <span class="s">&#34;.conflist&#34;</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">confList</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">libcni</span><span class="p">.</span><span class="nf">ConfListFromFile</span><span class="p">(</span><span class="nx">confFile</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">glog</span><span class="p">.</span><span class="nf">Warningf</span><span class="p">(</span><span class="s">&#34;Error loading CNI config list file %s: %v&#34;</span><span class="p">,</span> <span class="nx">confFile</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="nx">conf</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">libcni</span><span class="p">.</span><span class="nf">ConfFromFile</span><span class="p">(</span><span class="nx">confFile</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">glog</span><span class="p">.</span><span class="nf">Warningf</span><span class="p">(</span><span class="s">&#34;Error loading CNI config file %s: %v&#34;</span><span class="p">,</span> <span class="nx">confFile</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+			<span class="c1">// Ensure the config has a &#34;type&#34; so we know what plugin to run.
+</span><span class="c1"></span>			<span class="c1">// Also catches the case where somebody put a conflist into a conf file.
+</span><span class="c1"></span>			<span class="k">if</span> <span class="nx">conf</span><span class="p">.</span><span class="nx">Network</span><span class="p">.</span><span class="nx">Type</span> <span class="o">==</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+				<span class="nx">glog</span><span class="p">.</span><span class="nf">Warningf</span><span class="p">(</span><span class="s">&#34;Error loading CNI config file %s: no &#39;type&#39;; perhaps this is a .conflist?&#34;</span><span class="p">,</span> <span class="nx">confFile</span><span class="p">)</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+
+			<span class="nx">confList</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">libcni</span><span class="p">.</span><span class="nf">ConfListFromConf</span><span class="p">(</span><span class="nx">conf</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">glog</span><span class="p">.</span><span class="nf">Warningf</span><span class="p">(</span><span class="s">&#34;Error converting CNI config file %s to list: %v&#34;</span><span class="p">,</span> <span class="nx">confFile</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">confList</span><span class="p">.</span><span class="nx">Plugins</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">Warningf</span><span class="p">(</span><span class="s">&#34;CNI config list %s has no networks, skipping&#34;</span><span class="p">,</span> <span class="nx">confFile</span><span class="p">)</span>
+			<span class="k">continue</span>
+		<span class="p">}</span>
+
+		<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Using CNI configuration file %s&#34;</span><span class="p">,</span> <span class="nx">confFile</span><span class="p">)</span>
+
+		<span class="nx">network</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">cniNetwork</span><span class="p">{</span>
+			<span class="nx">name</span><span class="p">:</span>          <span class="nx">confList</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span>
+			<span class="nx">NetworkConfig</span><span class="p">:</span> <span class="nx">confList</span><span class="p">,</span>
+			<span class="nx">CNIConfig</span><span class="p">:</span>     <span class="o">&amp;</span><span class="nx">libcni</span><span class="p">.</span><span class="nx">CNIConfig</span><span class="p">{</span><span class="nx">Path</span><span class="p">:</span> <span class="nx">binDirs</span><span class="p">},</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="nx">network</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;No valid networks found in %s&#34;</span><span class="p">,</span> <span class="nx">confDir</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="pod-来源">POD 来源</h1>
+<p>在分析 POD 创建的流程之前，我们先看下 kubelet 是怎么获取 POD 资源。 总结下来有三种 POD 来源：</p>
+<ul>
+<li>最常见的是 kubelet list &amp; watch apiserver 获取 POD 资源的更新</li>
+<li>静态目录下 static POD</li>
+<li>kubelet 提供的 http 服务
+后面两者都是 static POD， kubelet 为了能够在 apiserver 也能管理 static POD，在 apiserver 创建了 mirror POD。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// makePodSourceConfig 为kubelet 提供 pod update 事件来源，目前支持三种，监听url，
+</span><span class="c1">// 监听目录，watch apiserver，每种来源都有对应的channel
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">makePodSourceConfig</span><span class="p">(</span><span class="nx">kubeCfg</span> <span class="o">*</span><span class="nx">kubeletconfiginternal</span><span class="p">.</span><span class="nx">KubeletConfiguration</span><span class="p">,</span> <span class="nx">kubeDeps</span> <span class="o">*</span><span class="nx">Dependencies</span><span class="p">,</span> <span class="nx">nodeName</span> <span class="nx">types</span><span class="p">.</span><span class="nx">NodeName</span><span class="p">,</span> <span class="nx">bootstrapCheckpointPath</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">config</span><span class="p">.</span><span class="nx">PodConfig</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">manifestURLHeader</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">http</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">kubeCfg</span><span class="p">.</span><span class="nx">StaticPodURLHeader</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">kubeCfg</span><span class="p">.</span><span class="nx">StaticPodURLHeader</span> <span class="p">{</span>
+			<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">v</span> <span class="p">{</span>
+				<span class="nx">manifestURLHeader</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="c1">// source of all configuration
+</span><span class="c1"></span>	<span class="nx">cfg</span> <span class="o">:=</span> <span class="nx">config</span><span class="p">.</span><span class="nf">NewPodConfig</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">PodConfigNotificationIncremental</span><span class="p">,</span> <span class="nx">kubeDeps</span><span class="p">.</span><span class="nx">Recorder</span><span class="p">)</span>
+
+	<span class="c1">// define file config source
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">kubeCfg</span><span class="p">.</span><span class="nx">StaticPodPath</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+		<span class="nx">glog</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Adding pod path: %v&#34;</span><span class="p">,</span> <span class="nx">kubeCfg</span><span class="p">.</span><span class="nx">StaticPodPath</span><span class="p">)</span>
+		<span class="nx">config</span><span class="p">.</span><span class="nf">NewSourceFile</span><span class="p">(</span><span class="nx">kubeCfg</span><span class="p">.</span><span class="nx">StaticPodPath</span><span class="p">,</span> <span class="nx">nodeName</span><span class="p">,</span> <span class="nx">kubeCfg</span><span class="p">.</span><span class="nx">FileCheckFrequency</span><span class="p">.</span><span class="nx">Duration</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nf">Channel</span><span class="p">(</span><span class="nx">kubetypes</span><span class="p">.</span><span class="nx">FileSource</span><span class="p">))</span>
+	<span class="p">}</span>
+
+	<span class="c1">// define url config source
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">kubeCfg</span><span class="p">.</span><span class="nx">StaticPodURL</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+		<span class="nx">glog</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Adding pod url %q with HTTP header %v&#34;</span><span class="p">,</span> <span class="nx">kubeCfg</span><span class="p">.</span><span class="nx">StaticPodURL</span><span class="p">,</span> <span class="nx">manifestURLHeader</span><span class="p">)</span>
+		<span class="nx">config</span><span class="p">.</span><span class="nf">NewSourceURL</span><span class="p">(</span><span class="nx">kubeCfg</span><span class="p">.</span><span class="nx">StaticPodURL</span><span class="p">,</span> <span class="nx">manifestURLHeader</span><span class="p">,</span> <span class="nx">nodeName</span><span class="p">,</span> <span class="nx">kubeCfg</span><span class="p">.</span><span class="nx">HTTPCheckFrequency</span><span class="p">.</span><span class="nx">Duration</span><span class="p">,</span> <span class="nx">cfg</span><span class="p">.</span><span class="nf">Channel</span><span class="p">(</span><span class="nx">kubetypes</span><span class="p">.</span><span class="nx">HTTPSource</span><span class="p">))</span>
+	<span class="p">}</span>
+
+	<span class="c1">// Restore from the checkpoint path
+</span><span class="c1"></span>	<span class="c1">// NOTE: This MUST happen before creating the apiserver source
+</span><span class="c1"></span>	<span class="c1">// below, or the checkpoint would override the source of truth.
+</span><span class="c1"></span>
+	<span class="kd">var</span> <span class="nx">updatechannel</span> <span class="kd">chan</span><span class="o">&lt;-</span> <span class="kd">interface</span><span class="p">{}</span>
+	<span class="k">if</span> <span class="nx">bootstrapCheckpointPath</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+		<span class="nx">glog</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Adding checkpoint path: %v&#34;</span><span class="p">,</span> <span class="nx">bootstrapCheckpointPath</span><span class="p">)</span>
+		<span class="nx">updatechannel</span> <span class="p">=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nf">Channel</span><span class="p">(</span><span class="nx">kubetypes</span><span class="p">.</span><span class="nx">ApiserverSource</span><span class="p">)</span>
+		<span class="nx">err</span> <span class="o">:=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nf">Restore</span><span class="p">(</span><span class="nx">bootstrapCheckpointPath</span><span class="p">,</span> <span class="nx">updatechannel</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">kubeDeps</span><span class="p">.</span><span class="nx">KubeClient</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">glog</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Watching apiserver&#34;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">updatechannel</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">updatechannel</span> <span class="p">=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nf">Channel</span><span class="p">(</span><span class="nx">kubetypes</span><span class="p">.</span><span class="nx">ApiserverSource</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="nx">config</span><span class="p">.</span><span class="nf">NewSourceApiserver</span><span class="p">(</span><span class="nx">kubeDeps</span><span class="p">.</span><span class="nx">KubeClient</span><span class="p">,</span> <span class="nx">nodeName</span><span class="p">,</span> <span class="nx">updatechannel</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">cfg</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>之后每个pod来源的更新都会发送事件到podcfg的update channel</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// syncLoop is the main loop for processing changes. It watches for changes from
+</span><span class="c1">// three channels (file, apiserver, and http) and creates a union of them. For
+</span><span class="c1">// any new change seen, will run a sync against desired state and running state. If
+</span><span class="c1">// no changes are seen to the configuration, will synchronize the last known desired
+</span><span class="c1">// state every sync-frequency seconds. Never returns.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">kl</span> <span class="o">*</span><span class="nx">Kubelet</span><span class="p">)</span> <span class="nf">syncLoop</span><span class="p">(</span><span class="nx">updates</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">PodUpdate</span><span class="p">,</span> <span class="nx">handler</span> <span class="nx">SyncHandler</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">glog</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;Starting kubelet main sync loop.&#34;</span><span class="p">)</span>
+	<span class="c1">// The resyncTicker wakes up kubelet to checks if there are any pod workers
+</span><span class="c1"></span>	<span class="c1">// that need to be sync&#39;d. A one-second period is sufficient because the
+</span><span class="c1"></span>	<span class="c1">// sync interval is defaulted to 10s.
+</span><span class="c1"></span>	<span class="nx">syncTicker</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">NewTicker</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+	<span class="k">defer</span> <span class="nx">syncTicker</span><span class="p">.</span><span class="nf">Stop</span><span class="p">()</span>
+	<span class="nx">housekeepingTicker</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">NewTicker</span><span class="p">(</span><span class="nx">housekeepingPeriod</span><span class="p">)</span>
+	<span class="k">defer</span> <span class="nx">housekeepingTicker</span><span class="p">.</span><span class="nf">Stop</span><span class="p">()</span>
+	<span class="nx">plegCh</span> <span class="o">:=</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">pleg</span><span class="p">.</span><span class="nf">Watch</span><span class="p">()</span>
+	<span class="kd">const</span> <span class="p">(</span>
+		<span class="nx">base</span>   <span class="p">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span>
+		<span class="nx">max</span>    <span class="p">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span>
+		<span class="nx">factor</span> <span class="p">=</span> <span class="mi">2</span>
+	<span class="p">)</span>
+	<span class="nx">duration</span> <span class="o">:=</span> <span class="nx">base</span>
+	<span class="k">for</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">rs</span> <span class="o">:=</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">runtimeState</span><span class="p">.</span><span class="nf">runtimeErrors</span><span class="p">();</span> <span class="nb">len</span><span class="p">(</span><span class="nx">rs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;skipping pod synchronization - %v&#34;</span><span class="p">,</span> <span class="nx">rs</span><span class="p">)</span>
+			<span class="c1">// exponential backoff
+</span><span class="c1"></span>			<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="nx">duration</span><span class="p">)</span>
+			<span class="nx">duration</span> <span class="p">=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">math</span><span class="p">.</span><span class="nf">Min</span><span class="p">(</span><span class="nb">float64</span><span class="p">(</span><span class="nx">max</span><span class="p">),</span> <span class="nx">factor</span><span class="o">*</span><span class="nb">float64</span><span class="p">(</span><span class="nx">duration</span><span class="p">)))</span>
+			<span class="k">continue</span>
+		<span class="p">}</span>
+		<span class="c1">// reset backoff if we have a success
+</span><span class="c1"></span>		<span class="nx">duration</span> <span class="p">=</span> <span class="nx">base</span>
+
+		<span class="nx">kl</span><span class="p">.</span><span class="nx">syncLoopMonitor</span><span class="p">.</span><span class="nf">Store</span><span class="p">(</span><span class="nx">kl</span><span class="p">.</span><span class="nx">clock</span><span class="p">.</span><span class="nf">Now</span><span class="p">())</span>
+		<span class="k">if</span> <span class="p">!</span><span class="nx">kl</span><span class="p">.</span><span class="nf">syncLoopIteration</span><span class="p">(</span><span class="nx">updates</span><span class="p">,</span> <span class="nx">handler</span><span class="p">,</span> <span class="nx">syncTicker</span><span class="p">.</span><span class="nx">C</span><span class="p">,</span> <span class="nx">housekeepingTicker</span><span class="p">.</span><span class="nx">C</span><span class="p">,</span> <span class="nx">plegCh</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">break</span>
+		<span class="p">}</span>
+		<span class="nx">kl</span><span class="p">.</span><span class="nx">syncLoopMonitor</span><span class="p">.</span><span class="nf">Store</span><span class="p">(</span><span class="nx">kl</span><span class="p">.</span><span class="nx">clock</span><span class="p">.</span><span class="nf">Now</span><span class="p">())</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="pod-创建">POD 创建</h1>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span><span class="lnt">116
+</span><span class="lnt">117
+</span><span class="lnt">118
+</span><span class="lnt">119
+</span><span class="lnt">120
+</span><span class="lnt">121
+</span><span class="lnt">122
+</span><span class="lnt">123
+</span><span class="lnt">124
+</span><span class="lnt">125
+</span><span class="lnt">126
+</span><span class="lnt">127
+</span><span class="lnt">128
+</span><span class="lnt">129
+</span><span class="lnt">130
+</span><span class="lnt">131
+</span><span class="lnt">132
+</span><span class="lnt">133
+</span><span class="lnt">134
+</span><span class="lnt">135
+</span><span class="lnt">136
+</span><span class="lnt">137
+</span><span class="lnt">138
+</span><span class="lnt">139
+</span><span class="lnt">140
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// syncLoopIteration reads from various channels and dispatches pods to the
+</span><span class="c1">// given handler.
+</span><span class="c1">//
+</span><span class="c1">// Arguments:
+</span><span class="c1">// 1.  configCh:       a channel to read config events from
+</span><span class="c1">// 2.  handler:        the SyncHandler to dispatch pods to
+</span><span class="c1">// 3.  syncCh:         a channel to read periodic sync events from
+</span><span class="c1">// 4.  houseKeepingCh: a channel to read housekeeping events from
+</span><span class="c1">// 5.  plegCh:         a channel to read PLEG updates from
+</span><span class="c1">//
+</span><span class="c1">// Events are also read from the kubelet liveness manager&#39;s update channel.
+</span><span class="c1">//
+</span><span class="c1">// The workflow is to read from one of the channels, handle that event, and
+</span><span class="c1">// update the timestamp in the sync loop monitor.
+</span><span class="c1">//
+</span><span class="c1">// Here is an appropriate place to note that despite the syntactical
+</span><span class="c1">// similarity to the switch statement, the case statements in a select are
+</span><span class="c1">// evaluated in a pseudorandom order if there are multiple channels ready to
+</span><span class="c1">// read from when the select is evaluated.  In other words, case statements
+</span><span class="c1">// are evaluated in random order, and you can not assume that the case
+</span><span class="c1">// statements evaluate in order if multiple channels have events.
+</span><span class="c1">//
+</span><span class="c1">// With that in mind, in truly no particular order, the different channels
+</span><span class="c1">// are handled as follows:
+</span><span class="c1">//
+</span><span class="c1">// * configCh: dispatch the pods for the config change to the appropriate
+</span><span class="c1">//             handler callback for the event type
+</span><span class="c1">// * plegCh: update the runtime cache; sync pod
+</span><span class="c1">// * syncCh: sync all pods waiting for sync
+</span><span class="c1">// * houseKeepingCh: trigger cleanup of pods
+</span><span class="c1">// * liveness manager: sync pods that have failed or in which one or more
+</span><span class="c1">//                     containers have failed liveness checks
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">kl</span> <span class="o">*</span><span class="nx">Kubelet</span><span class="p">)</span> <span class="nf">syncLoopIteration</span><span class="p">(</span><span class="nx">configCh</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">PodUpdate</span><span class="p">,</span> <span class="nx">handler</span> <span class="nx">SyncHandler</span><span class="p">,</span>
+	<span class="nx">syncCh</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">,</span> <span class="nx">housekeepingCh</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">,</span> <span class="nx">plegCh</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="o">*</span><span class="nx">pleg</span><span class="p">.</span><span class="nx">PodLifecycleEvent</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">select</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="nx">u</span><span class="p">,</span> <span class="nx">open</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">configCh</span><span class="p">:</span>
+		<span class="c1">// Update from a config source; dispatch it to the right handler
+</span><span class="c1"></span>		<span class="c1">// callback.
+</span><span class="c1"></span>		<span class="k">if</span> <span class="p">!</span><span class="nx">open</span> <span class="p">{</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Update channel is closed. Exiting the sync loop.&#34;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">false</span>
+		<span class="p">}</span>
+
+		<span class="k">switch</span> <span class="nx">u</span><span class="p">.</span><span class="nx">Op</span> <span class="p">{</span>
+		<span class="k">case</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">ADD</span><span class="p">:</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (ADD, %q): %q&#34;</span><span class="p">,</span> <span class="nx">u</span><span class="p">.</span><span class="nx">Source</span><span class="p">,</span> <span class="nx">format</span><span class="p">.</span><span class="nf">Pods</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">))</span>
+			<span class="c1">// After restarting, kubelet will get all existing pods through
+</span><span class="c1"></span>			<span class="c1">// ADD as if they are new pods. These pods will then go through the
+</span><span class="c1"></span>			<span class="c1">// admission process and *may* be rejected. This can be resolved
+</span><span class="c1"></span>			<span class="c1">// once we have checkpointing.
+</span><span class="c1"></span>			<span class="nx">handler</span><span class="p">.</span><span class="nf">HandlePodAdditions</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">)</span>
+		<span class="k">case</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">UPDATE</span><span class="p">:</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (UPDATE, %q): %q&#34;</span><span class="p">,</span> <span class="nx">u</span><span class="p">.</span><span class="nx">Source</span><span class="p">,</span> <span class="nx">format</span><span class="p">.</span><span class="nf">PodsWithDeletionTimestamps</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">))</span>
+			<span class="nx">handler</span><span class="p">.</span><span class="nf">HandlePodUpdates</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">)</span>
+		<span class="k">case</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">REMOVE</span><span class="p">:</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (REMOVE, %q): %q&#34;</span><span class="p">,</span> <span class="nx">u</span><span class="p">.</span><span class="nx">Source</span><span class="p">,</span> <span class="nx">format</span><span class="p">.</span><span class="nf">Pods</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">))</span>
+			<span class="nx">handler</span><span class="p">.</span><span class="nf">HandlePodRemoves</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">)</span>
+		<span class="k">case</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">RECONCILE</span><span class="p">:</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (RECONCILE, %q): %q&#34;</span><span class="p">,</span> <span class="nx">u</span><span class="p">.</span><span class="nx">Source</span><span class="p">,</span> <span class="nx">format</span><span class="p">.</span><span class="nf">Pods</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">))</span>
+			<span class="nx">handler</span><span class="p">.</span><span class="nf">HandlePodReconcile</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">)</span>
+		<span class="k">case</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">DELETE</span><span class="p">:</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (DELETE, %q): %q&#34;</span><span class="p">,</span> <span class="nx">u</span><span class="p">.</span><span class="nx">Source</span><span class="p">,</span> <span class="nx">format</span><span class="p">.</span><span class="nf">Pods</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">))</span>
+			<span class="c1">// DELETE is treated as a UPDATE because of graceful deletion.
+</span><span class="c1"></span>			<span class="nx">handler</span><span class="p">.</span><span class="nf">HandlePodUpdates</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">)</span>
+		<span class="k">case</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">RESTORE</span><span class="p">:</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (RESTORE, %q): %q&#34;</span><span class="p">,</span> <span class="nx">u</span><span class="p">.</span><span class="nx">Source</span><span class="p">,</span> <span class="nx">format</span><span class="p">.</span><span class="nf">Pods</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">))</span>
+			<span class="c1">// These are pods restored from the checkpoint. Treat them as new
+</span><span class="c1"></span>			<span class="c1">// pods.
+</span><span class="c1"></span>			<span class="nx">handler</span><span class="p">.</span><span class="nf">HandlePodAdditions</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Pods</span><span class="p">)</span>
+		<span class="k">case</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">SET</span><span class="p">:</span>
+			<span class="c1">// TODO: Do we want to support this?
+</span><span class="c1"></span>			<span class="nx">glog</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Kubelet does not support snapshot update&#34;</span><span class="p">)</span>
+		<span class="p">}</span>
+
+		<span class="k">if</span> <span class="nx">u</span><span class="p">.</span><span class="nx">Op</span> <span class="o">!=</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">RESTORE</span> <span class="p">{</span>
+			<span class="c1">// If the update type is RESTORE, it means that the update is from
+</span><span class="c1"></span>			<span class="c1">// the pod checkpoints and may be incomplete. Do not mark the
+</span><span class="c1"></span>			<span class="c1">// source as ready.
+</span><span class="c1"></span>
+			<span class="c1">// Mark the source ready after receiving at least one update from the
+</span><span class="c1"></span>			<span class="c1">// source. Once all the sources are marked ready, various cleanup
+</span><span class="c1"></span>			<span class="c1">// routines will start reclaiming resources. It is important that this
+</span><span class="c1"></span>			<span class="c1">// takes place only after kubelet calls the update handler to process
+</span><span class="c1"></span>			<span class="c1">// the update to ensure the internal pod cache is up-to-date.
+</span><span class="c1"></span>			<span class="nx">kl</span><span class="p">.</span><span class="nx">sourcesReady</span><span class="p">.</span><span class="nf">AddSource</span><span class="p">(</span><span class="nx">u</span><span class="p">.</span><span class="nx">Source</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="k">case</span> <span class="nx">e</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">plegCh</span><span class="p">:</span>
+		<span class="k">if</span> <span class="nf">isSyncPodWorthy</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+			<span class="c1">// PLEG event for a pod; sync it.
+</span><span class="c1"></span>			<span class="k">if</span> <span class="nx">pod</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">podManager</span><span class="p">.</span><span class="nf">GetPodByUID</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">ID</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+				<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (PLEG): %q, event: %#v&#34;</span><span class="p">,</span> <span class="nx">format</span><span class="p">.</span><span class="nf">Pod</span><span class="p">(</span><span class="nx">pod</span><span class="p">),</span> <span class="nx">e</span><span class="p">)</span>
+				<span class="nx">handler</span><span class="p">.</span><span class="nf">HandlePodSyncs</span><span class="p">([]</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">{</span><span class="nx">pod</span><span class="p">})</span>
+			<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+				<span class="c1">// If the pod no longer exists, ignore the event.
+</span><span class="c1"></span>				<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (PLEG): ignore irrelevant event: %#v&#34;</span><span class="p">,</span> <span class="nx">e</span><span class="p">)</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+
+		<span class="k">if</span> <span class="nx">e</span><span class="p">.</span><span class="nx">Type</span> <span class="o">==</span> <span class="nx">pleg</span><span class="p">.</span><span class="nx">ContainerDied</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="nx">containerID</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">Data</span><span class="p">.(</span><span class="kt">string</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+				<span class="nx">kl</span><span class="p">.</span><span class="nf">cleanUpContainersInPod</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">containerID</span><span class="p">)</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">syncCh</span><span class="p">:</span>
+		<span class="c1">// Sync pods waiting for sync
+</span><span class="c1"></span>		<span class="nx">podsToSync</span> <span class="o">:=</span> <span class="nx">kl</span><span class="p">.</span><span class="nf">getPodsToSync</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">podsToSync</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="k">break</span>
+		<span class="p">}</span>
+		<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (SYNC): %d pods; %s&#34;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">podsToSync</span><span class="p">),</span> <span class="nx">format</span><span class="p">.</span><span class="nf">Pods</span><span class="p">(</span><span class="nx">podsToSync</span><span class="p">))</span>
+		<span class="nx">handler</span><span class="p">.</span><span class="nf">HandlePodSyncs</span><span class="p">(</span><span class="nx">podsToSync</span><span class="p">)</span>
+	<span class="k">case</span> <span class="nx">update</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">kl</span><span class="p">.</span><span class="nx">livenessManager</span><span class="p">.</span><span class="nf">Updates</span><span class="p">():</span>
+		<span class="k">if</span> <span class="nx">update</span><span class="p">.</span><span class="nx">Result</span> <span class="o">==</span> <span class="nx">proberesults</span><span class="p">.</span><span class="nx">Failure</span> <span class="p">{</span>
+			<span class="c1">// The liveness manager detected a failure; sync the pod.
+</span><span class="c1"></span>
+			<span class="c1">// We should not use the pod from livenessManager, because it is never updated after
+</span><span class="c1"></span>			<span class="c1">// initialization.
+</span><span class="c1"></span>			<span class="nx">pod</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">podManager</span><span class="p">.</span><span class="nf">GetPodByUID</span><span class="p">(</span><span class="nx">update</span><span class="p">.</span><span class="nx">PodUID</span><span class="p">)</span>
+			<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+				<span class="c1">// If the pod no longer exists, ignore the update.
+</span><span class="c1"></span>				<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (container unhealthy): ignore irrelevant update: %#v&#34;</span><span class="p">,</span> <span class="nx">update</span><span class="p">)</span>
+				<span class="k">break</span>
+			<span class="p">}</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (container unhealthy): %q&#34;</span><span class="p">,</span> <span class="nx">format</span><span class="p">.</span><span class="nf">Pod</span><span class="p">(</span><span class="nx">pod</span><span class="p">))</span>
+			<span class="nx">handler</span><span class="p">.</span><span class="nf">HandlePodSyncs</span><span class="p">([]</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">{</span><span class="nx">pod</span><span class="p">})</span>
+		<span class="p">}</span>
+	<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">housekeepingCh</span><span class="p">:</span>
+		<span class="k">if</span> <span class="p">!</span><span class="nx">kl</span><span class="p">.</span><span class="nx">sourcesReady</span><span class="p">.</span><span class="nf">AllReady</span><span class="p">()</span> <span class="p">{</span>
+			<span class="c1">// If the sources aren&#39;t ready or volume manager has not yet synced the states,
+</span><span class="c1"></span>			<span class="c1">// skip housekeeping, as we may accidentally delete pods from unready sources.
+</span><span class="c1"></span>			<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (housekeeping, skipped): sources aren&#39;t ready yet.&#34;</span><span class="p">)</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;SyncLoop (housekeeping)&#34;</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">handler</span><span class="p">.</span><span class="nf">HandlePodCleanups</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">glog</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Failed cleaning pods: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="kc">true</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>pod_works用于为pod update分配goroutine执行具体任务。
+<code>result := kl.containerRuntime.SyncPod(pod, apiPodStatus, podStatus, pullSecrets, kl.backOff)</code>
+syncPod时会调用createPodSandbox 来创建pause container（infrastructure container），pause pod 创建后所有的业务容器共享该pause 容器的网络。
+在创建 pause 容器时调用如下方法配置网络，
+err = ds.network.SetUpPod(config.GetMetadata().Namespace, config.GetMetadata().Name, cID, config.Annotations)</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 为了能够保证业务pod在异常退出时仍然能够保存网络信息，因此创建pause (infra)容器来共享网络配置
+</span><span class="c1">// pause container也叫做 infrastructure-container， 
+</span><span class="c1">// RunPodSandbox creates and starts a pod-level sandbox. Runtimes should ensure
+</span><span class="c1">// the sandbox is in ready state.
+</span><span class="c1">// For docker, PodSandbox is implemented by a container holding the network
+</span><span class="c1">// namespace for the pod.
+</span><span class="c1">// Note: docker doesn&#39;t use LogDirectory (yet).
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ds</span> <span class="o">*</span><span class="nx">dockerService</span><span class="p">)</span> <span class="nf">RunPodSandbox</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">r</span> <span class="o">*</span><span class="nx">runtimeapi</span><span class="p">.</span><span class="nx">RunPodSandboxRequest</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">runtimeapi</span><span class="p">.</span><span class="nx">RunPodSandboxResponse</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">config</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nf">GetConfig</span><span class="p">()</span>
+
+	<span class="c1">// Step 1: Pull the image for the sandbox.
+</span><span class="c1"></span>	<span class="nx">image</span> <span class="o">:=</span> <span class="nx">defaultSandboxImage</span>
+	<span class="nx">podSandboxImage</span> <span class="o">:=</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">podSandboxImage</span>
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">podSandboxImage</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nx">image</span> <span class="p">=</span> <span class="nx">podSandboxImage</span>
+	<span class="p">}</span>
+
+	<span class="c1">// NOTE: To use a custom sandbox image in a private repository, users need to configure the nodes with credentials properly.
+</span><span class="c1"></span>	<span class="c1">// see: http://kubernetes.io/docs/user-guide/images/#configuring-nodes-to-authenticate-to-a-private-repository
+</span><span class="c1"></span>	<span class="c1">// Only pull sandbox image when it&#39;s not present - v1.PullIfNotPresent.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">ensureSandboxImageExists</span><span class="p">(</span><span class="nx">ds</span><span class="p">.</span><span class="nx">client</span><span class="p">,</span> <span class="nx">image</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="c1">// Step 2: Create the sandbox container.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">r</span><span class="p">.</span><span class="nf">GetRuntimeHandler</span><span class="p">()</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;RuntimeHandler %q not supported&#34;</span><span class="p">,</span> <span class="nx">r</span><span class="p">.</span><span class="nf">GetRuntimeHandler</span><span class="p">())</span>
+	<span class="p">}</span>
+	<span class="nx">createConfig</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ds</span><span class="p">.</span><span class="nf">makeSandboxDockerConfig</span><span class="p">(</span><span class="nx">config</span><span class="p">,</span> <span class="nx">image</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to make sandbox docker config for pod %q: %v&#34;</span><span class="p">,</span> <span class="nx">config</span><span class="p">.</span><span class="nx">Metadata</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">createResp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">CreateContainer</span><span class="p">(</span><span class="o">*</span><span class="nx">createConfig</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">createResp</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">recoverFromCreationConflictIfNeeded</span><span class="p">(</span><span class="nx">ds</span><span class="p">.</span><span class="nx">client</span><span class="p">,</span> <span class="o">*</span><span class="nx">createConfig</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">||</span> <span class="nx">createResp</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to create a sandbox for pod %q: %v&#34;</span><span class="p">,</span> <span class="nx">config</span><span class="p">.</span><span class="nx">Metadata</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">resp</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">runtimeapi</span><span class="p">.</span><span class="nx">RunPodSandboxResponse</span><span class="p">{</span><span class="nx">PodSandboxId</span><span class="p">:</span> <span class="nx">createResp</span><span class="p">.</span><span class="nx">ID</span><span class="p">}</span>
+
+	<span class="nx">ds</span><span class="p">.</span><span class="nf">setNetworkReady</span><span class="p">(</span><span class="nx">createResp</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span>
+	<span class="k">defer</span> <span class="kd">func</span><span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+		<span class="c1">// Set networking ready depending on the error return of
+</span><span class="c1"></span>		<span class="c1">// the parent function
+</span><span class="c1"></span>		<span class="k">if</span> <span class="o">*</span><span class="nx">e</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">ds</span><span class="p">.</span><span class="nf">setNetworkReady</span><span class="p">(</span><span class="nx">createResp</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}(</span><span class="o">&amp;</span><span class="nx">err</span><span class="p">)</span>
+
+	<span class="c1">// Step 3: Create Sandbox Checkpoint.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">checkpointManager</span><span class="p">.</span><span class="nf">CreateCheckpoint</span><span class="p">(</span><span class="nx">createResp</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nf">constructPodSandboxCheckpoint</span><span class="p">(</span><span class="nx">config</span><span class="p">));</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="c1">// Step 4: Start the sandbox container.
+</span><span class="c1"></span>	<span class="c1">// Assume kubelet&#39;s garbage collector would remove the sandbox later, if
+</span><span class="c1"></span>	<span class="c1">// startContainer failed.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">StartContainer</span><span class="p">(</span><span class="nx">createResp</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to start sandbox container for pod %q: %v&#34;</span><span class="p">,</span> <span class="nx">config</span><span class="p">.</span><span class="nx">Metadata</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="c1">// Rewrite resolv.conf file generated by docker.
+</span><span class="c1"></span>	<span class="c1">// NOTE: cluster dns settings aren&#39;t passed anymore to docker api in all cases,
+</span><span class="c1"></span>	<span class="c1">// not only for pods with host network: the resolver conf will be overwritten
+</span><span class="c1"></span>	<span class="c1">// after sandbox creation to override docker&#39;s behaviour. This resolv.conf
+</span><span class="c1"></span>	<span class="c1">// file is shared by all containers of the same pod, and needs to be modified
+</span><span class="c1"></span>	<span class="c1">// only once per pod.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">dnsConfig</span> <span class="o">:=</span> <span class="nx">config</span><span class="p">.</span><span class="nf">GetDnsConfig</span><span class="p">();</span> <span class="nx">dnsConfig</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">containerInfo</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">InspectContainer</span><span class="p">(</span><span class="nx">createResp</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to inspect sandbox container for pod %q: %v&#34;</span><span class="p">,</span> <span class="nx">config</span><span class="p">.</span><span class="nx">Metadata</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="p">}</span>
+
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">rewriteResolvFile</span><span class="p">(</span><span class="nx">containerInfo</span><span class="p">.</span><span class="nx">ResolvConfPath</span><span class="p">,</span> <span class="nx">dnsConfig</span><span class="p">.</span><span class="nx">Servers</span><span class="p">,</span> <span class="nx">dnsConfig</span><span class="p">.</span><span class="nx">Searches</span><span class="p">,</span> <span class="nx">dnsConfig</span><span class="p">.</span><span class="nx">Options</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;rewrite resolv.conf failed for pod %q: %v&#34;</span><span class="p">,</span> <span class="nx">config</span><span class="p">.</span><span class="nx">Metadata</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="c1">// Do not invoke network plugins if in hostNetwork mode.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">config</span><span class="p">.</span><span class="nf">GetLinux</span><span class="p">().</span><span class="nf">GetSecurityContext</span><span class="p">().</span><span class="nf">GetNamespaceOptions</span><span class="p">().</span><span class="nf">GetNetwork</span><span class="p">()</span> <span class="o">==</span> <span class="nx">runtimeapi</span><span class="p">.</span><span class="nx">NamespaceMode_NODE</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">resp</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+	<span class="c1">// Step 5: Setup networking for the sandbox.
+</span><span class="c1"></span>	<span class="c1">// All pod networking is setup by a CNI plugin discovered at startup time.
+</span><span class="c1"></span>	<span class="c1">// This plugin assigns the pod ip, sets up routes inside the sandbox,
+</span><span class="c1"></span>	<span class="c1">// creates interfaces etc. In theory, its jurisdiction ends with pod
+</span><span class="c1"></span>	<span class="c1">// sandbox networking, but it might insert iptables rules or open ports
+</span><span class="c1"></span>	<span class="c1">// on the host as well, to satisfy parts of the pod spec that aren&#39;t
+</span><span class="c1"></span>	<span class="c1">// recognized by the CNI standard yet.
+</span><span class="c1"></span>	<span class="nx">cID</span> <span class="o">:=</span> <span class="nx">kubecontainer</span><span class="p">.</span><span class="nf">BuildContainerID</span><span class="p">(</span><span class="nx">runtimeName</span><span class="p">,</span> <span class="nx">createResp</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+	<span class="nx">err</span> <span class="p">=</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">network</span><span class="p">.</span><span class="nf">SetUpPod</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nf">GetMetadata</span><span class="p">().</span><span class="nx">Namespace</span><span class="p">,</span> <span class="nx">config</span><span class="p">.</span><span class="nf">GetMetadata</span><span class="p">().</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">cID</span><span class="p">,</span> <span class="nx">config</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">errList</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">error</span><span class="p">{</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to set up sandbox container %q network for pod %q: %v&#34;</span><span class="p">,</span> <span class="nx">createResp</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">config</span><span class="p">.</span><span class="nx">Metadata</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">)}</span>
+
+		<span class="c1">// Ensure network resources are cleaned up even if the plugin
+</span><span class="c1"></span>		<span class="c1">// succeeded but an error happened between that success and here.
+</span><span class="c1"></span>		<span class="nx">err</span> <span class="p">=</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">network</span><span class="p">.</span><span class="nf">TearDownPod</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nf">GetMetadata</span><span class="p">().</span><span class="nx">Namespace</span><span class="p">,</span> <span class="nx">config</span><span class="p">.</span><span class="nf">GetMetadata</span><span class="p">().</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">cID</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">errList</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">errList</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to clean up sandbox container %q network for pod %q: %v&#34;</span><span class="p">,</span> <span class="nx">createResp</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">config</span><span class="p">.</span><span class="nx">Metadata</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
+		<span class="p">}</span>
+
+		<span class="nx">err</span> <span class="p">=</span> <span class="nx">ds</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nf">StopContainer</span><span class="p">(</span><span class="nx">createResp</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">defaultSandboxGracePeriod</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">errList</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">errList</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to stop sandbox container %q for pod %q: %v&#34;</span><span class="p">,</span> <span class="nx">createResp</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">config</span><span class="p">.</span><span class="nx">Metadata</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
+		<span class="p">}</span>
+
+		<span class="k">return</span> <span class="nx">resp</span><span class="p">,</span> <span class="nx">utilerrors</span><span class="p">.</span><span class="nf">NewAggregate</span><span class="p">(</span><span class="nx">errList</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="nx">resp</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>SetUpPod -&gt; addToNetwork，cniNet.AddNetworkList 根据 CNI 执行 CNI binary，并将 CNI config 文件内容作为 stdin ，将podName, podNamespace， podSandboxID 等以 env 的形式传递给 CNI binary</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">plugin</span> <span class="o">*</span><span class="nx">cniNetworkPlugin</span><span class="p">)</span> <span class="nf">addToNetwork</span><span class="p">(</span><span class="nx">network</span> <span class="o">*</span><span class="nx">cniNetwork</span><span class="p">,</span> <span class="nx">podName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">podNamespace</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">podSandboxID</span> <span class="nx">kubecontainer</span><span class="p">.</span><span class="nx">ContainerID</span><span class="p">,</span> <span class="nx">podNetnsPath</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">annotations</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">cnitypes</span><span class="p">.</span><span class="nx">Result</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">rt</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">plugin</span><span class="p">.</span><span class="nf">buildCNIRuntimeConf</span><span class="p">(</span><span class="nx">podName</span><span class="p">,</span> <span class="nx">podNamespace</span><span class="p">,</span> <span class="nx">podSandboxID</span><span class="p">,</span> <span class="nx">podNetnsPath</span><span class="p">,</span> <span class="nx">annotations</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">glog</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Error adding network when building cni runtime conf: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="nx">netConf</span><span class="p">,</span> <span class="nx">cniNet</span> <span class="o">:=</span> <span class="nx">network</span><span class="p">.</span><span class="nx">NetworkConfig</span><span class="p">,</span> <span class="nx">network</span><span class="p">.</span><span class="nx">CNIConfig</span>
+	<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;About to add CNI network %v (type=%v)&#34;</span><span class="p">,</span> <span class="nx">netConf</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">netConf</span><span class="p">.</span><span class="nx">Plugins</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Network</span><span class="p">.</span><span class="nx">Type</span><span class="p">)</span>
+	<span class="nx">res</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cniNet</span><span class="p">.</span><span class="nf">AddNetworkList</span><span class="p">(</span><span class="nx">netConf</span><span class="p">,</span> <span class="nx">rt</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">glog</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Error adding network: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="nx">res</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div></div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-10-16</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://likakuli.github.io/posts/kubernetes-cni/" data-title="Kubelet与CNI交互源码" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://likakuli.github.io/posts/kubernetes-cni/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://likakuli.github.io/posts/kubernetes-cni/" data-title="Kubelet与CNI交互源码" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://likakuli.github.io/posts/kubernetes-cni/" data-title="Kubelet与CNI交互源码"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://likakuli.github.io/posts/kubernetes-cni/" data-title="Kubelet与CNI交互源码"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://likakuli.github.io/posts/kubernetes-cni/" data-title="Kubelet与CNI交互源码" data-description="kubelet与cni交互流程"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://likakuli.github.io/posts/kubernetes-cni/" data-title="Kubelet与CNI交互源码" data-description="kubelet与cni交互流程"><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://likakuli.github.io/posts/kubernetes-cni/" data-title="Kubelet与CNI交互源码"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/cgroup-leak/" class="prev" rel="prev" title="Cgroup泄露"><i class="fas fa-angle-left fa-fw"></i>Cgroup泄露</a>
+            <a href="/posts/kubernetes-pod-create/" class="next" rel="next" title="Pod创建流程">Pod创建流程<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

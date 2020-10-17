@@ -6,31 +6,31 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
             <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 21 Aug 2019 19:25:13 &#43;0800</lastBuildDate><atom:link href="https://likakuli.github.io/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="self" type="application/rss+xml" /><item>
     <title>Kube-apiserver watch实现</title>
-    <link>https://likakuli.github.io/kubernetes-apiserver-watch/</link>
+    <link>https://likakuli.github.io/posts/kubernetes-apiserver-watch/</link>
     <pubDate>Wed, 21 Aug 2019 19:25:13 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/kubernetes-apiserver-watch/</guid>
+    <guid>https://likakuli.github.io/posts/kubernetes-apiserver-watch/</guid>
     <description><![CDATA[List-Watch是kubernetes的核心机制。组件kubelet、kube-controller-manager、kube-sche]]></description>
 </item><item>
     <title>Pod创建流程</title>
-    <link>https://likakuli.github.io/kubernetes-pod-create/</link>
+    <link>https://likakuli.github.io/posts/kubernetes-pod-create/</link>
     <pubDate>Tue, 06 Aug 2019 20:41:24 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/kubernetes-pod-create/</guid>
+    <guid>https://likakuli.github.io/posts/kubernetes-pod-create/</guid>
     <description><![CDATA[kubernetes 版本： v1.12 kubelet 工作原理 kubelet 的工作核心就是在围绕着不同的生产者生产出来的不同的有关 pod 的消息来调用相应的消费者（不同的子模块）完成不同的行为(创建和]]></description>
 </item><item>
     <title>Kubelet与CNI交互源码</title>
-    <link>https://likakuli.github.io/kubernetes-cni/</link>
+    <link>https://likakuli.github.io/posts/kubernetes-cni/</link>
     <pubDate>Tue, 16 Jul 2019 13:53:02 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/kubernetes-cni/</guid>
+    <guid>https://likakuli.github.io/posts/kubernetes-cni/</guid>
     <description><![CDATA[转载自：https://www.cnblogs.com/haoqingchuan/p/8668746.html，有修改 代码版本1.12.4 整]]></description>
 </item><item>
     <title>Golang netpoll源码分析</title>
-    <link>https://likakuli.github.io/golang-netpoll/</link>
+    <link>https://likakuli.github.io/posts/golang-netpoll/</link>
     <pubDate>Sun, 10 Jun 2018 13:59:38 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/golang-netpoll/</guid>
+    <guid>https://likakuli.github.io/posts/golang-netpoll/</guid>
     <description><![CDATA[简介 go针对不同的操作系统，其网络io模型不同，可以从go源码目录结构和对应内容清楚的看到各平台的io模型，如针对linux系统实现的epo]]></description>
 </item></channel>
 </rss>

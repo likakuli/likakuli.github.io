@@ -6,10 +6,10 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
             <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 07 Nov 2019 23:35:20 &#43;0800</lastBuildDate><atom:link href="https://likakuli.github.io/tags/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92/" rel="self" type="application/rss+xml" /><item>
     <title>背包问题golang</title>
-    <link>https://likakuli.github.io/backpack/</link>
+    <link>https://likakuli.github.io/posts/backpack/</link>
     <pubDate>Thu, 07 Nov 2019 23:35:20 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/backpack/</guid>
+    <guid>https://likakuli.github.io/posts/backpack/</guid>
     <description><![CDATA[最近的工作都跟集群调度有关，一直在为了满足用户需求添加各种调度策略，现在也暂时告一段落了，抽时间总结思考了之前的工作，调度本质上就是背包问题]]></description>
 </item></channel>
 </rss>

@@ -6,73 +6,73 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
             <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 20 Aug 2020 13:26:19 &#43;0800</lastBuildDate><atom:link href="https://likakuli.github.io/posts/" rel="self" type="application/rss+xml" /><item>
     <title>Knative健康检查</title>
-    <link>https://likakuli.github.io/knative-healthcheck/</link>
+    <link>https://likakuli.github.io/posts/knative-healthcheck/</link>
     <pubDate>Thu, 20 Aug 2020 13:26:19 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/knative-healthcheck/</guid>
+    <guid>https://likakuli.github.io/posts/knative-healthcheck/</guid>
     <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 在支持了前面的定制功能后，集群中部署ksvc服务时会报Ingre]]></description>
 </item><item>
     <title>Knative通过header访问指定版本</title>
-    <link>https://likakuli.github.io/knative-version/</link>
+    <link>https://likakuli.github.io/posts/knative-version/</link>
     <pubDate>Wed, 19 Aug 2020 17:26:47 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/knative-version/</guid>
+    <guid>https://likakuli.github.io/posts/knative-version/</guid>
     <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
 </item><item>
     <title>Knative根据Path转发请求</title>
-    <link>https://likakuli.github.io/knative-pathfilter/</link>
+    <link>https://likakuli.github.io/posts/knative-pathfilter/</link>
     <pubDate>Wed, 19 Aug 2020 17:26:18 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/knative-pathfilter/</guid>
+    <guid>https://likakuli.github.io/posts/knative-pathfilter/</guid>
     <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
 </item><item>
     <title>Knative组件镜像制作</title>
-    <link>https://likakuli.github.io/knative-build/</link>
+    <link>https://likakuli.github.io/posts/knative-build/</link>
     <pubDate>Thu, 09 Jul 2020 21:00:16 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/knative-build/</guid>
+    <guid>https://likakuli.github.io/posts/knative-build/</guid>
     <description><![CDATA[背景 knative 0.14.0 最近在搭建公司级的serverless平台，遇到某些问题，看了源码发现无法通过其扩展机制来解决，遂决定修改源码来解决 过程 源码很快修改]]></description>
 </item><item>
     <title>Knative通过外部域名访问集群内服务</title>
-    <link>https://likakuli.github.io/knative-ingress-gateway/</link>
+    <link>https://likakuli.github.io/posts/knative-ingress-gateway/</link>
     <pubDate>Thu, 09 Jul 2020 21:00:07 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/knative-ingress-gateway/</guid>
+    <guid>https://likakuli.github.io/posts/knative-ingress-gateway/</guid>
     <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
 </item><item>
     <title>Endpoint异常变化</title>
-    <link>https://likakuli.github.io/kubernetes-ep-event/</link>
+    <link>https://likakuli.github.io/posts/kubernetes-ep-event/</link>
     <pubDate>Tue, 23 Jun 2020 19:53:31 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/kubernetes-ep-event/</guid>
+    <guid>https://likakuli.github.io/posts/kubernetes-ep-event/</guid>
     <description><![CDATA[背景 k8s 1.12.4 包含自定义功能 线上集群在批量原地升级时出现流量异常问题，大体流程如下： 批量摘流，并等待7秒 批量删除容器 watch到Endpoint ready]]></description>
 </item><item>
     <title>Sidecar优雅退出</title>
-    <link>https://likakuli.github.io/kubernetes-graceful-shutdown/</link>
+    <link>https://likakuli.github.io/posts/kubernetes-graceful-shutdown/</link>
     <pubDate>Tue, 23 Jun 2020 19:46:45 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/kubernetes-graceful-shutdown/</guid>
+    <guid>https://likakuli.github.io/posts/kubernetes-graceful-shutdown/</guid>
     <description><![CDATA[背景 codis集群在接入弹性云测试时发现容器漂移失败，通过集群日志看，提示 调度超时，去界面查看，已经调度成功了（调度成功的标志就是已经有宿主]]></description>
 </item><item>
     <title>Kube-controller-manager同步数据慢</title>
-    <link>https://likakuli.github.io/kubernetes-controllerrevisionhistory-bug/</link>
+    <link>https://likakuli.github.io/posts/kubernetes-controllerrevisionhistory-bug/</link>
     <pubDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/kubernetes-controllerrevisionhistory-bug/</guid>
+    <guid>https://likakuli.github.io/posts/kubernetes-controllerrevisionhistory-bug/</guid>
     <description><![CDATA[背景 版本1.12.4 线上遇到kube-controller-manager重启慢的问题，具体表现为进程重启虽然速度快，但是重启完所有数据都同]]></description>
 </item><item>
     <title>Flannel key not found</title>
-    <link>https://likakuli.github.io/kubernetes-flannel/</link>
+    <link>https://likakuli.github.io/posts/kubernetes-flannel/</link>
     <pubDate>Mon, 16 Dec 2019 17:58:20 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/kubernetes-flannel/</guid>
+    <guid>https://likakuli.github.io/posts/kubernetes-flannel/</guid>
     <description><![CDATA[问题描述 etcd 3.3.1 flannel 0.11.0 flannel启动时报错，启动参数如下 1 ./flannel -etcd-keyfile=/etc/kubernetes/ssl/etcd-client-key.pem -etcd-cafile=/etc/kubernetes/ssl/ca.pem -etcd-endpoints=https://ip:port -etcd-certfile=/etc/kubernetes/ssl/etcd-client.pem -etcd-prefix=/coreos.com/network 错误信息如下： 1 2 3 4 5 E0908 20:27:17.671602 2331 main.go:382] Couldn&#39;t fetch network config: 100: Key not found (/coreos.com) [22] timed out E0908 20:27:18.680096 2331 main.go:382] Couldn&#39;t fetch network config:]]></description>
 </item><item>
     <title>Kube-apiserver goroutine leak</title>
-    <link>https://likakuli.github.io/kubernetes-apiserver-goroutine-leak/</link>
+    <link>https://likakuli.github.io/posts/kubernetes-apiserver-goroutine-leak/</link>
     <pubDate>Fri, 06 Dec 2019 17:15:45 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/kubernetes-apiserver-goroutine-leak/</guid>
+    <guid>https://likakuli.github.io/posts/kubernetes-apiserver-goroutine-leak/</guid>
     <description><![CDATA[背景 线上master的apiserver组件内存报警，内存使用量持续增长，监控如下 排查过程 从监控上看和另外一个程序（管理员平台）的内存使用情]]></description>
 </item></channel>
 </rss>
