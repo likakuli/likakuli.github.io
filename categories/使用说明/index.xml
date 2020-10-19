@@ -1,50 +1,50 @@
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
         <title>使用说明 - 分类 - kaku&#39;s blog</title>
-        <link>https://likakuli.github.io/categories/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/</link>
+        <link>https://www.likakuli.com/categories/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/</link>
         <description>使用说明 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 09 Jul 2020 21:00:16 &#43;0800</lastBuildDate><atom:link href="https://likakuli.github.io/categories/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 09 Jul 2020 21:00:16 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/" rel="self" type="application/rss+xml" /><item>
     <title>Knative组件镜像制作</title>
-    <link>https://likakuli.github.io/posts/knative-build/</link>
+    <link>https://www.likakuli.com/posts/knative-build/</link>
     <pubDate>Thu, 09 Jul 2020 21:00:16 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/posts/knative-build/</guid>
+    <guid>https://www.likakuli.com/posts/knative-build/</guid>
     <description><![CDATA[背景 knative 0.14.0 最近在搭建公司级的serverless平台，遇到某些问题，看了源码发现无法通过其扩展机制来解决，遂决定修改源码来解决 过程 源码很快修改]]></description>
 </item><item>
     <title>Dragonfly &#43; Harbor实现的p2p镜像分发</title>
-    <link>https://likakuli.github.io/posts/dragonfly/</link>
+    <link>https://www.likakuli.com/posts/dragonfly/</link>
     <pubDate>Thu, 13 Sep 2018 20:17:52 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/posts/dragonfly/</guid>
+    <guid>https://www.likakuli.com/posts/dragonfly/</guid>
     <description><![CDATA[测试环境 10.0.13.19 部署harbor，单点，docker-compose的方式部署 4核8G 10.0.13.22 dragonfly的supernode节点 16核64G do]]></description>
 </item><item>
     <title>Kubernetes 启用GPU</title>
-    <link>https://likakuli.github.io/posts/kubernetes-gpu/</link>
+    <link>https://www.likakuli.com/posts/kubernetes-gpu/</link>
     <pubDate>Thu, 06 Sep 2018 16:36:27 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/posts/kubernetes-gpu/</guid>
+    <guid>https://www.likakuli.com/posts/kubernetes-gpu/</guid>
     <description><![CDATA[kubernetes设置 k8s 1.10之前需要在kube-apiserver、kube-controller-manager、kube-sche]]></description>
 </item><item>
     <title>Golang监控</title>
-    <link>https://likakuli.github.io/posts/golang-monitor/</link>
+    <link>https://www.likakuli.com/posts/golang-monitor/</link>
     <pubDate>Sun, 01 Jul 2018 22:35:22 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/posts/golang-monitor/</guid>
+    <guid>https://www.likakuli.com/posts/golang-monitor/</guid>
     <description><![CDATA[看了一篇文章，里面涉及到了一些golang程序监控的问题，回过头总结了一下实现方式，简单介绍一下 expvar go自带的runtime包拥有各种功能，包]]></description>
 </item><item>
     <title>Prometheus</title>
-    <link>https://likakuli.github.io/posts/prometheus/</link>
+    <link>https://www.likakuli.com/posts/prometheus/</link>
     <pubDate>Thu, 21 Jun 2018 23:10:36 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/posts/prometheus/</guid>
+    <guid>https://www.likakuli.com/posts/prometheus/</guid>
     <description><![CDATA[公司采用Prometheus来采集Kubernetes集群的性能指标数据，之前对性能数据采集这方面没有关注过，但是实际生产环境下有很多此类需]]></description>
 </item><item>
     <title>Kubernetes 1.9.6 CA IPVS CoreDNS</title>
-    <link>https://likakuli.github.io/posts/kubernetes-ca/</link>
+    <link>https://www.likakuli.com/posts/kubernetes-ca/</link>
     <pubDate>Thu, 24 May 2018 21:56:42 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/posts/kubernetes-ca/</guid>
+    <guid>https://www.likakuli.com/posts/kubernetes-ca/</guid>
     <description><![CDATA[简介 kubernetes 系统的各组件需要使用 TLS 证书对通信进行加密，本文档使用 CloudFlare 的 PKI 工具集 cfssl 来生成 Certificate Authority (CA) 和其它证书，操作系统CentOS7 amd64； 集群节点 10.202.43.132]]></description>
 </item></channel>
 </rss>

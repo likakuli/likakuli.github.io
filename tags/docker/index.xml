@@ -1,22 +1,22 @@
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
         <title>docker - 标签 - kaku&#39;s blog</title>
-        <link>https://likakuli.github.io/tags/docker/</link>
+        <link>https://www.likakuli.com/tags/docker/</link>
         <description>docker - 标签 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 09 Jul 2019 20:06:53 &#43;0800</lastBuildDate><atom:link href="https://likakuli.github.io/tags/docker/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 09 Jul 2019 20:06:53 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/docker/" rel="self" type="application/rss+xml" /><item>
     <title>Dockerd内存泄露</title>
-    <link>https://likakuli.github.io/posts/dockerd-memory-leak1/</link>
+    <link>https://www.likakuli.com/posts/dockerd-memory-leak1/</link>
     <pubDate>Tue, 09 Jul 2019 20:06:53 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/posts/dockerd-memory-leak1/</guid>
+    <guid>https://www.likakuli.com/posts/dockerd-memory-leak1/</guid>
     <description><![CDATA[背景 线上部分宿主机dockerd占用内存过大，有的甚至超过100G，而整个宿主上的容器使用的内存还不如dockerd一个进程使用的多，现在的]]></description>
 </item><item>
     <title>Dragonfly &#43; Harbor实现的p2p镜像分发</title>
-    <link>https://likakuli.github.io/posts/dragonfly/</link>
+    <link>https://www.likakuli.com/posts/dragonfly/</link>
     <pubDate>Thu, 13 Sep 2018 20:17:52 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/posts/dragonfly/</guid>
+    <guid>https://www.likakuli.com/posts/dragonfly/</guid>
     <description><![CDATA[测试环境 10.0.13.19 部署harbor，单点，docker-compose的方式部署 4核8G 10.0.13.22 dragonfly的supernode节点 16核64G do]]></description>
 </item></channel>
 </rss>

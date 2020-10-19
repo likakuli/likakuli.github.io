@@ -1,15 +1,15 @@
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
         <title>dragonfly - 标签 - kaku&#39;s blog</title>
-        <link>https://likakuli.github.io/tags/dragonfly/</link>
+        <link>https://www.likakuli.com/tags/dragonfly/</link>
         <description>dragonfly - 标签 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 13 Sep 2018 20:17:52 &#43;0800</lastBuildDate><atom:link href="https://likakuli.github.io/tags/dragonfly/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 13 Sep 2018 20:17:52 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/dragonfly/" rel="self" type="application/rss+xml" /><item>
     <title>Dragonfly &#43; Harbor实现的p2p镜像分发</title>
-    <link>https://likakuli.github.io/posts/dragonfly/</link>
+    <link>https://www.likakuli.com/posts/dragonfly/</link>
     <pubDate>Thu, 13 Sep 2018 20:17:52 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/posts/dragonfly/</guid>
+    <guid>https://www.likakuli.com/posts/dragonfly/</guid>
     <description><![CDATA[测试环境 10.0.13.19 部署harbor，单点，docker-compose的方式部署 4核8G 10.0.13.22 dragonfly的supernode节点 16核64G do]]></description>
 </item></channel>
 </rss>

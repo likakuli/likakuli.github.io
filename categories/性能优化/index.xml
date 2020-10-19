@@ -1,22 +1,22 @@
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
         <title>性能优化 - 分类 - kaku&#39;s blog</title>
-        <link>https://likakuli.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</link>
+        <link>https://www.likakuli.com/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</link>
         <description>性能优化 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</lastBuildDate><atom:link href="https://likakuli.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="self" type="application/rss+xml" /><item>
     <title>Kube-controller-manager同步数据慢</title>
-    <link>https://likakuli.github.io/posts/kubernetes-controllerrevisionhistory-bug/</link>
+    <link>https://www.likakuli.com/posts/kubernetes-controllerrevisionhistory-bug/</link>
     <pubDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/posts/kubernetes-controllerrevisionhistory-bug/</guid>
+    <guid>https://www.likakuli.com/posts/kubernetes-controllerrevisionhistory-bug/</guid>
     <description><![CDATA[背景 版本1.12.4 线上遇到kube-controller-manager重启慢的问题，具体表现为进程重启虽然速度快，但是重启完所有数据都同]]></description>
 </item><item>
     <title>Statefulset创建pod慢</title>
-    <link>https://likakuli.github.io/posts/kubernetes-statefulset-sync/</link>
+    <link>https://www.likakuli.com/posts/kubernetes-statefulset-sync/</link>
     <pubDate>Tue, 26 Mar 2019 11:16:03 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://likakuli.github.io/posts/kubernetes-statefulset-sync/</guid>
+    <guid>https://www.likakuli.com/posts/kubernetes-statefulset-sync/</guid>
     <description><![CDATA[背景 线上kubernetes集群从创建sts到创建pod需要时间很长，分钟级别，但是调度却很快。偶尔还会出现导致kube-odin任务失败（]]></description>
 </item></channel>
 </rss>
