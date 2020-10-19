@@ -6,24 +6,24 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
             <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 19 Aug 2020 17:26:47 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E5%AE%9A%E5%88%B6%E5%BC%80%E5%8F%91/" rel="self" type="application/rss+xml" /><item>
     <title>Knative通过header访问指定版本</title>
-    <link>https://www.likakuli.com/knative-version/</link>
+    <link>https://www.likakuli.com/posts/knative-version/</link>
     <pubDate>Wed, 19 Aug 2020 17:26:47 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://www.likakuli.com/knative-version/</guid>
+    <guid>https://www.likakuli.com/posts/knative-version/</guid>
     <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
 </item><item>
     <title>Knative根据Path转发请求</title>
-    <link>https://www.likakuli.com/knative-pathfilter/</link>
+    <link>https://www.likakuli.com/posts/knative-pathfilter/</link>
     <pubDate>Wed, 19 Aug 2020 17:26:18 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://www.likakuli.com/knative-pathfilter/</guid>
+    <guid>https://www.likakuli.com/posts/knative-pathfilter/</guid>
     <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
 </item><item>
     <title>Knative通过外部域名访问集群内服务</title>
-    <link>https://www.likakuli.com/knative-ingress-gateway/</link>
+    <link>https://www.likakuli.com/posts/knative-ingress-gateway/</link>
     <pubDate>Thu, 09 Jul 2020 21:00:07 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://www.likakuli.com/knative-ingress-gateway/</guid>
+    <guid>https://www.likakuli.com/posts/knative-ingress-gateway/</guid>
     <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
 </item></channel>
 </rss>
