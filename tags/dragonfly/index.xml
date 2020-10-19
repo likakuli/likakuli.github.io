@@ -6,10 +6,10 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
             <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 13 Sep 2018 20:17:52 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/dragonfly/" rel="self" type="application/rss+xml" /><item>
     <title>Dragonfly &#43; Harbor实现的p2p镜像分发</title>
-    <link>https://www.likakuli.com/posts/dragonfly/</link>
+    <link>https://www.likakuli.com/dragonfly/</link>
     <pubDate>Thu, 13 Sep 2018 20:17:52 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://www.likakuli.com/posts/dragonfly/</guid>
+    <guid>https://www.likakuli.com/dragonfly/</guid>
     <description><![CDATA[测试环境 10.0.13.19 部署harbor，单点，docker-compose的方式部署 4核8G 10.0.13.22 dragonfly的supernode节点 16核64G do]]></description>
 </item></channel>
 </rss>
