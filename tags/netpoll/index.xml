@@ -6,10 +6,10 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
             <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 10 Jun 2018 13:59:38 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/netpoll/" rel="self" type="application/rss+xml" /><item>
     <title>Golang netpoll源码分析</title>
-    <link>https://www.likakuli.com/golang-netpoll/</link>
+    <link>https://www.likakuli.com/posts/golang-netpoll/</link>
     <pubDate>Sun, 10 Jun 2018 13:59:38 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://www.likakuli.com/golang-netpoll/</guid>
+    <guid>https://www.likakuli.com/posts/golang-netpoll/</guid>
     <description><![CDATA[简介 go针对不同的操作系统，其网络io模型不同，可以从go源码目录结构和对应内容清楚的看到各平台的io模型，如针对linux系统实现的epo]]></description>
 </item></channel>
 </rss>

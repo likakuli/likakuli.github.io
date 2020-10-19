@@ -6,17 +6,17 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
             <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 31 Jan 2019 14:20:39 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/etcd/" rel="self" type="application/rss+xml" /><item>
     <title>Etcd watch内存泄漏</title>
-    <link>https://www.likakuli.com/etcd-watch/</link>
+    <link>https://www.likakuli.com/posts/etcd-watch/</link>
     <pubDate>Thu, 31 Jan 2019 14:20:39 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://www.likakuli.com/etcd-watch/</guid>
+    <guid>https://www.likakuli.com/posts/etcd-watch/</guid>
     <description><![CDATA[背景 通过监控看到弹性云用户平台后端程序kube-odin的内存使用量在稳定增加，每次上线完又会恢复，可以判断出kube-odin中存在内存泄]]></description>
 </item><item>
     <title>Etcd分布式锁加锁失败</title>
-    <link>https://www.likakuli.com/etcd-lock/</link>
+    <link>https://www.likakuli.com/posts/etcd-lock/</link>
     <pubDate>Thu, 31 Jan 2019 14:20:28 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://www.likakuli.com/etcd-lock/</guid>
+    <guid>https://www.likakuli.com/posts/etcd-lock/</guid>
     <description><![CDATA[现象 线上程序一直报错，错误信息：lock failed: context deadline exceeded, retry 排查过程 异常对应代码位置 很明显的是获取锁超时了，由于用的etcd的分布式锁，就怀疑是etc]]></description>
 </item></channel>
 </rss>
