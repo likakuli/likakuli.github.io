@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Etcd分布式锁加锁失败 - kaku&#39;s blog</title><meta name="Description" content="etcd分布式锁加锁失败"><meta property="og:title" content="Etcd分布式锁加锁失败" />
+<meta property="og:description" content="etcd分布式锁加锁失败" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/etcd-lock/" />
+<meta property="og:image" content="https://www.likakuli.com/logo.png"/>
+<meta property="article:published_time" content="2019-01-31T14:20:28+08:00" />
+<meta property="article:modified_time" content="2020-10-16T18:17:42+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="Etcd分布式锁加锁失败"/>
+<meta name="twitter:description" content="etcd分布式锁加锁失败"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/etcd-lock/" /><link rel="prev" href="https://www.likakuli.com/posts/dragonfly/" /><link rel="next" href="https://www.likakuli.com/posts/etcd-watch/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Etcd分布式锁加锁失败",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/etcd-lock\/"
+        },"genre": "posts","keywords": "etcd","wordcount":  2611 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/etcd-lock\/","datePublished": "2019-01-31T14:20:28+08:00","dateModified": "2020-10-16T18:17:42+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": "etcd分布式锁加锁失败"
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Etcd分布式锁加锁失败</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-01-31">2019-01-31</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 2611 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 6 分钟&nbsp;<span id="/posts/etcd-lock/" class="leancloud_visitors" data-flag-title="Etcd分布式锁加锁失败">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#现象">现象</a></li>
+            <li><a href="#排查过程">排查过程</a></li>
+            <li><a href="#etcd源码部分">etcd源码部分</a></li>
+            <li><a href="#总结">总结</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h3 id="现象">现象</h3>
+<p>线上程序一直报错，错误信息：lock failed: context deadline exceeded, retry</p>
+<h3 id="排查过程">排查过程</h3>
+<p>异常对应代码位置</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="etcd_lock.png"
+        data-srcset="/posts/etcd-lock/etcd_lock.png, etcd_lock.png 1.5x, /posts/etcd-lock/etcd_lock.png 2x"
+        data-sizes="auto"
+        alt="/posts/etcd-lock/etcd_lock.png"
+        title="img" /></p>
+<p>很明显的是获取锁超时了，由于用的etcd的分布式锁，就怀疑是etcd出问题了，此时看到大量etcd日志，rejected connection from &ldquo;ip:port&rdquo; (error &ldquo;tls: first record does not look like a TLS handshake&rdquo;, ServerName &ldquo;&quot;)，怀疑是不是这个问题导致的，经过查询报错的IP，均为线上容器IP，登陆容器内看发现都是管理员平台的代码，里面也用到了py03的etcd，但是不是导致超时的原因。在排除各种可能之后，最后去etcd查看锁对应的key的情况，发现有两个key</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">/notifier/locker/<span class="o">{</span>leaseid<span class="o">}</span>
+ 
+/notifier/locker/rwl/<span class="o">{</span>leaseid<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其中第一个key是notifier自己添加的，第二个key在代码中搜不到，但是看起来像是redis whitelist的简写，先把第一个key删了，然后看notifier日志，仍然获取不到锁，所以怀疑是第二个key已经获得了锁，虽然key不一样。于是删除了第二个key，再看notifier日志，终于获得了锁，开始正常工作，<strong>于是得出猜想，etcd****的分布式锁，在子目录下加了锁之后，父目录会加锁失败</strong>。然后用etcdctl lock来验证了下，确实如此，/a/b下加了锁，/a再加锁就会失败，但是/a下加了锁，/a/b再加锁会成功。基本上可以验证上面的猜想，剩下的就是从etcd源码中找到对应处理的代码了。</p>
+<h3 id="etcd源码部分">etcd源码部分</h3>
+<p>在查询源码之前，第一反应就是这肯定是在服务端实现的，于是开始了从etcd服务端找相关源码的过程，从etcdctl命令开始追溯到所涉及的服务端，一直没有发现问题。又在网上搜了相关etcd服务端源码实现的文章，结合本地代码均没有想找的代码，于是反过来从client找起。</p>
+<p>首先从etcdctl lock命令开始，挑主要函数展示</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码位置go.etcd.io/etcd/etcdctl/ctlv3/command/lock_command.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">lockUntilSignal</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">lockname</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">cmdArgs</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="o">...</span>
+ 
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">Lock</span><span class="p">(</span><span class="nx">ctx</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">err</span>
+   <span class="p">}</span>
+ 
+   <span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>接下来进入到Lock函数，这是个关键函数，etcd的分布式锁就是在这里实现的</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span><span class="lnt">87
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Lock</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="nx">s</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">s</span>
+   <span class="nx">client</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">s</span><span class="p">.</span><span class="nf">Client</span><span class="p">()</span>
+ 
+   <span class="c1">// 这里的pfx就是prefix，就是传进来的前缀，后面的s.Lease()会返回一个租约，是一个int64的整数，和session有关
+</span><span class="c1"></span>   <span class="nx">m</span><span class="p">.</span><span class="nx">myKey</span> <span class="p">=</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%s%x&#34;</span><span class="p">,</span> <span class="nx">m</span><span class="p">.</span><span class="nx">pfx</span><span class="p">,</span> <span class="nx">s</span><span class="p">.</span><span class="nf">Lease</span><span class="p">())</span>
+   <span class="c1">// 这里比较上面prefix/lease的createrevision是否为0，为0表示目前不存在该key，需要执行Put操作，下面可以看到
+</span><span class="c1"></span>   <span class="c1">// 部位0表示已经有对应的key了，只需要执行Get就行
+</span><span class="c1"></span>   <span class="c1">// createrevision是自增的
+</span><span class="c1"></span>   <span class="nx">cmp</span> <span class="o">:=</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">Compare</span><span class="p">(</span><span class="nx">v3</span><span class="p">.</span><span class="nf">CreateRevision</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">myKey</span><span class="p">),</span> <span class="s">&#34;=&#34;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+   <span class="c1">// put self in lock waiters via myKey; oldest waiter holds lock
+</span><span class="c1"></span>   <span class="nx">put</span> <span class="o">:=</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">OpPut</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">myKey</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">WithLease</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nf">Lease</span><span class="p">()))</span>
+   <span class="c1">// reuse key in case this session already holds the lock
+</span><span class="c1"></span>   <span class="nx">get</span> <span class="o">:=</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">OpGet</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">myKey</span><span class="p">)</span>
+   <span class="c1">// 获取所得持有者
+</span><span class="c1"></span>   <span class="nx">getOwner</span> <span class="o">:=</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">OpGet</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">pfx</span><span class="p">,</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">WithFirstCreate</span><span class="p">()</span><span class="o">...</span><span class="p">)</span>
+   <span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">client</span><span class="p">.</span><span class="nf">Txn</span><span class="p">(</span><span class="nx">ctx</span><span class="p">).</span><span class="nf">If</span><span class="p">(</span><span class="nx">cmp</span><span class="p">).</span><span class="nf">Then</span><span class="p">(</span><span class="nx">put</span><span class="p">,</span> <span class="nx">getOwner</span><span class="p">).</span><span class="nf">Else</span><span class="p">(</span><span class="nx">get</span><span class="p">,</span> <span class="nx">getOwner</span><span class="p">).</span><span class="nf">Commit</span><span class="p">()</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">err</span>
+   <span class="p">}</span>
+   <span class="nx">m</span><span class="p">.</span><span class="nx">myRev</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nx">Revision</span>
+   <span class="k">if</span> <span class="p">!</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Succeeded</span> <span class="p">{</span>
+      <span class="nx">m</span><span class="p">.</span><span class="nx">myRev</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Responses</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nf">GetResponseRange</span><span class="p">().</span><span class="nx">Kvs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">CreateRevision</span>
+   <span class="p">}</span>
+   <span class="c1">// if no key on prefix / the minimum rev is key, already hold the lock
+</span><span class="c1"></span>   <span class="nx">ownerKey</span> <span class="o">:=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Responses</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="nf">GetResponseRange</span><span class="p">().</span><span class="nx">Kvs</span>
+   <span class="c1">// 比较如果当前没有人获得锁或者锁的owner的createrevision等于当前的kv的revision，则表示已获得锁，就可以退出了
+</span><span class="c1"></span>   <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ownerKey</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nx">ownerKey</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">CreateRevision</span> <span class="o">==</span> <span class="nx">m</span><span class="p">.</span><span class="nx">myRev</span> <span class="p">{</span>
+      <span class="nx">m</span><span class="p">.</span><span class="nx">hdr</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Header</span>
+      <span class="k">return</span> <span class="kc">nil</span>
+   <span class="p">}</span>
+ 
+   <span class="c1">// 为了验证自己加的打印信息
+</span><span class="c1"></span>   <span class="c1">//fmt.Printf(&#34;ownerKey: %s\n&#34;, ownerKey)
+</span><span class="c1"></span>   <span class="c1">// 走到这里代表没有获得锁，需要等待之前的锁被释放，即revision小于当前revision的kv被删除
+</span><span class="c1"></span>   <span class="nx">hdr</span><span class="p">,</span> <span class="nx">werr</span> <span class="o">:=</span> <span class="nf">waitDeletes</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">client</span><span class="p">,</span> <span class="nx">m</span><span class="p">.</span><span class="nx">pfx</span><span class="p">,</span> <span class="nx">m</span><span class="p">.</span><span class="nx">myRev</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+   <span class="c1">// release lock key if wait failed
+</span><span class="c1"></span>   <span class="k">if</span> <span class="nx">werr</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="nx">m</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">(</span><span class="nx">client</span><span class="p">.</span><span class="nf">Ctx</span><span class="p">())</span>
+   <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">m</span><span class="p">.</span><span class="nx">hdr</span> <span class="p">=</span> <span class="nx">hdr</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="nx">werr</span>
+<span class="p">}</span>
+ 
+<span class="c1">// waitDeletes 等待所有当前比当前key的revision小的key被删除后，锁释放后才返回
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">waitDeletes</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">client</span> <span class="o">*</span><span class="nx">v3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">pfx</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">maxCreateRev</span> <span class="kt">int64</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">pb</span><span class="p">.</span><span class="nx">ResponseHeader</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="nx">getOpts</span> <span class="o">:=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">v3</span><span class="p">.</span><span class="nf">WithLastCreate</span><span class="p">(),</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">WithMaxCreateRev</span><span class="p">(</span><span class="nx">maxCreateRev</span><span class="p">))</span>
+   <span class="k">for</span> <span class="p">{</span>
+      <span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">client</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">pfx</span><span class="p">,</span> <span class="nx">getOpts</span><span class="o">...</span><span class="p">)</span>
+      <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Kvs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Header</span><span class="p">,</span> <span class="kc">nil</span>
+      <span class="p">}</span>
+      <span class="nx">lastKey</span> <span class="o">:=</span> <span class="nb">string</span><span class="p">(</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Kvs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Key</span><span class="p">)</span>
+      <span class="c1">// 为了调试自己加的这句
+</span><span class="c1"></span>      <span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;wait for %s to delete\n&#34;</span><span class="p">,</span> <span class="nx">lastKey</span><span class="p">)</span>
+      <span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">waitDelete</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">client</span><span class="p">,</span> <span class="nx">lastKey</span><span class="p">,</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nx">Revision</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+ 
+<span class="kd">func</span> <span class="nf">waitDelete</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">client</span> <span class="o">*</span><span class="nx">v3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">key</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">rev</span> <span class="kt">int64</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="nx">cctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithCancel</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+   <span class="k">defer</span> <span class="nf">cancel</span><span class="p">()</span>
+ 
+   <span class="kd">var</span> <span class="nx">wr</span> <span class="nx">v3</span><span class="p">.</span><span class="nx">WatchResponse</span>
+   <span class="c1">// wch是个channel，key被删除后会往这个chan发数据
+</span><span class="c1"></span>   <span class="nx">wch</span> <span class="o">:=</span> <span class="nx">client</span><span class="p">.</span><span class="nf">Watch</span><span class="p">(</span><span class="nx">cctx</span><span class="p">,</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">WithRev</span><span class="p">(</span><span class="nx">rev</span><span class="p">))</span>
+   <span class="k">for</span> <span class="nx">wr</span> <span class="p">=</span> <span class="k">range</span> <span class="nx">wch</span> <span class="p">{</span>
+      <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ev</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">wr</span><span class="p">.</span><span class="nx">Events</span> <span class="p">{</span>
+         <span class="k">if</span> <span class="nx">ev</span><span class="p">.</span><span class="nx">Type</span> <span class="o">==</span> <span class="nx">mvccpb</span><span class="p">.</span><span class="nx">DELETE</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">nil</span>
+         <span class="p">}</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">wr</span><span class="p">.</span><span class="nf">Err</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">err</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">err</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;lost watcher waiting for delete&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>看完上面的代码基本知道了etcd分布式锁的实现机制了，但是还没看到哪里和前缀Prefix相关了。其实答案就藏在getOwner里，看上述代码，不管是执行Put还是Get，最终都有个getOwner的过程，看一下这个getOwner，options模式里有个v3.WithFirstCreate函数调用，看下这个函数</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// WithFirstCreate gets the key with the oldest creation revision in the request range.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">WithFirstCreate</span><span class="p">()</span> <span class="p">[]</span><span class="nx">OpOption</span> <span class="p">{</span> <span class="k">return</span> <span class="nf">withTop</span><span class="p">(</span><span class="nx">SortByCreateRevision</span><span class="p">,</span> <span class="nx">SortAscend</span><span class="p">)</span> <span class="p">}</span>
+ 
+<span class="c1">// withTop gets the first key over the get&#39;s prefix given a sort order
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">withTop</span><span class="p">(</span><span class="nx">target</span> <span class="nx">SortTarget</span><span class="p">,</span> <span class="nx">order</span> <span class="nx">SortOrder</span><span class="p">)</span> <span class="p">[]</span><span class="nx">OpOption</span> <span class="p">{</span>
+   <span class="k">return</span> <span class="p">[]</span><span class="nx">OpOption</span><span class="p">{</span><span class="nf">WithPrefix</span><span class="p">(),</span> <span class="nf">WithSort</span><span class="p">(</span><span class="nx">target</span><span class="p">,</span> <span class="nx">order</span><span class="p">),</span> <span class="nf">WithLimit</span><span class="p">(</span><span class="mi">1</span><span class="p">)}</span>
+<span class="p">}</span>
+ 
+<span class="c1">// WithPrefix enables &#39;Get&#39;, &#39;Delete&#39;, or &#39;Watch&#39; requests to operate
+</span><span class="c1">// on the keys with matching prefix. For example, &#39;Get(foo, WithPrefix())&#39;
+</span><span class="c1">// can return &#39;foo1&#39;, &#39;foo2&#39;, and so on.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">WithPrefix</span><span class="p">()</span> <span class="nx">OpOption</span> <span class="p">{</span>
+   <span class="k">return</span> <span class="kd">func</span><span class="p">(</span><span class="nx">op</span> <span class="o">*</span><span class="nx">Op</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">op</span><span class="p">.</span><span class="nx">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+         <span class="nx">op</span><span class="p">.</span><span class="nx">key</span><span class="p">,</span> <span class="nx">op</span><span class="p">.</span><span class="nx">end</span> <span class="p">=</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">{</span><span class="mi">0</span><span class="p">},</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">{</span><span class="mi">0</span><span class="p">}</span>
+         <span class="k">return</span>
+      <span class="p">}</span>
+      <span class="nx">op</span><span class="p">.</span><span class="nx">end</span> <span class="p">=</span> <span class="nf">getPrefix</span><span class="p">(</span><span class="nx">op</span><span class="p">.</span><span class="nx">key</span><span class="p">)</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>看到上面的是三个函数后，大致就找到了对应的源码的感觉，因为看到了WithPrefix函数，和上面的猜测正好匹配。所以getOwner的具体执行效果是会把虽有以lockkey开头的kv都拿到，且按照createrevision升序排列，取第一个值，这个意思就很明白了，就是要拿到当前以lockkey为prefix的且createrevision最小的那个key，就是目前已经拿到锁的key。</p>
+<p>看了上面的源码就可以明白为什么/a/b加了锁之后，/a加锁会超时了，因为在getOwner时，拿到了/a/b，且createrevision小于/a的revision，于是/a就会等待/a/b被删除后，watch chanel有数据后才能获得锁。</p>
+<p>看到这里还有个需要确认的问题，那就是如果/ab加锁了，那么再对/a加锁会怎么样？/a肯定是/ab的prefix啊，是不是也会加锁失败呢？</p>
+<p>结论是会加锁成功，看下源码</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"> <span class="kd">func</span> <span class="nf">NewMutex</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Session</span><span class="p">,</span> <span class="nx">pfx</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">Mutex</span> <span class="p">{</span>
+   <span class="k">return</span> <span class="o">&amp;</span><span class="nx">Mutex</span><span class="p">{</span><span class="nx">s</span><span class="p">,</span> <span class="nx">pfx</span> <span class="o">+</span> <span class="s">&#34;/&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">nil</span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到在NewMutex时并不是直接拿传进来的pfx作为prefix的，而且在后面加了个&rdquo;/&quot;，所以上线的/ab加了锁，/a加锁还是可以成功的。一般查找prefix或suffix时都会加上固定的分隔符，要不然就会出现误判。</p>
+<h3 id="总结">总结</h3>
+<p>通过分析问题，看源码，可以了解到etcd锁的实现原理，以及可能存在的小坑。etcd居然把锁的实现放在了client端，也是出乎我的意料，这样的话，可以直接修改client端代码来修改其锁的实现，就可能出现虽然共用一个服务端，但是etcd行为却不一致的问题，不知道为何要这么设计，个人感觉还是要放到服务端更好些。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-10-16</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/etcd-lock/" data-title="Etcd分布式锁加锁失败" data-hashtags="etcd"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/etcd-lock/" data-hashtag="etcd"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/etcd-lock/" data-title="Etcd分布式锁加锁失败" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/etcd-lock/" data-title="Etcd分布式锁加锁失败"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/etcd-lock/" data-title="Etcd分布式锁加锁失败"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/etcd-lock/" data-title="Etcd分布式锁加锁失败" data-description="etcd分布式锁加锁失败"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/etcd-lock/" data-title="Etcd分布式锁加锁失败" data-description="etcd分布式锁加锁失败"><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/etcd-lock/" data-title="Etcd分布式锁加锁失败"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/etcd/">etcd</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/dragonfly/" class="prev" rel="prev" title="Dragonfly &#43; Harbor实现的p2p镜像分发"><i class="fas fa-angle-left fa-fw"></i>Dragonfly &#43; Harbor实现的p2p镜像分发</a>
+            <a href="/posts/etcd-watch/" class="next" rel="next" title="Etcd watch内存泄漏">Etcd watch内存泄漏<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Statefulset创建pod慢 - kaku&#39;s blog</title><meta name="Description" content="create pod slowly"><meta property="og:title" content="Statefulset创建pod慢" />
+<meta property="og:description" content="create pod slowly" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-statefulset-sync/" />
+<meta property="og:image" content="https://www.likakuli.com/logo.png"/>
+<meta property="article:published_time" content="2019-03-26T11:16:03+08:00" />
+<meta property="article:modified_time" content="2020-10-16T18:17:42+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="Statefulset创建pod慢"/>
+<meta name="twitter:description" content="create pod slowly"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/kubernetes-statefulset-sync/" /><link rel="prev" href="https://www.likakuli.com/posts/etcd-watch/" /><link rel="next" href="https://www.likakuli.com/posts/dockerd-memory-leak1/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Statefulset创建pod慢",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/kubernetes-statefulset-sync\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  1950 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-statefulset-sync\/","datePublished": "2019-03-26T11:16:03+08:00","dateModified": "2020-10-16T18:17:42+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": "create pod slowly"
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Statefulset创建pod慢</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a>&nbsp;<a href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"><i class="far fa-folder fa-fw"></i>性能优化</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-03-26">2019-03-26</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1950 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 4 分钟&nbsp;<span id="/posts/kubernetes-statefulset-sync/" class="leancloud_visitors" data-flag-title="Statefulset创建pod慢">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#背景">背景</a></li>
+            <li><a href="#排查过程">排查过程</a></li>
+            <li><a href="#解决方案">解决方案</a></li>
+            <li><a href="#社区">社区</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h3 id="背景">背景</h3>
+<p>线上kubernetes集群从创建sts到创建pod需要时间很长，分钟级别，但是调度却很快。偶尔还会出现导致kube-odin任务失败（超过300s）的情况</p>
+<h3 id="排查过程">排查过程</h3>
+<p>分析可能的原因：</p>
+<ul>
+<li>watch到sts的变化有延迟</li>
+<li>sts从入队列到出队列耗时长</li>
+<li>处理sts耗时长</li>
+</ul>
+<p>kube-controller-manager中sts相关源码中有一些日志，需要把loglevel设置为4，即调试级别才会打印，里面就包括处理单个sts的耗时。首先把kube-controller-manager日志级别调到4，日志如下图, 最后显示的时间是从队列中拿到sts到处理完sts的整个过程的耗时，可以看到耗时并不长，在毫秒级别，那就可以排除掉处理单个sts耗时长的可能性了。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="kube-controller-manager-slowly.png"
+        data-srcset="/posts/kubernetes-statefulset-sync/kube-controller-manager-slowly.png, kube-controller-manager-slowly.png 1.5x, /posts/kubernetes-statefulset-sync/kube-controller-manager-slowly.png 2x"
+        data-sizes="auto"
+        alt="/posts/kubernetes-statefulset-sync/kube-controller-manager-slowly.png"
+        title="img" /></p>
+<p>还剩下两种可能，不过细想的话，第一种可能也不大，因为watch是通用的，没道理同一个集群kube-controller-manager里的watch就慢，kube-scheuler的watch就快。那就很有可能是从watch到变化后把sts入队列到从队列中拿到sts这个阶段耗时太长了。源码中并没有这一部分的耗时统计，但是从源码中可以看到整个处理过程是同步到的，即watch的所有sts按顺序入队列，消费者在顺序的从队列中拿到，每消费完一个，再去拿另一个，串行执行，那问题就来了，虽然单个sts执行耗时在毫秒级，但是真个ys02的sts数量在2000+，按平均每个sts耗时40ms计算，粗略估算一下处理完一轮的话也需要40ms*2000=80s的时间，到这里已经离真相不远了，但还有一个问题，那就是kube-controller-manager在初始化的时候是会把所有的sts加载一遍放入队列中的，处理完一遍哪怕耗时2分钟，但是处理完一遍之后只watch变化的sts，数量就会少很多了，所以处理完初始化时加载的所有sts后，按道理再有sts变化应该是可以及时处理的，因为此时队列中基本没有sts了。带着问题再去看源码，发现了一个神奇的地方，如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">setInformer</span><span class="p">.</span><span class="nf">Informer</span><span class="p">().</span><span class="nf">AddEventHandlerWithResyncPeriod</span><span class="p">(</span>
+   <span class="nx">cache</span><span class="p">.</span><span class="nx">ResourceEventHandlerFuncs</span><span class="p">{</span>
+      <span class="nx">AddFunc</span><span class="p">:</span> <span class="nx">ssc</span><span class="p">.</span><span class="nx">enqueueStatefulSet</span><span class="p">,</span>
+      <span class="nx">UpdateFunc</span><span class="p">:</span> <span class="kd">func</span><span class="p">(</span><span class="nx">old</span><span class="p">,</span> <span class="nx">cur</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">{</span>
+         <span class="nx">oldPS</span> <span class="o">:=</span> <span class="nx">old</span><span class="p">.(</span><span class="o">*</span><span class="nx">apps</span><span class="p">.</span><span class="nx">StatefulSet</span><span class="p">)</span>
+         <span class="nx">curPS</span> <span class="o">:=</span> <span class="nx">cur</span><span class="p">.(</span><span class="o">*</span><span class="nx">apps</span><span class="p">.</span><span class="nx">StatefulSet</span><span class="p">)</span>
+         <span class="k">if</span> <span class="nx">oldPS</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Replicas</span> <span class="o">!=</span> <span class="nx">curPS</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Replicas</span> <span class="p">{</span>
+            <span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Observed updated replica count for StatefulSet: %v, %d-&gt;%d&#34;</span><span class="p">,</span> <span class="nx">curPS</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">oldPS</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Replicas</span><span class="p">,</span> <span class="nx">curPS</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">Replicas</span><span class="p">)</span>
+         <span class="p">}</span>
+         <span class="nx">ssc</span><span class="p">.</span><span class="nf">enqueueStatefulSet</span><span class="p">(</span><span class="nx">cur</span><span class="p">)</span>
+      <span class="p">},</span>
+      <span class="nx">DeleteFunc</span><span class="p">:</span> <span class="nx">ssc</span><span class="p">.</span><span class="nx">enqueueStatefulSet</span><span class="p">,</span>
+   <span class="p">},</span>
+   <span class="nx">statefulSetResyncPeriod</span><span class="p">,</span> <span class="c1">// 30s
+</span><span class="c1"></span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这就对了，上面这段代码意思是只要watch到sts的变化，就会把对应的sts放入队列，<strong>且每隔30s<strong><strong>会把全部sts</strong></strong>重新入一遍队列</strong>，再加上刚才的估算，80s才能处理完所有sts，在未处理完之前（处理了30s时）就又会把所有的sts重新加入到队列中（并不是简单粗暴的把所有sts入队列，中间还会做一些处理，过滤掉一些不需要重复入队列的sts），这就会导致sts的待处理队列中始终有2000+个元素，新watch到的变化会加到队尾，从而导致sts创建后过了很久Pod才创建，因为sts controller一直在消费之前未处理完的其他sts了。</p>
+<p>下面写了一个Demo来演示这个问题，代码很简单，如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span><span class="lnt">87
+</span><span class="lnt">88
+</span><span class="lnt">89
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"> <span class="kn">package</span> <span class="nx">main</span>
+ 
+<span class="kn">import</span> <span class="p">(</span>
+   <span class="s">&#34;fmt&#34;</span>
+   <span class="s">&#34;k8s.io/api/apps/v1&#34;</span>
+   <span class="s">&#34;k8s.io/client-go/informers&#34;</span>
+   <span class="s">&#34;k8s.io/client-go/kubernetes&#34;</span>
+   <span class="s">&#34;k8s.io/client-go/rest&#34;</span>
+   <span class="s">&#34;k8s.io/client-go/tools/cache&#34;</span>
+   <span class="s">&#34;k8s.io/client-go/util/workqueue&#34;</span>
+   <span class="s">&#34;log&#34;</span>
+   <span class="s">&#34;math/rand&#34;</span>
+   <span class="s">&#34;time&#34;</span>
+   <span class="s">&#34;unsafe&#34;</span>
+<span class="p">)</span>
+ 
+<span class="kd">var</span> <span class="nx">queue</span> <span class="nx">workqueue</span><span class="p">.</span><span class="nx">RateLimitingInterface</span>
+ 
+<span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+   <span class="k">defer</span> <span class="nx">queue</span><span class="p">.</span><span class="nf">ShutDown</span><span class="p">()</span>
+ 
+   <span class="nx">clientset</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">kubernetes</span><span class="p">.</span><span class="nf">NewForConfig</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rest</span><span class="p">.</span><span class="nx">Config</span><span class="p">{</span>
+      <span class="nx">Host</span><span class="p">:</span> <span class="s">&#34;http://10.89.107.26:8080&#34;</span><span class="p">,</span>
+   <span class="p">})</span>
+   <span class="nx">factor</span> <span class="o">:=</span> <span class="nx">rand</span><span class="p">.</span><span class="nf">Float64</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+   <span class="nx">syncPeriod</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nb">float64</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="mi">12</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span><span class="p">).</span><span class="nf">Nanoseconds</span><span class="p">())</span> <span class="o">*</span> <span class="nx">factor</span><span class="p">)</span>
+   <span class="nx">informerFactory</span> <span class="o">:=</span> <span class="nx">informers</span><span class="p">.</span><span class="nf">NewSharedInformerFactory</span><span class="p">(</span><span class="nx">clientset</span><span class="p">,</span> <span class="nx">syncPeriod</span><span class="p">)</span>
+   <span class="nx">stopChan</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span>
+   <span class="nx">informerFactory</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="nx">stopChan</span><span class="p">)</span>
+   <span class="nx">informerFactory</span><span class="p">.</span><span class="nf">WaitForCacheSync</span><span class="p">(</span><span class="nx">stopChan</span><span class="p">)</span>
+   <span class="nx">stsInformer</span> <span class="o">:=</span> <span class="nx">informerFactory</span><span class="p">.</span><span class="nf">Apps</span><span class="p">().</span><span class="nf">V1</span><span class="p">().</span><span class="nf">StatefulSets</span><span class="p">().</span><span class="nf">Informer</span><span class="p">()</span>
+   <span class="c1">// 和sts controller一直，30s同步一遍所有sts
+</span><span class="c1"></span>   <span class="nx">stsInformer</span><span class="p">.</span><span class="nf">AddEventHandlerWithResyncPeriod</span><span class="p">(</span><span class="nx">cache</span><span class="p">.</span><span class="nx">ResourceEventHandlerFuncs</span><span class="p">{</span>
+      <span class="nx">AddFunc</span><span class="p">:</span>    <span class="nx">onAdd</span><span class="p">,</span>
+      <span class="nx">UpdateFunc</span><span class="p">:</span> <span class="nx">onUpdate</span><span class="p">,</span>
+      <span class="nx">DeleteFunc</span><span class="p">:</span> <span class="nx">onDelete</span><span class="p">,</span>
+   <span class="p">},</span> <span class="mi">30</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+ 
+   <span class="k">go</span> <span class="nf">consume</span><span class="p">()</span>
+ 
+   <span class="nx">stsInformer</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="nx">stopChan</span><span class="p">)</span>
+<span class="p">}</span>
+ 
+<span class="kd">func</span> <span class="nf">init</span><span class="p">()</span> <span class="p">{</span>
+   <span class="nx">queue</span> <span class="p">=</span> <span class="nx">workqueue</span><span class="p">.</span><span class="nf">NewNamedRateLimitingQueue</span><span class="p">(</span><span class="nx">workqueue</span><span class="p">.</span><span class="nf">DefaultControllerRateLimiter</span><span class="p">(),</span> <span class="s">&#34;statefulset&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+ 
+<span class="kd">func</span> <span class="nf">consume</span><span class="p">()</span> <span class="p">{</span>
+   <span class="k">for</span> <span class="p">{</span>
+      <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+         <span class="nx">key</span><span class="p">,</span> <span class="nx">quit</span> <span class="o">:=</span> <span class="nx">queue</span><span class="p">.</span><span class="nf">Get</span><span class="p">()</span>
+         <span class="k">if</span> <span class="nx">quit</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;done&#34;</span><span class="p">)</span>
+            <span class="k">return</span>
+         <span class="p">}</span>
+         <span class="k">defer</span> <span class="nx">queue</span><span class="p">.</span><span class="nf">Done</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+         <span class="nx">sts</span> <span class="o">:=</span> <span class="nx">key</span><span class="p">.(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">StatefulSet</span><span class="p">)</span>
+         <span class="c1">// 模拟处理单个sts耗时40ms
+</span><span class="c1"></span>         <span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">40</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">)</span>
+         <span class="nx">log</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;cosumed %s, queue count: %d&#34;</span><span class="p">,</span> <span class="nx">sts</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">queue</span><span class="p">.</span><span class="nf">Len</span><span class="p">())</span>
+      <span class="p">}()</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+ 
+<span class="kd">func</span> <span class="nf">onAdd</span><span class="p">(</span><span class="nx">obj</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">{</span>
+   <span class="nx">sts</span> <span class="o">:=</span> <span class="nx">obj</span><span class="p">.(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">StatefulSet</span><span class="p">)</span>
+   <span class="k">if</span> <span class="nx">sts</span><span class="p">.</span><span class="nx">Name</span> <span class="o">==</span> <span class="s">&#34;test-delay-sf-60f09&#34;</span> <span class="p">{</span>
+      <span class="nx">log</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;add address: %d&#34;</span><span class="p">,</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">sts</span><span class="p">))</span>
+   <span class="p">}</span>
+   <span class="nx">queue</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">sts</span><span class="p">)</span>
+<span class="p">}</span>
+ 
+<span class="kd">func</span> <span class="nf">onUpdate</span><span class="p">(</span><span class="nx">old</span><span class="p">,</span> <span class="nx">new</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">{</span>
+   <span class="nx">sts</span> <span class="o">:=</span> <span class="nx">old</span><span class="p">.(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">StatefulSet</span><span class="p">)</span>
+   <span class="c1">// 测试用的sts，观察全量同步时的地址变化，用来确定是不通批次的同步，针对同一个sts来说是否地址相同
+</span><span class="c1"></span>   <span class="c1">// 因为queue中用到sts作为map的key，所以此处打印地址，验证一下
+</span><span class="c1"></span>   <span class="k">if</span> <span class="nx">sts</span><span class="p">.</span><span class="nx">Name</span> <span class="o">==</span> <span class="s">&#34;test-delay-sf-60f09&#34;</span> <span class="p">{</span>
+      <span class="nx">log</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;update address: %d&#34;</span><span class="p">,</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">sts</span><span class="p">))</span>
+   <span class="p">}</span>
+   <span class="nx">queue</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">sts</span><span class="p">)</span>
+<span class="p">}</span>
+ 
+<span class="kd">func</span> <span class="nf">onDelete</span><span class="p">(</span><span class="nx">obj</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">{</span>
+   <span class="nx">sts</span> <span class="o">:=</span> <span class="nx">obj</span><span class="p">.(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">StatefulSet</span><span class="p">)</span>
+   <span class="k">if</span> <span class="nx">sts</span><span class="p">.</span><span class="nx">Name</span> <span class="o">==</span> <span class="s">&#34;test-delay-sf-60f09&#34;</span> <span class="p">{</span>
+      <span class="nx">log</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;update address: %d&#34;</span><span class="p">,</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">sts</span><span class="p">))</span>
+   <span class="p">}</span>
+   <span class="nx">queue</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">sts</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>最终的输出结果</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="slowly_demo1.png"
+        data-srcset="/posts/kubernetes-statefulset-sync/slowly_demo1.png, slowly_demo1.png 1.5x, /posts/kubernetes-statefulset-sync/slowly_demo1.png 2x"
+        data-sizes="auto"
+        alt="/posts/kubernetes-statefulset-sync/slowly_demo1.png"
+        title="img" /></p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="slowly_demo2.png"
+        data-srcset="/posts/kubernetes-statefulset-sync/slowly_demo2.png, slowly_demo2.png 1.5x, /posts/kubernetes-statefulset-sync/slowly_demo2.png 2x"
+        data-sizes="auto"
+        alt="/posts/kubernetes-statefulset-sync/slowly_demo2.png"
+        title="img" /></p>
+<p>可以看到queue的长度从一开始的2000+一直降到1525，此时同步了一遍全量的sts，即2000+，queue中元素数量又生了上去。同时在未修改sts的情况，指定sts同步后的地址和同步前的地址相同824689074368。验证了之前的猜想，问题就出在了这里。</p>
+<h3 id="解决方案">解决方案</h3>
+<p>想到两种优化方案</p>
+<ol>
+<li>去掉定期（30s）全量同步的机制，目前看其他controller，如ReplicationController，ServiceController，EndpointsController等都没有设置定期全量同步</li>
+<li>保留定期同步，添加已处理的sts的缓存，每次从queue中拿到一个新的sts时，比较已处理缓存中时候存在先相同的sts(resourceversion相同)，存在则忽略此sts，否则进行处理</li>
+</ol>
+<h3 id="社区">社区</h3>
+<p>上述问题已反馈社区，见<br>
+<a href="https://github.com/kubernetes/kubernetes/issues/75495">https://github.com/kubernetes/kubernetes/issues/75495</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/75622">https://github.com/kubernetes/kubernetes/pull/75622</a></p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-10-16</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/kubernetes-statefulset-sync/" data-title="Statefulset创建pod慢" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/kubernetes-statefulset-sync/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/kubernetes-statefulset-sync/" data-title="Statefulset创建pod慢" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/kubernetes-statefulset-sync/" data-title="Statefulset创建pod慢"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/kubernetes-statefulset-sync/" data-title="Statefulset创建pod慢"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/kubernetes-statefulset-sync/" data-title="Statefulset创建pod慢" data-description="create pod slowly"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/kubernetes-statefulset-sync/" data-title="Statefulset创建pod慢" data-description="create pod slowly"><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/kubernetes-statefulset-sync/" data-title="Statefulset创建pod慢"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/etcd-watch/" class="prev" rel="prev" title="Etcd watch内存泄漏"><i class="fas fa-angle-left fa-fw"></i>Etcd watch内存泄漏</a>
+            <a href="/posts/dockerd-memory-leak1/" class="next" rel="next" title="Dockerd内存泄露">Dockerd内存泄露<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>
