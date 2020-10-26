@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Index - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Index" />
+<meta property="og:description" content="转载自组内同事 1. 背景 最近升级了一版kubelet，修复因kubelet删除Pod慢导致平台删除集群超时的问题。在灰度redis隔离集群的时候" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/docker-hung/" />
+<meta property="og:image" content="https://www.likakuli.com/logo.png"/>
+<meta property="article:published_time" content="2020-10-26T21:52:54+08:00" />
+<meta property="article:modified_time" content="2020-10-26T21:57:20+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="Index"/>
+<meta name="twitter:description" content="转载自组内同事 1. 背景 最近升级了一版kubelet，修复因kubelet删除Pod慢导致平台删除集群超时的问题。在灰度redis隔离集群的时候"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/docker-hung/" /><link rel="prev" href="https://www.likakuli.com/posts/netns-leak/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Index",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/docker-hung\/"
+        },"genre": "posts","keywords": "docker","wordcount":  8791 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/docker-hung\/","datePublished": "2020-10-26T21:52:54+08:00","dateModified": "2020-10-26T21:57:20+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Index</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-10-26">2020-10-26</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 8791 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 18 分钟&nbsp;<span id="/posts/docker-hung/" class="leancloud_visitors" data-flag-title="Index">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#1-背景">1. 背景</a></li>
+            <li><a href="#2重启kubelet变更宿主状态">2.重启kubelet变更宿主状态</a></li>
+            <li><a href="#3-docker-hang死">3. docker hang死</a>
+              <ul>
+                <li><a href="#31-链路跟踪">3.1 链路跟踪</a></li>
+                <li><a href="#32-进程排查">3.2 进程排查</a></li>
+              </ul>
+            </li>
+            <li><a href="#4-解决方案">4. 解决方案</a>
+              <ul>
+                <li><a href="#41-最直观的办法">4.1 最直观的办法</a></li>
+                <li><a href="#42-最根本的办法">4.2 最根本的办法</a></li>
+                <li><a href="#43-最简单的办法">4.3 最简单的办法</a></li>
+              </ul>
+            </li>
+            <li><a href="#5-后续">5. 后续</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><blockquote>
+<p>转载自组内同事</p>
+</blockquote>
+<h3 id="1-背景">1. 背景</h3>
+<p>最近升级了一版kubelet，修复因kubelet删除Pod慢导致平台删除集群超时的问题。在灰度redis隔离集群的时候，发现升级kubelet并重启服务后，少量宿主状态变成了NotReady，并且回滚kubelet至之前版本，宿主状态仍然是NotReady。查看宿主状态时提示 &lsquo;container runtime is down&rsquo; ，根据经验，此时一般就是容器运行时出了问题。弹性云使用的容器运行时是docker，我们就去检查docker的状态，检测结果如下：</p>
+<ul>
+<li>docker ps 查看所有容器状态，执行正常</li>
+<li>docker inspect 查看某一容器详细状态，执行阻塞</li>
+</ul>
+<p>典型的docker hang死行为。因为我们最近在升级docker版本，存量宿主docker的版本为1.13.1，并且在逐步升级至18.06.3，新宿主的docker版本都是18.06.3。docker hang死问题在1.13.1版本上表现得更彻底，在执行docker ps的时候就已经hang死了，一旦某个容器出了问题，docker就处于无响应状态；而docker 18.06.3做了一点小小的优化，在执行docker ps时去掉了针对容器级别的加锁操作，但是docker inspect依然会加容器锁，因此某一个容器出现问题，并不会造成docker服务不可响应，受影响的也仅仅是该容器，无法执行任何操作。</p>
+<p>至于为什么以docker ps与docker inspect为指标检查docker状态，因为kubelet就是依赖这两个docker API获取容器状态。</p>
+<p>所以，现在问题有二：</p>
+<ol>
+<li>docker hang死的根因是什么？</li>
+<li>docker hang死时，为什么重启kubelet，会导致宿主状态变为NotReady？</li>
+</ol>
+<h3 id="2重启kubelet变更宿主状态">2.重启kubelet变更宿主状态</h3>
+<p>kubelet重启后宿主状态从Ready变为NotReady，这个问题相较docker hang死而言，没有那么复杂，所以我们先排查这个问题。</p>
+<p>kubelet针对宿主会设置多个Condition，表明宿主当前所处的状态，比如宿主内存是否告急、线程数是否告急，以及宿主是否就绪。其中ReadyCondition表明宿主是否就绪，kubectl查看宿主状态时，展示的Statue信息就是ReadCondition的内容，常见的状态及其含义定义如下：</p>
+<ul>
+<li>Ready状态：表明当前宿主状态一切OK，能正常响应Pod事件</li>
+<li>NotReady状态：表明宿主的kubelet仍在运行，但是此时已经无法处理Pod事件。NotReady绝大多数情况都是容器运行时出了问题</li>
+<li>Unknown状态：表明宿主kubelet已停止运行</li>
+</ul>
+<p>kubelet定义的ReadyCondition的判定条件如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// defaultNodeStatusFuncs is a factory that generates the default set of
+</span><span class="c1">// setNodeStatus funcs
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">kl</span> <span class="o">*</span><span class="nx">Kubelet</span><span class="p">)</span> <span class="nf">defaultNodeStatusFuncs</span><span class="p">()</span> <span class="p">[]</span><span class="kd">func</span><span class="p">(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Node</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="o">......</span>
+   <span class="nx">setters</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">setters</span><span class="p">,</span>
+      <span class="nx">nodestatus</span><span class="p">.</span><span class="nf">OutOfDiskCondition</span><span class="p">(</span><span class="nx">kl</span><span class="p">.</span><span class="nx">clock</span><span class="p">.</span><span class="nx">Now</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">recordNodeStatusEvent</span><span class="p">),</span>
+      <span class="nx">nodestatus</span><span class="p">.</span><span class="nf">MemoryPressureCondition</span><span class="p">(</span><span class="nx">kl</span><span class="p">.</span><span class="nx">clock</span><span class="p">.</span><span class="nx">Now</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">evictionManager</span><span class="p">.</span><span class="nx">IsUnderMemoryPressure</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">recordNodeStatusEvent</span><span class="p">),</span>
+      <span class="nx">nodestatus</span><span class="p">.</span><span class="nf">DiskPressureCondition</span><span class="p">(</span><span class="nx">kl</span><span class="p">.</span><span class="nx">clock</span><span class="p">.</span><span class="nx">Now</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">evictionManager</span><span class="p">.</span><span class="nx">IsUnderDiskPressure</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">recordNodeStatusEvent</span><span class="p">),</span>
+      <span class="nx">nodestatus</span><span class="p">.</span><span class="nf">PIDPressureCondition</span><span class="p">(</span><span class="nx">kl</span><span class="p">.</span><span class="nx">clock</span><span class="p">.</span><span class="nx">Now</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">evictionManager</span><span class="p">.</span><span class="nx">IsUnderPIDPressure</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">recordNodeStatusEvent</span><span class="p">),</span>
+      <span class="nx">nodestatus</span><span class="p">.</span><span class="nf">ReadyCondition</span><span class="p">(</span><span class="nx">kl</span><span class="p">.</span><span class="nx">clock</span><span class="p">.</span><span class="nx">Now</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">runtimeState</span><span class="p">.</span><span class="nx">runtimeErrors</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">runtimeState</span><span class="p">.</span><span class="nx">networkErrors</span><span class="p">,</span> <span class="nx">validateHostFunc</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">containerManager</span><span class="p">.</span><span class="nx">Status</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">recordNodeStatusEvent</span><span class="p">),</span>
+      <span class="nx">nodestatus</span><span class="p">.</span><span class="nf">VolumesInUse</span><span class="p">(</span><span class="nx">kl</span><span class="p">.</span><span class="nx">volumeManager</span><span class="p">.</span><span class="nx">ReconcilerStatesHasBeenSynced</span><span class="p">,</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">volumeManager</span><span class="p">.</span><span class="nx">GetVolumesInUse</span><span class="p">),</span>
+      <span class="c1">// TODO(mtaufen): I decided not to move this setter for now, since all it does is send an event
+</span><span class="c1"></span>      <span class="c1">// and record state back to the Kubelet runtime object. In the future, I&#39;d like to isolate
+</span><span class="c1"></span>      <span class="c1">// these side-effects by decoupling the decisions to send events and partial status recording
+</span><span class="c1"></span>      <span class="c1">// from the Node setters.
+</span><span class="c1"></span>      <span class="nx">kl</span><span class="p">.</span><span class="nx">recordNodeSchedulableEvent</span><span class="p">,</span>
+   <span class="p">)</span>
+   <span class="k">return</span> <span class="nx">setters</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>深入nodestatus.ReadyCondition的实现可以发现，宿主是否Ready取决于很多条件，包含运行时判定、网络判定、基本资源判定等。这里我们只需关注运行时判定即可：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">runtimeState</span><span class="p">)</span> <span class="nf">runtimeErrors</span><span class="p">()</span> <span class="p">[]</span><span class="kt">string</span> <span class="p">{</span>
+   <span class="nx">s</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span>
+   <span class="k">defer</span> <span class="nx">s</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span>
+   <span class="kd">var</span> <span class="nx">ret</span> <span class="p">[]</span><span class="kt">string</span>
+   <span class="k">if</span> <span class="p">!</span><span class="nx">s</span><span class="p">.</span><span class="nx">lastBaseRuntimeSync</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">baseRuntimeSyncThreshold</span><span class="p">).</span><span class="nf">After</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">())</span> <span class="p">{</span>  <span class="c1">// 1
+</span><span class="c1"></span>      <span class="nx">ret</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">ret</span><span class="p">,</span> <span class="s">&#34;container runtime is down&#34;</span><span class="p">)</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="nx">s</span><span class="p">.</span><span class="nx">internalError</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="nx">ret</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">ret</span><span class="p">,</span> <span class="nx">s</span><span class="p">.</span><span class="nx">internalError</span><span class="p">.</span><span class="nf">Error</span><span class="p">())</span>
+   <span class="p">}</span>
+   <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">hc</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">s</span><span class="p">.</span><span class="nx">healthChecks</span> <span class="p">{</span>                                            <span class="c1">// 2
+</span><span class="c1"></span>      <span class="k">if</span> <span class="nx">ok</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">hc</span><span class="p">.</span><span class="nf">fn</span><span class="p">();</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+         <span class="nx">ret</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">ret</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%s is not healthy: %v&#34;</span><span class="p">,</span> <span class="nx">hc</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="nx">ret</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>当出现如下两种状况之一时，则判定运行时检查不通过：</p>
+<ol>
+<li>距最近一次运行时同步操作的时间间隔超过指定阈值（默认30s）</li>
+<li>运行时健康检查未通过</li>
+</ol>
+<p>那么，当时宿主的NotReady是由哪种状况引起的呢？结合kubelet日志分析，kubelet每隔5s就输出一条日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">......
+I0715 10:43:28.049240   <span class="m">16315</span> kubelet.go:1835<span class="o">]</span> skipping pod synchronization - <span class="o">[</span>container runtime is down<span class="o">]</span>
+I0715 10:43:33.049359   <span class="m">16315</span> kubelet.go:1835<span class="o">]</span> skipping pod synchronization - <span class="o">[</span>container runtime is down<span class="o">]</span>
+I0715 10:43:38.049492   <span class="m">16315</span> kubelet.go:1835<span class="o">]</span> skipping pod synchronization - <span class="o">[</span>container runtime is down<span class="o">]</span>
+......
+</code></pre></td></tr></table>
+</div>
+</div><p>因此，状况1是宿主NotReady的元凶。</p>
+<p>我们继续分析为什么kubelet没有按照预期设置lastBaseRuntimeSync。kubelet启动时会创建一个goroutine，并在该goroutine中循环设置lastBaseRuntimeSync，循环如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">kl</span> <span class="o">*</span><span class="nx">Kubelet</span><span class="p">)</span> <span class="nf">Run</span><span class="p">(</span><span class="nx">updates</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">PodUpdate</span><span class="p">)</span> <span class="p">{</span>
+   <span class="o">......</span>
+   <span class="k">go</span> <span class="nx">wait</span><span class="p">.</span><span class="nf">Until</span><span class="p">(</span><span class="nx">kl</span><span class="p">.</span><span class="nx">updateRuntimeUp</span><span class="p">,</span> <span class="mi">5</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">,</span> <span class="nx">wait</span><span class="p">.</span><span class="nx">NeverStop</span><span class="p">)</span>
+   <span class="o">......</span>
+<span class="p">}</span>
+
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">kl</span> <span class="o">*</span><span class="nx">Kubelet</span><span class="p">)</span> <span class="nf">updateRuntimeUp</span><span class="p">()</span> <span class="p">{</span>
+   <span class="nx">kl</span><span class="p">.</span><span class="nx">updateRuntimeMux</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+   <span class="k">defer</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">updateRuntimeMux</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+   <span class="o">......</span>
+   <span class="nx">kl</span><span class="p">.</span><span class="nx">oneTimeInitializer</span><span class="p">.</span><span class="nf">Do</span><span class="p">(</span><span class="nx">kl</span><span class="p">.</span><span class="nx">initializeRuntimeDependentModules</span><span class="p">)</span>
+   <span class="nx">kl</span><span class="p">.</span><span class="nx">runtimeState</span><span class="p">.</span><span class="nf">setRuntimeSync</span><span class="p">(</span><span class="nx">kl</span><span class="p">.</span><span class="nx">clock</span><span class="p">.</span><span class="nf">Now</span><span class="p">())</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>正常情况下，kubelet每隔5s会将lastBaseRuntimeSync设置为当前时间，而宿主状态异常时，这个时间戳一直未被更新。也即updateRuntimeUp一直被阻塞在设置lastBaseRuntimeSync之前的某一步。我们只需逐个排查updateRuntimeUp内的函数调用即可，具体过程不再展示，最终的函数调用链路如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">initializeRuntimeDependentModules -&gt; kl.cadvisor.Start -&gt; cc.Manager.Start -&gt; self.createContainer -&gt; m.createContainerLocked -&gt; container.NewContainerHandler -&gt; factory.CanHandleAndAccept -&gt; self.client.ContainerInspect
+</code></pre></td></tr></table>
+</div>
+</div><p>由于某个容器状态异常，kubelet执行docker inspect操作也被hang死。</p>
+<p>因此，重启kubelet引起宿主状态从Ready变为NotReady，其根因在于某个容器状态异常，执行docker inspect时被hang死。而如果docker inspect hang死发生在kubelet重启之后，则不会对宿主的Ready状态造成任何影响，因为oneTimeInitializer是sync.Once类型，也即仅仅会在kebelet启动时执行一次。那时kubelet仅仅是不能处理该Pod相关的任何事件，包含删除、变更等，但是仍然能够处理其他Pod的任意事件。</p>
+<p>可能有人会问，为什么kubelet重启时访问docker inspect操作不加超时控制？确实，如果添加了超时控制，kubelet重启不会引起宿主状态变更。待详细挖掘后再来补充，我们先继续分析docker hang死的问题。</p>
+<h3 id="3-docker-hang死">3. docker hang死</h3>
+<p>我们对docker hang死并不陌生，因为已经发生了好多起。其发生时的现象也多种多样。以往针对docker 1.13.1版本的排查都发现了一些线索，但是并没有定位到根因，最终绝大多数也是通过重启docker解决。而这一次发生在docker 18.06.3版本的docker hang死行为，经过我们4人小分队接近一周的望闻问切，终于确定了其病因。注意，docker hang死的原因不止一种，因此本处方并非是个万能药。</p>
+<p>现在，我们掌握的知识仅仅是docker异常了，无法响应特定容器的docker inspect操作，而对详细信息则一无所知。</p>
+<h4 id="31-链路跟踪">3.1 链路跟踪</h4>
+<p>首先，我们希望对docker运行的全局状况有一个大致的了解，熟悉go语言开发的用户自然能联想到神器pprof。我们借助pprof描绘出了docker当时运行的蓝图：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">goroutine profile: total <span class="m">722373</span>
+<span class="m">717594</span> @ 0x7fe8bc202980 0x7fe8bc202a40 0x7fe8bc2135d8 0x7fe8bc2132ef 0x7fe8bc238c1a 0x7fe8bd56f7fe 0x7fe8bd56f6bd 0x7fe8bcea8719 0x7fe8bcea938b 0x7fe8bcb726ca 0x7fe8bcb72b01 0x7fe8bc71c26b 0x7fe8bcb85f4a 0x7fe8bc4b9896 0x7fe8bc72a438 0x7fe8bcb849e2 0x7fe8bc4bc67e 0x7fe8bc4b88a3 0x7fe8bc230711
+<span class="c1">#	0x7fe8bc2132ee	sync.runtime_SemacquireMutex+0x3e																/usr/local/go/src/runtime/sema.go:71</span>
+<span class="c1">#	0x7fe8bc238c19	sync.(*Mutex).Lock+0x109																	/usr/local/go/src/sync/mutex.go:134</span>
+<span class="c1">#	0x7fe8bd56f7fd	github.com/docker/docker/daemon.(*Daemon).ContainerInspectCurrent+0x8d												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/daemon/inspect.go:40</span>
+<span class="c1">#	0x7fe8bd56f6bc	github.com/docker/docker/daemon.(*Daemon).ContainerInspect+0x11c												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/daemon/inspect.go:29</span>
+<span class="c1">#	0x7fe8bcea8718	github.com/docker/docker/api/server/router/container.(*containerRouter).getContainersByName+0x118								/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router/container/inspect.go:15</span>
+<span class="c1">#	0x7fe8bcea938a	github.com/docker/docker/api/server/router/container.(*containerRouter).(github.com/docker/docker/api/server/router/container.getContainersByName)-fm+0x6a	/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router/container/container.go:39</span>
+<span class="c1">#	0x7fe8bcb726c9	github.com/docker/docker/api/server/middleware.ExperimentalMiddleware.WrapHandler.func1+0xd9									/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/middleware/experimental.go:26</span>
+<span class="c1">#	0x7fe8bcb72b00	github.com/docker/docker/api/server/middleware.VersionMiddleware.WrapHandler.func1+0x400									/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/middleware/version.go:62</span>
+<span class="c1">#	0x7fe8bc71c26a	github.com/docker/docker/pkg/authorization.(*Middleware).WrapHandler.func1+0x7aa										/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/pkg/authorization/middleware.go:59</span>
+<span class="c1">#	0x7fe8bcb85f49	github.com/docker/docker/api/server.(*Server).makeHTTPHandler.func1+0x199											/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/server.go:141</span>
+<span class="c1">#	0x7fe8bc4b9895	net/http.HandlerFunc.ServeHTTP+0x45																/usr/local/go/src/net/http/server.go:1947</span>
+<span class="c1">#	0x7fe8bc72a437	github.com/docker/docker/vendor/github.com/gorilla/mux.(*Router).ServeHTTP+0x227										/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/github.com/gorilla/mux/mux.go:103</span>
+<span class="c1">#	0x7fe8bcb849e1	github.com/docker/docker/api/server.(*routerSwapper).ServeHTTP+0x71												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router_swapper.go:29</span>
+<span class="c1">#	0x7fe8bc4bc67d	net/http.serverHandler.ServeHTTP+0xbd																/usr/local/go/src/net/http/server.go:2694</span>
+<span class="c1">#	0x7fe8bc4b88a2	net/http.(*conn).serve+0x652																	/usr/local/go/src/net/http/server.go:1830</span>
+
+<span class="m">4175</span> @ 0x7fe8bc202980 0x7fe8bc202a40 0x7fe8bc2135d8 0x7fe8bc2132ef 0x7fe8bc238c1a 0x7fe8bcc2eccf 0x7fe8bd597af4 0x7fe8bcea2456 0x7fe8bcea956b 0x7fe8bcb73dff 0x7fe8bcb726ca 0x7fe8bcb72b01 0x7fe8bc71c26b 0x7fe8bcb85f4a 0x7fe8bc4b9896 0x7fe8bc72a438 0x7fe8bcb849e2 0x7fe8bc4bc67e 0x7fe8bc4b88a3 0x7fe8bc230711
+<span class="c1">#	0x7fe8bc2132ee	sync.runtime_SemacquireMutex+0x3e																/usr/local/go/src/runtime/sema.go:71</span>
+<span class="c1">#	0x7fe8bc238c19	sync.(*Mutex).Lock+0x109																	/usr/local/go/src/sync/mutex.go:134</span>
+<span class="c1">#	0x7fe8bcc2ecce	github.com/docker/docker/container.(*State).IsRunning+0x2e													/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/container/state.go:240</span>
+<span class="c1">#	0x7fe8bd597af3	github.com/docker/docker/daemon.(*Daemon).ContainerStats+0xb3													/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/daemon/stats.go:30</span>
+<span class="c1">#	0x7fe8bcea2455	github.com/docker/docker/api/server/router/container.(*containerRouter).getContainersStats+0x1e5								/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router/container/container_routes.go:115</span>
+<span class="c1">#	0x7fe8bcea956a	github.com/docker/docker/api/server/router/container.(*containerRouter).(github.com/docker/docker/api/server/router/container.getContainersStats)-fm+0x6a	/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router/container/container.go:42</span>
+<span class="c1">#	0x7fe8bcb73dfe	github.com/docker/docker/api/server/router.cancellableHandler.func1+0xce											/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router/local.go:92</span>
+<span class="c1">#	0x7fe8bcb726c9	github.com/docker/docker/api/server/middleware.ExperimentalMiddleware.WrapHandler.func1+0xd9									/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/middleware/experimental.go:26</span>
+<span class="c1">#	0x7fe8bcb72b00	github.com/docker/docker/api/server/middleware.VersionMiddleware.WrapHandler.func1+0x400									/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/middleware/version.go:62</span>
+<span class="c1">#	0x7fe8bc71c26a	github.com/docker/docker/pkg/authorization.(*Middleware).WrapHandler.func1+0x7aa										/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/pkg/authorization/middleware.go:59</span>
+<span class="c1">#	0x7fe8bcb85f49	github.com/docker/docker/api/server.(*Server).makeHTTPHandler.func1+0x199											/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/server.go:141</span>
+<span class="c1">#	0x7fe8bc4b9895	net/http.HandlerFunc.ServeHTTP+0x45																/usr/local/go/src/net/http/server.go:1947</span>
+<span class="c1">#	0x7fe8bc72a437	github.com/docker/docker/vendor/github.com/gorilla/mux.(*Router).ServeHTTP+0x227										/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/github.com/gorilla/mux/mux.go:103</span>
+<span class="c1">#	0x7fe8bcb849e1	github.com/docker/docker/api/server.(*routerSwapper).ServeHTTP+0x71												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router_swapper.go:29</span>
+<span class="c1">#	0x7fe8bc4bc67d	net/http.serverHandler.ServeHTTP+0xbd																/usr/local/go/src/net/http/server.go:2694</span>
+<span class="c1">#	0x7fe8bc4b88a2	net/http.(*conn).serve+0x652																	/usr/local/go/src/net/http/server.go:1830</span>
+
+<span class="m">1</span> @ 0x7fe8bc202980 0x7fe8bc202a40 0x7fe8bc2135d8 0x7fe8bc2131fb 0x7fe8bc239a3b 0x7fe8bcbb679d 0x7fe8bcc26774 0x7fe8bd570b20 0x7fe8bd56f81c 0x7fe8bd56f6bd 0x7fe8bcea8719 0x7fe8bcea938b 0x7fe8bcb726ca 0x7fe8bcb72b01 0x7fe8bc71c26b 0x7fe8bcb85f4a 0x7fe8bc4b9896 0x7fe8bc72a438 0x7fe8bcb849e2 0x7fe8bc4bc67e 0x7fe8bc4b88a3 0x7fe8bc230711
+<span class="c1">#	0x7fe8bc2131fa	sync.runtime_Semacquire+0x3a																	/usr/local/go/src/runtime/sema.go:56</span>
+<span class="c1">#	0x7fe8bc239a3a	sync.(*RWMutex).RLock+0x4a																	/usr/local/go/src/sync/rwmutex.go:50</span>
+<span class="c1">#	0x7fe8bcbb679c	github.com/docker/docker/daemon/exec.(*Store).List+0x4c														/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/daemon/exec/exec.go:140</span>
+<span class="c1">#	0x7fe8bcc26773	github.com/docker/docker/container.(*Container).GetExecIDs+0x33													/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/container/container.go:423</span>
+<span class="c1">#	0x7fe8bd570b1f	github.com/docker/docker/daemon.(*Daemon).getInspectData+0x5cf													/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/daemon/inspect.go:178</span>
+<span class="c1">#	0x7fe8bd56f81b	github.com/docker/docker/daemon.(*Daemon).ContainerInspectCurrent+0xab												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/daemon/inspect.go:42</span>
+<span class="c1">#	0x7fe8bd56f6bc	github.com/docker/docker/daemon.(*Daemon).ContainerInspect+0x11c												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/daemon/inspect.go:29</span>
+<span class="c1">#	0x7fe8bcea8718	github.com/docker/docker/api/server/router/container.(*containerRouter).getContainersByName+0x118								/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router/container/inspect.go:15</span>
+<span class="c1">#	0x7fe8bcea938a	github.com/docker/docker/api/server/router/container.(*containerRouter).(github.com/docker/docker/api/server/router/container.getContainersByName)-fm+0x6a	/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router/container/container.go:39</span>
+<span class="c1">#	0x7fe8bcb726c9	github.com/docker/docker/api/server/middleware.ExperimentalMiddleware.WrapHandler.func1+0xd9									/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/middleware/experimental.go:26</span>
+<span class="c1">#	0x7fe8bcb72b00	github.com/docker/docker/api/server/middleware.VersionMiddleware.WrapHandler.func1+0x400									/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/middleware/version.go:62</span>
+<span class="c1">#	0x7fe8bc71c26a	github.com/docker/docker/pkg/authorization.(*Middleware).WrapHandler.func1+0x7aa										/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/pkg/authorization/middleware.go:59</span>
+<span class="c1">#	0x7fe8bcb85f49	github.com/docker/docker/api/server.(*Server).makeHTTPHandler.func1+0x199											/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/server.go:141</span>
+<span class="c1">#	0x7fe8bc4b9895	net/http.HandlerFunc.ServeHTTP+0x45																/usr/local/go/src/net/http/server.go:1947</span>
+<span class="c1">#	0x7fe8bc72a437	github.com/docker/docker/vendor/github.com/gorilla/mux.(*Router).ServeHTTP+0x227										/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/github.com/gorilla/mux/mux.go:103</span>
+<span class="c1">#	0x7fe8bcb849e1	github.com/docker/docker/api/server.(*routerSwapper).ServeHTTP+0x71												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router_swapper.go:29</span>
+<span class="c1">#	0x7fe8bc4bc67d	net/http.serverHandler.ServeHTTP+0xbd																/usr/local/go/src/net/http/server.go:2694</span>
+<span class="c1">#	0x7fe8bc4b88a2	net/http.(*conn).serve+0x652																	/usr/local/go/src/net/http/server.go:1830</span>
+
+<span class="m">1</span> @ 0x7fe8bc202980 0x7fe8bc212946 0x7fe8bc8b6881 0x7fe8bc8b699d 0x7fe8bc8e259b 0x7fe8bc8e1695 0x7fe8bc8c47d5 0x7fe8bd2e0c06 0x7fe8bd2eda96 0x7fe8bc8c42fb 0x7fe8bc8c4613 0x7fe8bd2a6474 0x7fe8bd2e6976 0x7fe8bd3661c5 0x7fe8bd56842f 0x7fe8bcea7bdb 0x7fe8bcea9f6b 0x7fe8bcb726ca 0x7fe8bcb72b01 0x7fe8bc71c26b 0x7fe8bcb85f4a 0x7fe8bc4b9896 0x7fe8bc72a438 0x7fe8bcb849e2 0x7fe8bc4bc67e 0x7fe8bc4b88a3 0x7fe8bc230711
+<span class="c1">#	0x7fe8bc8b6880	github.com/docker/docker/vendor/google.golang.org/grpc/transport.(*Stream).waitOnHeader+0x100											/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/google.golang.org/grpc/transport/transport.go:222</span>
+<span class="c1">#	0x7fe8bc8b699c	github.com/docker/docker/vendor/google.golang.org/grpc/transport.(*Stream).RecvCompress+0x2c											/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/google.golang.org/grpc/transport/transport.go:233</span>
+<span class="c1">#	0x7fe8bc8e259a	github.com/docker/docker/vendor/google.golang.org/grpc.(*csAttempt).recvMsg+0x63a												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/google.golang.org/grpc/stream.go:515</span>
+<span class="c1">#	0x7fe8bc8e1694	github.com/docker/docker/vendor/google.golang.org/grpc.(*clientStream).RecvMsg+0x44												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/google.golang.org/grpc/stream.go:395</span>
+<span class="c1">#	0x7fe8bc8c47d4	github.com/docker/docker/vendor/google.golang.org/grpc.invoke+0x184														/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/google.golang.org/grpc/call.go:83</span>
+<span class="c1">#	0x7fe8bd2e0c05	github.com/docker/docker/vendor/github.com/containerd/containerd.namespaceInterceptor.unary+0xf5										/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/github.com/containerd/containerd/grpc.go:35</span>
+<span class="c1">#	0x7fe8bd2eda95	github.com/docker/docker/vendor/github.com/containerd/containerd.(namespaceInterceptor).(github.com/docker/docker/vendor/github.com/containerd/containerd.unary)-fm+0xf5	/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/github.com/containerd/containerd/grpc.go:51</span>
+<span class="c1">#	0x7fe8bc8c42fa	github.com/docker/docker/vendor/google.golang.org/grpc.(*ClientConn).Invoke+0x10a												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/google.golang.org/grpc/call.go:35</span>
+<span class="c1">#	0x7fe8bc8c4612	github.com/docker/docker/vendor/google.golang.org/grpc.Invoke+0xc2														/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/google.golang.org/grpc/call.go:60</span>
+<span class="c1">#	0x7fe8bd2a6473	github.com/docker/docker/vendor/github.com/containerd/containerd/api/services/tasks/v1.(*tasksClient).Start+0xd3								/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/github.com/containerd/containerd/api/services/tasks/v1/tasks.pb.go:421</span>
+<span class="c1">#	0x7fe8bd2e6975	github.com/docker/docker/vendor/github.com/containerd/containerd.(*process).Start+0xf5												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/github.com/containerd/containerd/process.go:109</span>
+<span class="c1">#	0x7fe8bd3661c4	github.com/docker/docker/libcontainerd.(*client).Exec+0x4b4															/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/libcontainerd/client_daemon.go:381</span>
+<span class="c1">#	0x7fe8bd56842e	github.com/docker/docker/daemon.(*Daemon).ContainerExecStart+0xb4e														/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/daemon/exec.go:251</span>
+<span class="c1">#	0x7fe8bcea7bda	github.com/docker/docker/api/server/router/container.(*containerRouter).postContainerExecStart+0x34a										/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router/container/exec.go:125</span>
+<span class="c1">#	0x7fe8bcea9f6a	github.com/docker/docker/api/server/router/container.(*containerRouter).(github.com/docker/docker/api/server/router/container.postContainerExecStart)-fm+0x6a			/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router/container/container.go:59</span>
+<span class="c1">#	0x7fe8bcb726c9	github.com/docker/docker/api/server/middleware.ExperimentalMiddleware.WrapHandler.func1+0xd9											/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/middleware/experimental.go:26</span>
+<span class="c1">#	0x7fe8bcb72b00	github.com/docker/docker/api/server/middleware.VersionMiddleware.WrapHandler.func1+0x400											/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/middleware/version.go:62</span>
+<span class="c1">#	0x7fe8bc71c26a	github.com/docker/docker/pkg/authorization.(*Middleware).WrapHandler.func1+0x7aa												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/pkg/authorization/middleware.go:59</span>
+<span class="c1">#	0x7fe8bcb85f49	github.com/docker/docker/api/server.(*Server).makeHTTPHandler.func1+0x199													/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/server.go:141</span>
+<span class="c1">#	0x7fe8bc4b9895	net/http.HandlerFunc.ServeHTTP+0x45																		/usr/local/go/src/net/http/server.go:1947</span>
+<span class="c1">#	0x7fe8bc72a437	github.com/docker/docker/vendor/github.com/gorilla/mux.(*Router).ServeHTTP+0x227												/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/vendor/github.com/gorilla/mux/mux.go:103</span>
+<span class="c1">#	0x7fe8bcb849e1	github.com/docker/docker/api/server.(*routerSwapper).ServeHTTP+0x71														/root/rpmbuild/BUILD/src/engine/.gopath/src/github.com/docker/docker/api/server/router_swapper.go:29</span>
+<span class="c1">#	0x7fe8bc4bc67d	net/http.serverHandler.ServeHTTP+0xbd																		/usr/local/go/src/net/http/server.go:2694</span>
+<span class="c1">#	0x7fe8bc4b88a2	net/http.(*conn).serve+0x652																			/usr/local/go/src/net/http/server.go:1830</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>注意，这是一份精简后的docker协程栈信息。从上面的蓝图，我们可以总结出如下结论：</p>
+<ol>
+<li>有 717594 个协程被阻塞在docker inspect</li>
+<li>有 4175 个协程被阻塞在docker stats</li>
+<li>有 1 个协程被阻塞在获取 docker exec的任务ID</li>
+<li>有 1 个协程被阻塞在docker exec的执行过程</li>
+</ol>
+<p>从上面的结论，我们基本了解了异常容器hang死的原因，在于该容器执行docker exec后未返回(4)，进而导致获取docker exec的任务ID阻塞(3)，由于(3)实现获取了容器锁，进而导致了docker inspect (1)与docker stats (2) 卡死。所以病因并非是docker inspect，而是docker exec。</p>
+<p>要想继续往下挖掘，我们现在有必要补充一下背景知识。kubelet启动容器或者在容器内执行命令的完整调用路径如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-golang" data-lang="golang"><span class="o">+--------------------------------------------------------------+</span>
+<span class="p">|</span>                                                              <span class="p">|</span>
+<span class="p">|</span>   <span class="o">+------------+</span>                                             <span class="p">|</span>
+<span class="p">|</span>   <span class="p">|</span>            <span class="p">|</span>                                             <span class="p">|</span>
+<span class="p">|</span>   <span class="p">|</span>   <span class="nx">kubelet</span>  <span class="p">|</span>                                             <span class="p">|</span>
+<span class="p">|</span>   <span class="p">|</span>            <span class="p">|</span>                                             <span class="p">|</span>
+<span class="p">|</span>   <span class="o">+------</span><span class="p">|</span><span class="o">-----+</span>                                             <span class="p">|</span>
+<span class="p">|</span>          <span class="p">|</span>                                                   <span class="p">|</span>
+<span class="p">|</span>          <span class="p">|</span>                                                   <span class="p">|</span>
+<span class="p">|</span>   <span class="o">+------</span><span class="nx">v</span><span class="o">-----+</span>       <span class="o">+---------------+</span>                     <span class="p">|</span>
+<span class="p">|</span>   <span class="p">|</span>            <span class="p">|</span>       <span class="p">|</span>               <span class="p">|</span>                     <span class="p">|</span>
+<span class="p">|</span>   <span class="p">|</span>   <span class="nx">dockerd</span>  <span class="o">-------</span><span class="p">&gt;|</span>  <span class="nx">containerd</span>   <span class="p">|</span>                     <span class="p">|</span>
+<span class="p">|</span>   <span class="p">|</span>            <span class="p">|</span>       <span class="p">|</span>               <span class="p">|</span>                     <span class="p">|</span>
+<span class="p">|</span>   <span class="o">+------------+</span>       <span class="o">+-------</span><span class="p">|</span><span class="o">-------+</span>                     <span class="p">|</span>
+<span class="p">|</span>                                <span class="p">|</span>                             <span class="p">|</span>
+<span class="p">|</span>                                <span class="p">|</span>                             <span class="p">|</span>
+<span class="p">|</span>                        <span class="o">+-------</span><span class="nx">v</span><span class="o">-------+</span>     <span class="o">+-----------+</span>   <span class="p">|</span>
+<span class="p">|</span>                        <span class="p">|</span>               <span class="p">|</span>     <span class="p">|</span>           <span class="p">|</span>   <span class="p">|</span>
+<span class="p">|</span>                        <span class="p">|</span><span class="nx">containerd</span><span class="o">-</span><span class="nx">shim</span><span class="o">-----</span><span class="p">&gt;|</span>   <span class="nx">runc</span>    <span class="p">|</span>   <span class="p">|</span>
+<span class="p">|</span>                        <span class="p">|</span>               <span class="p">|</span>     <span class="p">|</span>           <span class="p">|</span>   <span class="p">|</span>
+<span class="p">|</span>                        <span class="o">+---------------+</span>     <span class="o">+-----------+</span>   <span class="p">|</span>
+<span class="p">|</span>                                                              <span class="p">|</span>
+<span class="o">+--------------------------------------------------------------+</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>dockerd与containerd可以当做两层nginx代理，containerd-shim是容器的监护人，而runc则是容器启动与命令执行的真正工具人。runc干的事情也非常简单：按照用户指定的配置创建NS，或者进入特定NS，然后执行用户命令。说白了，创建容器就是新建NS，然后在该NS内执行用户指定的命令。</p>
+<p>按照上面介绍的背景知识，我们继续往下探索containerd。幸运的是，借助pprof，我们也可以描绘出containerd此时的运行蓝图：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">goroutine profile: total <span class="m">430</span>
+<span class="m">1</span> @ 0x7f6e55f82740 0x7f6e55f92616 0x7f6e56a8412c 0x7f6e56a83d6d 0x7f6e56a911bf 0x7f6e56ac6e3b 0x7f6e565093de 0x7f6e5650dd3b 0x7f6e5650392b 0x7f6e56b51216 0x7f6e564e5909 0x7f6e563ec76a 0x7f6e563f000a 0x7f6e563f6791 0x7f6e55fb0151
+<span class="c1">#	0x7f6e56a8412b	github.com/containerd/containerd/vendor/github.com/stevvooe/ttrpc.(*Client).dispatch+0x24b				/go/src/github.com/containerd/containerd/vendor/github.com/stevvooe/ttrpc/client.go:102</span>
+<span class="c1">#	0x7f6e56a83d6c	github.com/containerd/containerd/vendor/github.com/stevvooe/ttrpc.(*Client).Call+0x15c					/go/src/github.com/containerd/containerd/vendor/github.com/stevvooe/ttrpc/client.go:73</span>
+<span class="c1">#	0x7f6e56a911be	github.com/containerd/containerd/linux/shim/v1.(*shimClient).Start+0xbe							/go/src/github.com/containerd/containerd/linux/shim/v1/shim.pb.go:1745</span>
+<span class="c1">#	0x7f6e56ac6e3a	github.com/containerd/containerd/linux.(*Process).Start+0x8a								/go/src/github.com/containerd/containerd/linux/process.go:125</span>
+<span class="c1">#	0x7f6e565093dd	github.com/containerd/containerd/services/tasks.(*local).Start+0x14d							/go/src/github.com/containerd/containerd/services/tasks/local.go:187</span>
+<span class="c1">#	0x7f6e5650dd3a	github.com/containerd/containerd/services/tasks.(*service).Start+0x6a							/go/src/github.com/containerd/containerd/services/tasks/service.go:72</span>
+<span class="c1">#	0x7f6e5650392a	github.com/containerd/containerd/api/services/tasks/v1._Tasks_Start_Handler.func1+0x8a					/go/src/github.com/containerd/containerd/api/services/tasks/v1/tasks.pb.go:624</span>
+<span class="c1">#	0x7f6e56b51215	github.com/containerd/containerd/vendor/github.com/grpc-ecosystem/go-grpc-prometheus.UnaryServerInterceptor+0xa5	/go/src/github.com/containerd/containerd/vendor/github.com/grpc-ecosystem/go-grpc-prometheus/server.go:29</span>
+<span class="c1">#	0x7f6e564e5908	github.com/containerd/containerd/api/services/tasks/v1._Tasks_Start_Handler+0x168					/go/src/github.com/containerd/containerd/api/services/tasks/v1/tasks.pb.go:626</span>
+<span class="c1">#	0x7f6e563ec769	github.com/containerd/containerd/vendor/google.golang.org/grpc.(*Server).processUnaryRPC+0x849				/go/src/github.com/containerd/containerd/vendor/google.golang.org/grpc/server.go:920</span>
+<span class="c1">#	0x7f6e563f0009	github.com/containerd/containerd/vendor/google.golang.org/grpc.(*Server).handleStream+0x1319				/go/src/github.com/containerd/containerd/vendor/google.golang.org/grpc/server.go:1142</span>
+<span class="c1">#	0x7f6e563f6790	github.com/containerd/containerd/vendor/google.golang.org/grpc.(*Server).serveStreams.func1.1+0xa0			/go/src/github.com/containerd/containerd/vendor/google.golang.org/grpc/server.go:637</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>同样，我们仅保留了关键的协程信息，从上面的协程栈可以看出，containerd阻塞在接收exec返回结果处，附上关键代码佐证：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Client</span><span class="p">)</span> <span class="nf">dispatch</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">Request</span><span class="p">,</span> <span class="nx">resp</span> <span class="o">*</span><span class="nx">Response</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="nx">errs</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">error</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+   <span class="nx">call</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">callRequest</span><span class="p">{</span>
+      <span class="nx">req</span><span class="p">:</span>  <span class="nx">req</span><span class="p">,</span>
+      <span class="nx">resp</span><span class="p">:</span> <span class="nx">resp</span><span class="p">,</span>
+      <span class="nx">errs</span><span class="p">:</span> <span class="nx">errs</span><span class="p">,</span>
+   <span class="p">}</span>
+
+   <span class="k">select</span> <span class="p">{</span>
+   <span class="k">case</span> <span class="nx">c</span><span class="p">.</span><span class="nx">calls</span> <span class="o">&lt;-</span> <span class="nx">call</span><span class="p">:</span>
+   <span class="k">case</span> <span class="o">&lt;-</span><span class="nx">c</span><span class="p">.</span><span class="nx">done</span><span class="p">:</span>
+      <span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nx">err</span>
+   <span class="p">}</span>
+
+   <span class="k">select</span> <span class="p">{</span>        <span class="c1">// 此处对应上面协程栈 /go/src/github.com/containerd/containerd/vendor/github.com/stevvooe/ttrpc/client.go:102
+</span><span class="c1"></span>   <span class="k">case</span> <span class="nx">err</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">errs</span><span class="p">:</span>
+      <span class="k">return</span> <span class="nf">filterCloseErr</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+   <span class="k">case</span> <span class="o">&lt;-</span><span class="nx">c</span><span class="p">.</span><span class="nx">done</span><span class="p">:</span>
+      <span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nx">err</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>containerd将请求传递至containerd-shim之后，一直在等待containerd-shim的返回。</p>
+<p>正常情况下，如果我们能够按照调用链路逐个分析每个组件的协程调用栈信息，我们能够很快的定位问题所在。不幸的是，由于线上docker没有开启debug模式，我们无法收集containerd-shim的pprof信息，并且runc也没有开启pprof。因此单纯依赖协程调用链路定位问题这条路被堵死了。</p>
+<p>截至目前，我们已经收集了部分关键信息，同时也将问题排查范围更进一步地缩小在containerd-shim与runc之间。接下来我们换一种思路继续排查。</p>
+<h4 id="32-进程排查">3.2 进程排查</h4>
+<p>当组件的运行状态无法继续获取时，我们转换一下思维，获取容器的运行状态，也即异常容器此时的进程状态。</p>
+<p>既然docker ps执行正常，而docker inspect hang死，首先我们定位异常容器，命令如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">docker ps <span class="p">|</span> grep -v NAME <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span> <span class="p">|</span> <span class="k">while</span> <span class="nb">read</span> cid<span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="nv">$cid</span><span class="p">;</span> docker inspect -f <span class="o">{{</span>.State.Pid<span class="o">}}</span> <span class="nv">$cid</span><span class="p">;</span> <span class="k">done</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>拿到异常容器的ID之后，我们就能扫描与该容器相关的所有进程：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">root     <span class="m">11646</span>  <span class="m">6655</span>  <span class="m">0</span> Jun17 ?        00:01:04 docker-containerd-shim -namespace moby -workdir /home/docker_rt/containerd/daemon/io.containerd.runtime.v1.linux/moby/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5 -address /var/run/docker/containerd/docker-containerd.sock -containerd-binary /usr/bin/docker-containerd -runtime-root /var/run/docker/runtime-runc
+root     <span class="m">11680</span> <span class="m">11646</span>  <span class="m">0</span> Jun17 ?        00:00:00 /dockerinit
+root     <span class="m">15581</span> <span class="m">11646</span>  <span class="m">0</span> Jun17 ?        00:00:00 docker-runc --root /var/run/docker/runtime-runc/moby --log /run/docker/containerd/daemon/io.containerd.runtime.v1.linux/moby/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/log.json --log-format json <span class="nb">exec</span> --process /tmp/runc-process616674997 --detach --pid-file /run/docker/containerd/daemon/io.containerd.runtime.v1.linux/moby/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/0594c5897a41d401e4d1d7ddd44dacdd316c7e7d53bfdae7f16b0f6b26fcbcda.pid bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5
+root     <span class="m">15638</span> <span class="m">15581</span>  <span class="m">0</span> Jun17 ?        00:00:00 docker-runc init
+</code></pre></td></tr></table>
+</div>
+</div><p>核心进程列表如上，简单备注下：</p>
+<ul>
+<li>6655：containerd进程</li>
+<li>11646：异常容器的containerd-shim进程</li>
+<li>11680：异常容器的容器启动进程。在容器内查看，因PID NS的隔离，该进程ID是1</li>
+<li>15581：在异常容器内执行用户命令的进程</li>
+<li>15638：在异常容器内执行用户命令时，进入容器NS的进程</li>
+</ul>
+<p>这里再补充一个背景知识：当我们启动容器时，首先会创建runc init进程，创建并进入新的容器NS；而当我们在容器内执行命令时，首先也会创建runc init进程，进入容器的NS。进入容器的隔离NS中，才会执行用户指定的命令。</p>
+<p>面对上面的进程列表，我们无法直观地感受问题究竟由哪个进程引起。因此，我们还需要了解进程当前所处的状态。借助strace，我们逐一展示进程的活动状态：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">// <span class="m">11646</span> <span class="o">(</span>container-shim<span class="o">)</span>
+Process <span class="m">11646</span> attached with <span class="m">10</span> threads
+<span class="o">[</span>pid 37342<span class="o">]</span> epoll_pwait<span class="o">(</span>5,  &lt;unfinished ...&gt;
+<span class="o">[</span>pid 11656<span class="o">]</span> futex<span class="o">(</span>0x818cc0, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 11655<span class="o">]</span> restart_syscall<span class="o">(</span>&lt;... resuming interrupted call ...&gt; &lt;unfinished ...&gt;
+<span class="o">[</span>pid 11654<span class="o">]</span> futex<span class="o">(</span>0x818bd8, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 11653<span class="o">]</span> futex<span class="o">(</span>0x7fc730, FUTEX_WAKE, <span class="m">1</span> &lt;unfinished ...&gt;
+<span class="o">[</span>pid 11651<span class="o">]</span> futex<span class="o">(</span>0xc4200b4148, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 11650<span class="o">]</span> futex<span class="o">(</span>0xc420082948, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 11649<span class="o">]</span> futex<span class="o">(</span>0xc420082548, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 11647<span class="o">]</span> restart_syscall<span class="o">(</span>&lt;... resuming interrupted call ...&gt; &lt;unfinished ...&gt;
+<span class="o">[</span>pid 11646<span class="o">]</span> futex<span class="o">(</span>0x7fd008, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 11653<span class="o">]</span> &lt;... futex resumed&gt; <span class="o">)</span>       <span class="o">=</span> <span class="m">0</span>
+<span class="o">[</span>pid 11647<span class="o">]</span> &lt;... restart_syscall resumed&gt; <span class="o">)</span> <span class="o">=</span> -1 EAGAIN <span class="o">(</span>Resource temporarily unavailable<span class="o">)</span>
+<span class="o">[</span>pid 11653<span class="o">]</span> epoll_wait<span class="o">(</span>4,  &lt;unfinished ...&gt;
+<span class="o">[</span>pid 11647<span class="o">]</span> pselect6<span class="o">(</span>0, NULL, NULL, NULL, <span class="o">{</span>0, 20000<span class="o">}</span>, 0<span class="o">)</span> <span class="o">=</span> <span class="m">0</span> <span class="o">(</span>Timeout<span class="o">)</span>
+<span class="o">[</span>pid 11647<span class="o">]</span> futex<span class="o">(</span>0x7fc730, FUTEX_WAIT, 0, <span class="o">{</span>60, 0<span class="o">}</span>
+
+
+// <span class="m">11581</span> <span class="o">(</span>runc <span class="nb">exec</span><span class="o">)</span>
+Process <span class="m">15581</span> attached with <span class="m">7</span> threads
+<span class="o">[</span>pid 15619<span class="o">]</span> read<span class="o">(</span>6,  &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15592<span class="o">]</span> futex<span class="o">(</span>0xc4200be148, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15591<span class="o">]</span> futex<span class="o">(</span>0x7fd6d25f6238, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15590<span class="o">]</span> futex<span class="o">(</span>0xc420084d48, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15586<span class="o">]</span> futex<span class="o">(</span>0x7fd6d25f6320, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15584<span class="o">]</span> restart_syscall<span class="o">(</span>&lt;... resuming interrupted call ...&gt; &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15581<span class="o">]</span> futex<span class="o">(</span>0x7fd6d25d9b28, FUTEX_WAIT, 0, NULL
+
+
+// <span class="m">11638</span> <span class="o">(</span>runc init<span class="o">)</span>
+Process <span class="m">15638</span> attached with <span class="m">7</span> threads
+<span class="o">[</span>pid 15648<span class="o">]</span> futex<span class="o">(</span>0x7f512cea5320, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15647<span class="o">]</span> futex<span class="o">(</span>0x7f512cea5238, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15645<span class="o">]</span> futex<span class="o">(</span>0xc4200bc148, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15643<span class="o">]</span> futex<span class="o">(</span>0xc420082d48, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15642<span class="o">]</span> futex<span class="o">(</span>0xc420082948, FUTEX_WAIT, 0, NULL &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15639<span class="o">]</span> restart_syscall<span class="o">(</span>&lt;... resuming interrupted call ...&gt; &lt;unfinished ...&gt;
+<span class="o">[</span>pid 15638<span class="o">]</span> write<span class="o">(</span>2, <span class="s2">&#34;/usr/local/go/src/runtime/proc.g&#34;</span>..., <span class="m">33</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>从关联进程的活动状态，我们可以得出如下结论：</p>
+<ul>
+<li>runc exec在等待从6号FD读取数据</li>
+<li>runc init在等待从2号FD写入数据</li>
+</ul>
+<p>这些FD究竟对应的是什么文件呢？我们借助lsof可以查看：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">// <span class="m">11638</span> <span class="o">(</span>runc init<span class="o">)</span>
+COMMAND     PID USER   FD      TYPE             DEVICE SIZE/OFF       NODE NAME
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root  cwd       DIR               0,41      <span class="m">192</span> <span class="m">1066743071</span> /
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root  rtd       DIR               0,41      <span class="m">192</span> <span class="m">1066743071</span> /
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root  txt       REG                0,4  <span class="m">7644224</span> <span class="m">1070360467</span> /memfd:runc_cloned:/proc/self/exe <span class="o">(</span>deleted<span class="o">)</span>
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root  mem       REG                8,3  <span class="m">2107816</span>    <span class="m">1053962</span> /usr/lib64/libc-2.17.so
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root  mem       REG                8,3    <span class="m">19512</span>    <span class="m">1054285</span> /usr/lib64/libdl-2.17.so
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root  mem       REG                8,3   <span class="m">266688</span>    <span class="m">1050626</span> /usr/lib64/libseccomp.so.2.3.1
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root  mem       REG                8,3   <span class="m">142296</span>    <span class="m">1055698</span> /usr/lib64/libpthread-2.17.so
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root  mem       REG                8,3    <span class="m">27168</span>    <span class="m">3024893</span> /usr/local/gundam/gundam_client/preload/lib64/gundam_preload.so
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root  mem       REG                8,3   <span class="m">164432</span>    <span class="m">1054515</span> /usr/lib64/ld-2.17.so
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root    0r     FIFO                0,8      0t0 <span class="m">1070361745</span> pipe
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root    1w     FIFO                0,8      0t0 <span class="m">1070361746</span> pipe
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root    2w     FIFO                0,8      0t0 <span class="m">1070361747</span> pipe
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root    3u     unix 0xffff881ff8273000      0t0 <span class="m">1070361341</span> socket
+runc:<span class="o">[</span>2:I <span class="m">15638</span> root    5u  a_inode                0,9        <span class="m">0</span>       <span class="m">7180</span> <span class="o">[</span>eventpoll<span class="o">]</span>
+
+
+// <span class="m">11581</span> <span class="o">(</span>runc <span class="nb">exec</span><span class="o">)</span>
+COMMAND     PID USER   FD      TYPE             DEVICE SIZE/OFF       NODE NAME
+docker-ru <span class="m">15581</span> root  cwd       DIR               0,18      <span class="m">120</span> <span class="m">1066743076</span> /run/docker/containerd/daemon/io.containerd.runtime.v1.linux/moby/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5
+docker-ru <span class="m">15581</span> root  rtd       DIR                8,3     <span class="m">4096</span>          <span class="m">2</span> /
+docker-ru <span class="m">15581</span> root  txt       REG                8,3  <span class="m">7644224</span>     <span class="m">919775</span> /usr/bin/docker-runc
+docker-ru <span class="m">15581</span> root  mem       REG                8,3  <span class="m">2107816</span>    <span class="m">1053962</span> /usr/lib64/libc-2.17.so
+docker-ru <span class="m">15581</span> root  mem       REG                8,3    <span class="m">19512</span>    <span class="m">1054285</span> /usr/lib64/libdl-2.17.so
+docker-ru <span class="m">15581</span> root  mem       REG                8,3   <span class="m">266688</span>    <span class="m">1050626</span> /usr/lib64/libseccomp.so.2.3.1
+docker-ru <span class="m">15581</span> root  mem       REG                8,3   <span class="m">142296</span>    <span class="m">1055698</span> /usr/lib64/libpthread-2.17.so
+docker-ru <span class="m">15581</span> root  mem       REG                8,3    <span class="m">27168</span>    <span class="m">3024893</span> /usr/local/gundam/gundam_client/preload/lib64/gundam_preload.so
+docker-ru <span class="m">15581</span> root  mem       REG                8,3   <span class="m">164432</span>    <span class="m">1054515</span> /usr/lib64/ld-2.17.so
+docker-ru <span class="m">15581</span> root    0r     FIFO                0,8      0t0 <span class="m">1070361745</span> pipe
+docker-ru <span class="m">15581</span> root    1w     FIFO                0,8      0t0 <span class="m">1070361746</span> pipe
+docker-ru <span class="m">15581</span> root    2w     FIFO                0,8      0t0 <span class="m">1070361747</span> pipe
+docker-ru <span class="m">15581</span> root    3w      REG               0,18     <span class="m">5456</span> <span class="m">1066709902</span> /run/docker/containerd/daemon/io.containerd.runtime.v1.linux/moby/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/log.json
+docker-ru <span class="m">15581</span> root    4u  a_inode                0,9        <span class="m">0</span>       <span class="m">7180</span> <span class="o">[</span>eventpoll<span class="o">]</span>
+docker-ru <span class="m">15581</span> root    6u     unix 0xffff881ff8275400      0t0 <span class="m">1070361342</span> socket
+
+
+// <span class="m">11646</span> <span class="o">(</span>container-shim<span class="o">)</span>
+COMMAND     PID USER   FD      TYPE             DEVICE SIZE/OFF       NODE NAME
+docker-co <span class="m">11646</span> root  cwd       DIR               0,18      <span class="m">120</span> <span class="m">1066743076</span> /run/docker/containerd/daemon/io.containerd.runtime.v1.linux/moby/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5
+docker-co <span class="m">11646</span> root  rtd       DIR                8,3     <span class="m">4096</span>          <span class="m">2</span> /
+docker-co <span class="m">11646</span> root  txt       REG                8,3  <span class="m">4173632</span>     <span class="m">919772</span> /usr/bin/docker-containerd-shim
+docker-co <span class="m">11646</span> root    0r      CHR                1,3      0t0       <span class="m">2052</span> /dev/null
+docker-co <span class="m">11646</span> root    1w      CHR                1,3      0t0       <span class="m">2052</span> /dev/null
+docker-co <span class="m">11646</span> root    2w      CHR                1,3      0t0       <span class="m">2052</span> /dev/null
+docker-co <span class="m">11646</span> root    3r     FIFO                0,8      0t0 <span class="m">1070361745</span> pipe
+docker-co <span class="m">11646</span> root    4u  a_inode                0,9        <span class="m">0</span>       <span class="m">7180</span> <span class="o">[</span>eventpoll<span class="o">]</span>
+docker-co <span class="m">11646</span> root    5u  a_inode                0,9        <span class="m">0</span>       <span class="m">7180</span> <span class="o">[</span>eventpoll<span class="o">]</span>
+docker-co <span class="m">11646</span> root    6u     unix 0xffff881e8cac2800      0t0 <span class="m">1066743079</span> @/containerd-shim/moby/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/shim.sock
+docker-co <span class="m">11646</span> root    7u     unix 0xffff881e8cac3400      0t0 <span class="m">1066743968</span> @/containerd-shim/moby/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/shim.sock
+docker-co <span class="m">11646</span> root    8r     FIFO                0,8      0t0 <span class="m">1066743970</span> pipe
+docker-co <span class="m">11646</span> root    9w     FIFO                0,8      0t0 <span class="m">1070361745</span> pipe
+docker-co <span class="m">11646</span> root   10r     FIFO                0,8      0t0 <span class="m">1066743971</span> pipe
+docker-co <span class="m">11646</span> root   11u     FIFO               0,18      0t0 <span class="m">1066700778</span> /run/docker/containerd/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/init-stdout
+docker-co <span class="m">11646</span> root   12r     FIFO                0,8      0t0 <span class="m">1066743972</span> pipe
+docker-co <span class="m">11646</span> root   13w     FIFO               0,18      0t0 <span class="m">1066700778</span> /run/docker/containerd/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/init-stdout
+docker-co <span class="m">11646</span> root   14u     FIFO               0,18      0t0 <span class="m">1066700778</span> /run/docker/containerd/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/init-stdout
+docker-co <span class="m">11646</span> root   15r     FIFO               0,18      0t0 <span class="m">1066700778</span> /run/docker/containerd/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/init-stdout
+docker-co <span class="m">11646</span> root   16u     FIFO               0,18      0t0 <span class="m">1066700779</span> /run/docker/containerd/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/init-stderr
+docker-co <span class="m">11646</span> root   17w     FIFO               0,18      0t0 <span class="m">1066700779</span> /run/docker/containerd/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/init-stderr
+docker-co <span class="m">11646</span> root   18u     FIFO               0,18      0t0 <span class="m">1066700779</span> /run/docker/containerd/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/init-stderr
+docker-co <span class="m">11646</span> root   19r     FIFO               0,18      0t0 <span class="m">1066700779</span> /run/docker/containerd/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/init-stderr
+docker-co <span class="m">11646</span> root   20r     FIFO                0,8      0t0 <span class="m">1070361746</span> pipe
+docker-co <span class="m">11646</span> root   26r     FIFO                0,8      0t0 <span class="m">1070361747</span> pipe
+</code></pre></td></tr></table>
+</div>
+</div><p>有心人结合strace与lsof的结果，已经能够自己得出结论：</p>
+<p>runc init往2号FD内写数据时阻塞，2号FD对应的类型是pipe类型。而linux pipe有一个默认的数据大小，当写入的数据超过该Size（这个Size可以借助ulimit获取）时，同时读端并未读取数据，写段就会被阻塞。总结一下：containerd-shim启动runc exec去容器内执行用户命令，runc exec启动runc init进入容器时，由于往2号FD写数据超过限制大小而被阻塞。当最底层的runc init被阻塞时，造成了调用链路上所有进程都被阻塞：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">runc init → runc <span class="nb">exec</span> → containerd-shim <span class="nb">exec</span> → containerd <span class="nb">exec</span> → dockerd <span class="nb">exec</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>问题定位至此，我们已经了解了docker hang死的原因。但是，现在我们还有如下问题并未解决：</p>
+<ul>
+<li>为什么runc init会往2号FD (对应go语言的os.Stderr) 中写入超过linux pipe大小限制的数据？</li>
+<li>为什么runc init出现问题只发生在特定容器？</li>
+</ul>
+<p>如果常态下runc init就需要往os.Stdout或者os.Stderr中写入很多数据，那么所有容器的创建都应该有问题。所以，我们可以确定是该异常容器出现了什么未知原因，导致runc init非预期往os.Stderr写入了大量数据。而这被写入的数据就很有可能揭示非预期的异常。</p>
+<p>所以，我们需要获取runc init当前正在写入的数据。由于runc init的2号FD是个匿名pipe，我们无法使用常规文件读取的方式获取pipe内的数据。这里感谢鹤哥（本人&hellip;）趟坑，找到了一种读取匿名pipe内容的方法：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span><span class="lnt">116
+</span><span class="lnt">117
+</span><span class="lnt">118
+</span><span class="lnt">119
+</span><span class="lnt">120
+</span><span class="lnt">121
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># cat /proc/15638/fd/2</span>
+runtime/cgo: pthread_create failed: Resource temporarily unavailable
+SIGABRT: abort
+<span class="nv">PC</span><span class="o">=</span>0x7f512b7365f7 <span class="nv">m</span><span class="o">=</span><span class="m">0</span> <span class="nv">sigcode</span><span class="o">=</span><span class="m">18446744073709551610</span>
+
+goroutine <span class="m">0</span> <span class="o">[</span>idle<span class="o">]</span>:
+runtime: unknown pc 0x7f512b7365f7
+stack: <span class="nv">frame</span><span class="o">={</span>sp:0x7ffe1121a658, fp:0x0<span class="o">}</span> <span class="nv">stack</span><span class="o">=[</span>0x7ffe0ae1bb28,0x7ffe1121ab50<span class="o">)</span>
+00007ffe1121a558:  00007ffe1121a6d8  00007ffe1121a6b0
+00007ffe1121a568:  <span class="m">0000000000000001</span>  00007f512c527660
+00007ffe1121a578:  00007f512c54d560  00007f512c54d208
+00007ffe1121a588:  00007f512c333e6f  <span class="m">0000000000000000</span>
+00007ffe1121a598:  00007f512c527660  <span class="m">0000000000000005</span>
+00007ffe1121a5a8:  <span class="m">0000000000000000</span>  <span class="m">0000000000000001</span>
+00007ffe1121a5b8:  00007f512c54d208  00007f512c528000
+00007ffe1121a5c8:  00007ffe1121a600  00007f512b704b0c
+00007ffe1121a5d8:  00007f512b7110c0  <span class="m">0000000000000000</span>
+00007ffe1121a5e8:  00007f512c54d560  00007ffe1121a620
+00007ffe1121a5f8:  00007ffe1121a610  000000000f11ed7d
+00007ffe1121a608:  00007f512c550153  00000000ffffffff
+00007ffe1121a618:  00007f512c550a9b  00007f512b707d00
+00007ffe1121a628:  00007f512babc868  00007f512c9e9e5e
+00007ffe1121a638:  00007f512d3bb080  00000000000000f1
+00007ffe1121a648:  <span class="m">0000000000000011</span>  <span class="m">0000000000000000</span>
+00007ffe1121a658: &lt;00007f512b737ce8  <span class="m">0000000000000020</span>
+00007ffe1121a668:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a678:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a688:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a698:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a6a8:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a6b8:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a6c8:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a6d8:  <span class="m">0000000000000000</span>  00007f512babc868
+00007ffe1121a6e8:  00007f512c9e9e5e  00007f512d3bb080
+00007ffe1121a6f8:  00007f512c33f260  00007f512babc1c0
+00007ffe1121a708:  00007f512babc1c0  <span class="m">0000000000000001</span>
+00007ffe1121a718:  00007f512babc243  00000000000000f1
+00007ffe1121a728:  00007f512b7787ec  <span class="m">0000000000000001</span>
+00007ffe1121a738:  00007f512babc1c0  000000000000000a
+00007ffe1121a748:  00007f512b7e8a4d  000000000000000a
+runtime: unknown pc 0x7f512b7365f7
+stack: <span class="nv">frame</span><span class="o">={</span>sp:0x7ffe1121a658, fp:0x0<span class="o">}</span> <span class="nv">stack</span><span class="o">=[</span>0x7ffe0ae1bb28,0x7ffe1121ab50<span class="o">)</span>
+00007ffe1121a558:  00007ffe1121a6d8  00007ffe1121a6b0
+00007ffe1121a568:  <span class="m">0000000000000001</span>  00007f512c527660
+00007ffe1121a578:  00007f512c54d560  00007f512c54d208
+00007ffe1121a588:  00007f512c333e6f  <span class="m">0000000000000000</span>
+00007ffe1121a598:  00007f512c527660  <span class="m">0000000000000005</span>
+00007ffe1121a5a8:  <span class="m">0000000000000000</span>  <span class="m">0000000000000001</span>
+00007ffe1121a5b8:  00007f512c54d208  00007f512c528000
+00007ffe1121a5c8:  00007ffe1121a600  00007f512b704b0c
+00007ffe1121a5d8:  00007f512b7110c0  <span class="m">0000000000000000</span>
+00007ffe1121a5e8:  00007f512c54d560  00007ffe1121a620
+00007ffe1121a5f8:  00007ffe1121a610  000000000f11ed7d
+00007ffe1121a608:  00007f512c550153  00000000ffffffff
+00007ffe1121a618:  00007f512c550a9b  00007f512b707d00
+00007ffe1121a628:  00007f512babc868  00007f512c9e9e5e
+00007ffe1121a638:  00007f512d3bb080  00000000000000f1
+00007ffe1121a648:  <span class="m">0000000000000011</span>  <span class="m">0000000000000000</span>
+00007ffe1121a658: &lt;00007f512b737ce8  <span class="m">0000000000000020</span>
+00007ffe1121a668:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a678:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a688:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a698:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a6a8:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a6b8:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a6c8:  <span class="m">0000000000000000</span>  <span class="m">0000000000000000</span>
+00007ffe1121a6d8:  <span class="m">0000000000000000</span>  00007f512babc868
+00007ffe1121a6e8:  00007f512c9e9e5e  00007f512d3bb080
+00007ffe1121a6f8:  00007f512c33f260  00007f512babc1c0
+00007ffe1121a708:  00007f512babc1c0  <span class="m">0000000000000001</span>
+00007ffe1121a718:  00007f512babc243  00000000000000f1
+00007ffe1121a728:  00007f512b7787ec  <span class="m">0000000000000001</span>
+00007ffe1121a738:  00007f512babc1c0  000000000000000a
+00007ffe1121a748:  00007f512b7e8a4d  000000000000000a
+
+goroutine <span class="m">1</span> <span class="o">[</span>running, locked to thread<span class="o">]</span>:
+runtime.systemstack_switch<span class="o">()</span>
+	/usr/local/go/src/runtime/asm_amd64.s:363 <span class="nv">fp</span><span class="o">=</span>0xc4200a3ed0 <span class="nv">sp</span><span class="o">=</span>0xc4200a3ec8 <span class="nv">pc</span><span class="o">=</span>0x7f512c7281d0
+runtime.startTheWorld<span class="o">()</span>
+	/usr/local/go/src/runtime/proc.go:978 +0x2f <span class="nv">fp</span><span class="o">=</span>0xc4200a3ee8 <span class="nv">sp</span><span class="o">=</span>0xc4200a3ed0 <span class="nv">pc</span><span class="o">=</span>0x7f512c70221f
+runtime.GOMAXPROCS<span class="o">(</span>0x1, 0xc42013d9a0<span class="o">)</span>
+	/usr/local/go/src/runtime/debug.go:30 +0xa0 <span class="nv">fp</span><span class="o">=</span>0xc4200a3f10 <span class="nv">sp</span><span class="o">=</span>0xc4200a3ee8 <span class="nv">pc</span><span class="o">=</span>0x7f512c6d9810
+main.init.0<span class="o">()</span>
+	/go/src/github.com/opencontainers/runc/init.go:14 +0x61 <span class="nv">fp</span><span class="o">=</span>0xc4200a3f30 <span class="nv">sp</span><span class="o">=</span>0xc4200a3f10 <span class="nv">pc</span><span class="o">=</span>0x7f512c992801
+main.init<span class="o">()</span>
+	&lt;autogenerated&gt;:1 +0x624 <span class="nv">fp</span><span class="o">=</span>0xc4200a3f88 <span class="nv">sp</span><span class="o">=</span>0xc4200a3f30 <span class="nv">pc</span><span class="o">=</span>0x7f512c9a1014
+runtime.main<span class="o">()</span>
+	/usr/local/go/src/runtime/proc.go:186 +0x1d2 <span class="nv">fp</span><span class="o">=</span>0xc4200a3fe0 <span class="nv">sp</span><span class="o">=</span>0xc4200a3f88 <span class="nv">pc</span><span class="o">=</span>0x7f512c6ff962
+runtime.goexit<span class="o">()</span>
+	/usr/local/go/src/runtime/asm_amd64.s:2361 +0x1 <span class="nv">fp</span><span class="o">=</span>0xc4200a3fe8 <span class="nv">sp</span><span class="o">=</span>0xc4200a3fe0 <span class="nv">pc</span><span class="o">=</span>0x7f512c72ad71
+
+goroutine <span class="m">6</span> <span class="o">[</span>syscall<span class="o">]</span>:
+os/signal.signal_recv<span class="o">(</span>0x0<span class="o">)</span>
+	/usr/local/go/src/runtime/sigqueue.go:139 +0xa8
+os/signal.loop<span class="o">()</span>
+	/usr/local/go/src/os/signal/signal_unix.go:22 +0x24
+created by os/signal.init.0
+	/usr/local/go/src/os/signal/signal_unix.go:28 +0x43
+
+rax    0x0
+rbx    0x7f512babc868
+rcx    0xffffffffffffffff
+rdx    0x6
+rdi    0x271
+rsi    0x271
+rbp    0x7f512c9e9e5e
+rsp    0x7ffe1121a658
+r8     0xa
+r9     0x7f512c524740
+r10    0x8
+r11    0x206
+r12    0x7f512d3bb080
+r13    0xf1
+r14    0x11
+r15    0x0
+rip    0x7f512b7365f7
+rflags 0x206
+cs     0x33
+fs     0x0
+gs     0x0
+<span class="nb">exec</span> failed: container_linux.go:348: starting container process caused <span class="s2">&#34;read init-p: connection reset by peer&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>额，runc init因资源不足创建线程失败？？？这种输出显然不是runc的输出，而是go runtime非预期的输出内容。那么资源不足，究竟是什么资源类型资源不足呢？我们在结合 /var/log/message 日志分析：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">Jun <span class="m">17</span> 03:18:17 host-xx kernel: runc:<span class="o">[</span>2:INIT<span class="o">]</span> invoked oom-killer: <span class="nv">gfp_mask</span><span class="o">=</span>0xd0, <span class="nv">order</span><span class="o">=</span>0, <span class="nv">oom_score_adj</span><span class="o">=</span><span class="m">997</span>
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: CPU: <span class="m">14</span> PID: <span class="m">12788</span> Comm: runc:<span class="o">[</span>2:INIT<span class="o">]</span> Tainted: G        W  OE  ------------ T 3.10.0-514.16.1.el7.stable.v1.4.x86_64 <span class="c1">#1</span>
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: Hardware name: Inspur SA5212M4/YZMB-00370-107, BIOS 4.1.10 11/14/2016
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: ffff88103841dee0 00000000c4394691 ffff880263e4bcb8 ffffffff8168863d
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: ffff880263e4bd50 ffffffff81683585 ffff88203cc5e300 ffff880ee02b2380
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="m">0000000000000001</span> <span class="m">0000000000000000</span> <span class="m">0000000000000000</span> <span class="m">0000000000000046</span>
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: Call Trace:
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff8168863d&gt;<span class="o">]</span> dump_stack+0x19/0x1b
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff81683585&gt;<span class="o">]</span> dump_header+0x85/0x27f
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff81185b06&gt;<span class="o">]</span> ? find_lock_task_mm+0x56/0xc0
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff81185fbe&gt;<span class="o">]</span> oom_kill_process+0x24e/0x3c0
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff81093c2e&gt;<span class="o">]</span> ? has_capability_noaudit+0x1e/0x30
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff811f4d91&gt;<span class="o">]</span> mem_cgroup_oom_synchronize+0x551/0x580
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff811f41b0&gt;<span class="o">]</span> ? mem_cgroup_charge_common+0xc0/0xc0
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff81186844&gt;<span class="o">]</span> pagefault_out_of_memory+0x14/0x90
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff816813fa&gt;<span class="o">]</span> mm_fault_error+0x68/0x12b
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff81694405&gt;<span class="o">]</span> __do_page_fault+0x395/0x450
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff816944f5&gt;<span class="o">]</span> do_page_fault+0x35/0x90
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>&lt;ffffffff81690708&gt;<span class="o">]</span> page_fault+0x28/0x30
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: memory: usage 3145728kB, limit 3145728kB, failcnt <span class="m">14406932</span>
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: memory+swap: usage 3145728kB, limit 9007199254740988kB, failcnt <span class="m">0</span>
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: kmem: usage 3143468kB, limit 9007199254740988kB, failcnt <span class="m">0</span>
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: Memory cgroup stats <span class="k">for</span> /kubepods/burstable/pod6c4333b3-a663-11ea-b39f-6c92bf85beda: cache:0KB rss:0KB rss_huge:0KB mapped_file:0KB swap:0KB inactive_anon:0KB active_anon:0KB inactive_file:0KB active_file:0KB unevictable:0KB
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: Memory cgroup stats <span class="k">for</span> /kubepods/burstable/pod6c4333b3-a663-11ea-b39f-6c92bf85beda/b761e05249245695278b3f409d2d6e5c6a5bff6995ff0cf44d03af4aa9764a30: cache:0KB rss:40KB rss_huge:0KB mapped_file:0KB swap:0KB inactive_anon:0KB active_anon:40KB inactive_file:0KB active_file:0KB unevictable:0KB
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: Memory cgroup stats <span class="k">for</span> /kubepods/burstable/pod6c4333b3-a663-11ea-b39f-6c92bf85beda/1d1750ecc627cc5d60d80c071b2eb4d515ee8880c5b5136883164f08319869b0: cache:0KB rss:0KB rss_huge:0KB mapped_file:0KB swap:0KB inactive_anon:0KB active_anon:0KB inactive_file:0KB active_file:0KB unevictable:0KB
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: Memory cgroup stats <span class="k">for</span> /kubepods/burstable/pod6c4333b3-a663-11ea-b39f-6c92bf85beda/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5: cache:0KB rss:2220KB rss_huge:0KB mapped_file:0KB swap:0KB inactive_anon:0KB active_anon:2140KB inactive_file:0KB active_file:0KB unevictable:0KB
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: Memory cgroup stats <span class="k">for</span> /kubepods/burstable/pod6c4333b3-a663-11ea-b39f-6c92bf85beda/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5/super-agent: cache:0KB rss:0KB rss_huge:0KB mapped_file:0KB swap:0KB inactive_anon:0KB active_anon:0KB inactive_file:0KB active_file:0KB unevictable:0KB
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span> pid <span class="o">]</span>   uid  tgid total_vm      rss nr_ptes swapents oom_score_adj name
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>30598<span class="o">]</span>     <span class="m">0</span> <span class="m">30598</span>      <span class="m">255</span>        <span class="m">1</span>       <span class="m">4</span>        <span class="m">0</span>          -998 pause
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>11680<span class="o">]</span>     <span class="m">0</span> <span class="m">11680</span>   <span class="m">164833</span>     <span class="m">1118</span>      <span class="m">20</span>        <span class="m">0</span>           <span class="m">997</span> dockerinit
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: <span class="o">[</span>12788<span class="o">]</span>     <span class="m">0</span> <span class="m">12788</span>   <span class="m">150184</span>     <span class="m">1146</span>      <span class="m">23</span>        <span class="m">0</span>           <span class="m">997</span> runc:<span class="o">[</span>2:INIT<span class="o">]</span>
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: oom-kill:,cpuset<span class="o">=</span>bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5,mems_allowed<span class="o">=</span>0-1,oom_memcg<span class="o">=</span>/kubepods/burstable/pod6c4333b3-a663-11ea-b39f-6c92bf85beda,task_memcg<span class="o">=</span>/kubepods/burstable/pod6c4333b3-a663-11ea-b39f-6c92bf85beda/bbd5e4b5f9c13666dd0ec7ff7afb2c4c2b0ede40a4adf1de43cc31c606f283f5,task<span class="o">=</span>runc:<span class="o">[</span>2:INIT<span class="o">]</span>,pid<span class="o">=</span>12800,uid<span class="o">=</span><span class="m">0</span>
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: Memory cgroup out of memory: Kill process <span class="m">12800</span> <span class="o">(</span>runc:<span class="o">[</span>2:INIT<span class="o">])</span> score <span class="m">997</span> or sacrifice child
+Jun <span class="m">17</span> 03:18:17 host-xx kernel: Killed process <span class="m">12788</span> <span class="o">(</span>runc:<span class="o">[</span>2:INIT<span class="o">])</span> total-vm:600736kB, anon-rss:3296kB, file-rss:276kB, shmem-rss:1012kB
+</code></pre></td></tr></table>
+</div>
+</div><p>在 /var/log/message 中可以找到该容器在大约1个月前大量的OOM日志记录，同时时间也基本匹配。</p>
+<p>所以总结下，在一个非常关键的时间节点，runc init由于内存资源不足，创建线程失败，触发go runtime的非预期输出，进而造成runc init阻塞在写pipe操作。</p>
+<p>定位至此，问题的全貌已经基本描述清楚。但是我们还有一个疑问，既然runc init再往pipe中写数据，难道没有其他进程来读取这个内容吗？</p>
+<p>大家还记得上面lsof执行的结果吗？有心人一定发现了该pipe的读端是谁了，对，就是containerd-shim，对应的pipe的inode编号为1070361747。那么，为什么containerd-shim没有来读pipe里面的内容呢？我们结合代码来分析：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">execProcess</span><span class="p">)</span> <span class="nf">start</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="o">......</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">parent</span><span class="p">.</span><span class="nx">runtime</span><span class="p">.</span><span class="nf">Exec</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">parent</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">spec</span><span class="p">,</span> <span class="nx">opts</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>   <span class="c1">// 执行runc init
+</span><span class="c1"></span>      <span class="nb">close</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">waitBlock</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nx">e</span><span class="p">.</span><span class="nx">parent</span><span class="p">.</span><span class="nf">runtimeError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;OCI runtime exec failed&#34;</span><span class="p">)</span>
+   <span class="p">}</span>
+   <span class="o">......</span>
+   <span class="k">else</span> <span class="k">if</span> <span class="p">!</span><span class="nx">e</span><span class="p">.</span><span class="nx">stdio</span><span class="p">.</span><span class="nf">IsNull</span><span class="p">()</span> <span class="p">{</span>
+      <span class="nx">fifoCtx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithTimeout</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="mi">15</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+      <span class="k">defer</span> <span class="nf">cancel</span><span class="p">()</span>
+
+      <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">copyPipes</span><span class="p">(</span><span class="nx">fifoCtx</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">io</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">stdio</span><span class="p">.</span><span class="nx">Stdin</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">stdio</span><span class="p">.</span><span class="nx">Stdout</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">stdio</span><span class="p">.</span><span class="nx">Stderr</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">e</span><span class="p">.</span><span class="nx">wg</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">copyWaitGroup</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>   <span class="c1">// 读pipe
+</span><span class="c1"></span>         <span class="k">return</span> <span class="nx">errors</span><span class="p">.</span><span class="nf">Wrap</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;failed to start io pipe copy&#34;</span><span class="p">)</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+   <span class="o">......</span>
+<span class="p">}</span>
+
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">Runc</span><span class="p">)</span> <span class="nf">Exec</span><span class="p">(</span><span class="nx">context</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">id</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">spec</span> <span class="nx">specs</span><span class="p">.</span><span class="nx">Process</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">*</span><span class="nx">ExecOpts</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="o">......</span>
+   <span class="nx">cmd</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nf">command</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nb">append</span><span class="p">(</span><span class="nx">args</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span><span class="o">...</span><span class="p">)</span>
+   <span class="k">if</span> <span class="nx">opts</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">opts</span><span class="p">.</span><span class="nx">IO</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="nx">opts</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">cmd</span><span class="p">)</span>
+   <span class="p">}</span>
+   <span class="o">......</span>
+   <span class="nx">ec</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">Monitor</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="nx">cmd</span><span class="p">)</span>
+   <span class="o">......</span>
+   <span class="nx">status</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">Monitor</span><span class="p">.</span><span class="nf">Wait</span><span class="p">(</span><span class="nx">cmd</span><span class="p">,</span> <span class="nx">ec</span><span class="p">)</span>
+   <span class="o">......</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>额，containerd-shim的设计是，等待runc init执行完成之后，再来读取pipe中的内容。但是此时的runc init由于非预期的写入数据量比较大，被阻塞在了写pipe操作处。。。完美的死锁。</p>
+<p>终于，本次docker hang死问题的核心脉络都已清楚。接下来我们聊聊怎么解决方案。</p>
+<h3 id="4-解决方案">4. 解决方案</h3>
+<p>当大家了解了docker hang死的成因之后，我们可以针对性的提出如下解决办法。</p>
+<h4 id="41-最直观的办法">4.1 最直观的办法</h4>
+<p>既然docker exec可能会引起docker hang死，那么我们禁用系统中所有的docker exec操作即可。最典型的是kubelet的probe，当前我们默认给所有Pod添加了ReadinessProbe，并且是以exec的形式进入容器内执行命令。我们调整kubelet的探测行为，修改为tcp或者http probe即可。</p>
+<p>这里虽然改动不大，但是涉及业务容器的改造成本太大了，如何迁移存量集群是个大问题。</p>
+<h4 id="42-最根本的办法">4.2 最根本的办法</h4>
+<p>既然当前containerd-shim读pipe需要等待runc exec执行完毕，如果我们将读pipe的操作提前至runc exec命令执行之前，理论上也可以避免死锁。</p>
+<p>同样。这种方案的升级成本太高了，升级containerd-shim时需要重启存量的所有容器，这个方案基本不可能通过。</p>
+<h4 id="43-最简单的办法">4.3 最简单的办法</h4>
+<p>既然runc init阻塞在写pipe，我们主动读取pipe内的内容，也能让runc init顺利推出。</p>
+<p>再将本解决方案自动化的过程中，如何能够识别如docker hang死是由于写pipe导致的，是一个小小的挑战。但是相对于以上两种解决方案，我认为还是值得一试，毕竟影响面微乎其微。</p>
+<h3 id="5-后续">5. 后续</h3>
+<p>其实我们在读pipe的时候还引起了一个其他的问题，后续我再来为大家介绍。</p>
+<p>另外，docker hang死的原因远飞这一种，本次排查的结果也并非适用于所有场景。希望各位看官能够根据自己的现场排查问题。</p>
+<p>本次docker hang死的排查之旅已然告终。</p>
+<p>本次排查由四人小分队 @飞哥 @鹤哥（本人） @博哥 @我 （培龙） 一起排查长达数天的结论</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-10-26</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/docker-hung/" data-title="Index" data-hashtags="docker"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/docker-hung/" data-hashtag="docker"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/docker-hung/" data-title="Index" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/docker-hung/" data-title="Index"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/docker-hung/" data-title="Index"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/docker-hung/" data-title="Index" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/docker-hung/" data-title="Index" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/docker-hung/" data-title="Index"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/netns-leak/" class="prev" rel="prev" title="netns泄露"><i class="fas fa-angle-left fa-fw"></i>netns泄露</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

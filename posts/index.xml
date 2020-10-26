@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 26 Oct 2020 21:42:48 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 26 Oct 2020 21:52:54 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>Index</title>
+    <link>https://www.likakuli.com/posts/docker-hung/</link>
+    <pubDate>Mon, 26 Oct 2020 21:52:54 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/docker-hung/</guid>
+    <description><![CDATA[转载自组内同事 1. 背景 最近升级了一版kubelet，修复因kubelet删除Pod慢导致平台删除集群超时的问题。在灰度redis隔离集群的时候]]></description>
+</item><item>
     <title>netns泄露</title>
     <link>https://www.likakuli.com/posts/netns-leak/</link>
     <pubDate>Mon, 26 Oct 2020 21:42:48 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kubernetes-graceful-shutdown/</guid>
     <description><![CDATA[背景 codis集群在接入弹性云测试时发现容器漂移失败，通过集群日志看，提示 调度超时，去界面查看，已经调度成功了（调度成功的标志就是已经有宿主]]></description>
-</item><item>
-    <title>Kube-controller-manager同步数据慢</title>
-    <link>https://www.likakuli.com/posts/kubernetes-controllerrevisionhistory-bug/</link>
-    <pubDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-controllerrevisionhistory-bug/</guid>
-    <description><![CDATA[背景 版本1.12.4 线上遇到kube-controller-manager重启慢的问题，具体表现为进程重启虽然速度快，但是重启完所有数据都同]]></description>
 </item></channel>
 </rss>
