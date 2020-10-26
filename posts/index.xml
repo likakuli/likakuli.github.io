@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 20 Aug 2020 13:26:19 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 26 Oct 2020 21:27:30 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>Kubelet重启导致容器重启</title>
+    <link>https://www.likakuli.com/posts/kubernetes-kubelet-restart/</link>
+    <pubDate>Mon, 26 Oct 2020 21:27:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kubernetes-kubelet-restart/</guid>
+    <description><![CDATA[问题描述 在修复cgroup泄漏问题时会现停掉kubelet，待修复完成后启动kubelet组件，重启后收到业务反馈，业务容器重启了。 问题排查]]></description>
+</item><item>
     <title>Knative健康检查</title>
     <link>https://www.likakuli.com/posts/knative-healthcheck/</link>
     <pubDate>Thu, 20 Aug 2020 13:26:19 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kubernetes-flannel/</guid>
     <description><![CDATA[问题描述 etcd 3.3.1 flannel 0.11.0 flannel启动时报错，启动参数如下 1 ./flannel -etcd-keyfile=/etc/kubernetes/ssl/etcd-client-key.pem -etcd-cafile=/etc/kubernetes/ssl/ca.pem -etcd-endpoints=https://ip:port -etcd-certfile=/etc/kubernetes/ssl/etcd-client.pem -etcd-prefix=/coreos.com/network 错误信息如下： 1 2 3 4 5 E0908 20:27:17.671602 2331 main.go:382] Couldn&#39;t fetch network config: 100: Key not found (/coreos.com) [22] timed out E0908 20:27:18.680096 2331 main.go:382] Couldn&#39;t fetch network config:]]></description>
-</item><item>
-    <title>Kube-apiserver goroutine leak</title>
-    <link>https://www.likakuli.com/posts/kubernetes-apiserver-goroutine-leak/</link>
-    <pubDate>Fri, 06 Dec 2019 17:15:45 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-apiserver-goroutine-leak/</guid>
-    <description><![CDATA[背景 线上master的apiserver组件内存报警，内存使用量持续增长，监控如下 排查过程 从监控上看和另外一个程序（管理员平台）的内存使用情]]></description>
 </item></channel>
 </rss>

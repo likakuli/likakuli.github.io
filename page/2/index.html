@@ -11,7 +11,7 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://www.likakuli.com/" />
 <meta property="og:image" content="https://www.likakuli.com/logo.png"/>
-<meta property="og:updated_time" content="2020-10-26T21:20:47+08:00" />
+<meta property="og:updated_time" content="2020-10-26T21:34:35+08:00" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
@@ -103,6 +103,11 @@
         alt="/avatar.png"
         title="/avatar.png" /></a></div><h1 class="home-title">李鹤</h1><h2 class="home-subtitle"><div id="id-1" class="typeit"></div></h2><div class="links"><a href="https://github.com/likakuli" title="GitHub" target="_blank" rel="noopener noreffer me"><i class="fab fa-github-alt fa-fw"></i></a><a href="mailto:1154584512@qq.com" title="Email" rel=" me"><i class="far fa-envelope fa-fw"></i></a><a href="/index.xml" title="RSS" target="_blank" rel="noopener noreffer me"><i class="fas fa-rss fa-fw"></i></a></div></div>
 <article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/kubernetes-ep-event/">Endpoint异常变化</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2020-06-23">2020-06-23</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div><div class="content">背景 k8s 1.12.4 包含自定义功能 线上集群在批量原地升级时出现流量异常问题，大体流程如下： 批量摘流，并等待7秒 批量删除容器 watch到Endpoint ready</div><div class="post-footer">
+        <a href="/posts/kubernetes-ep-event/">阅读全文</a><div class="post-tags">
+                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
         <a href="/posts/kubernetes-graceful-shutdown/">Sidecar优雅退出</a>
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2020-06-23">2020-06-23</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div><div class="content">背景 codis集群在接入弹性云测试时发现容器漂移失败，通过集群日志看，提示 调度超时，去界面查看，已经调度成功了（调度成功的标志就是已经有宿主</div><div class="post-footer">
         <a href="/posts/kubernetes-graceful-shutdown/">阅读全文</a><div class="post-tags">
@@ -127,11 +132,6 @@
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2019-11-07">2019-11-07</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E7%AE%97%E6%B3%95/"><i class="far fa-folder fa-fw"></i>算法</a></span></div><div class="content">最近的工作都跟集群调度有关，一直在为了满足用户需求添加各种调度策略，现在也暂时告一段落了，抽时间总结思考了之前的工作，调度本质上就是背包问题</div><div class="post-footer">
         <a href="/posts/backpack/">阅读全文</a><div class="post-tags">
                 <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92/">动态规划</a></div></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/kubernetes-apiserver-watch/">Kube-apiserver watch实现</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2019-08-21">2019-08-21</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div><div class="content">List-Watch是kubernetes的核心机制。组件kubelet、kube-controller-manager、kube-sche</div><div class="post-footer">
-        <a href="/posts/kubernetes-apiserver-watch/">阅读全文</a><div class="post-tags">
-                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
 </article><ul class="pagination"><li class="page-item ">
                     <span class="page-link">
                         <a href="/">1</a>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Kubelet重启导致容器重启 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Kubelet重启导致容器重启" />
+<meta property="og:description" content="问题描述 在修复cgroup泄漏问题时会现停掉kubelet，待修复完成后启动kubelet组件，重启后收到业务反馈，业务容器重启了。 问题排查" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" />
+<meta property="og:image" content="https://www.likakuli.com/logo.png"/>
+<meta property="article:published_time" content="2020-10-26T21:27:30+08:00" />
+<meta property="article:modified_time" content="2020-10-26T21:34:35+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="Kubelet重启导致容器重启"/>
+<meta name="twitter:description" content="问题描述 在修复cgroup泄漏问题时会现停掉kubelet，待修复完成后启动kubelet组件，重启后收到业务反馈，业务容器重启了。 问题排查"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" /><link rel="prev" href="https://www.likakuli.com/posts/knative-healthcheck/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Kubelet重启导致容器重启",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/kubernetes-kubelet-restart\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  4735 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-kubelet-restart\/","datePublished": "2020-10-26T21:27:30+08:00","dateModified": "2020-10-26T21:34:35+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Kubelet重启导致容器重启</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-10-26">2020-10-26</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 4735 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 10 分钟&nbsp;<span id="/posts/kubernetes-kubelet-restart/" class="leancloud_visitors" data-flag-title="Kubelet重启导致容器重启">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#问题描述">问题描述</a></li>
+            <li><a href="#问题排查">问题排查</a></li>
+            <li><a href="#结论">结论</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h3 id="问题描述">问题描述</h3>
+<p>在修复cgroup泄漏问题时会现停掉kubelet，待修复完成后启动kubelet组件，重启后收到业务反馈，业务容器重启了。</p>
+<h3 id="问题排查">问题排查</h3>
+<p>这个问题具体原因的排查还是花了一定时间的，下面会列一下大致的排查思路并结合源码（自定义的1.12.4分支）进行分析。</p>
+<p>排查过程中涉及到了3个容器，如下</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left"></th>
+<th style="text-align:left">名称</th>
+<th style="text-align:left">集群</th>
+<th style="text-align:left">宿主</th>
+<th style="text-align:left">结果</th>
+<th style="text-align:left">重启次数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">auto-srv-cwhttp-sf-30b71-0</td>
+<td style="text-align:left">py</td>
+<td style="text-align:left">10.86.98.42</td>
+<td style="text-align:left">重启</td>
+<td style="text-align:left">1</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">conf-master-sf-19cf6-0</td>
+<td style="text-align:left">us01</td>
+<td style="text-align:left">10.15.29.31</td>
+<td style="text-align:left">重启</td>
+<td style="text-align:left">1</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">opensource-sf-dc750-2</td>
+<td style="text-align:left">us01</td>
+<td style="text-align:left">10.15.29.31</td>
+<td style="text-align:left">未重启</td>
+<td style="text-align:left">1</td>
+</tr>
+</tbody>
+</table>
+<p>容器启停相关的组件首先想到的就是kubelet，因此去查看kubelet日志，拿py的距离，重启时间为2020-03-12 10:42:27，所以只需要看这之前的一些日志</p>
+<p>这里直接贴出来最后过滤后的日志，省略一些中间过程</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">root@ddcloud-underlay-kube-node065.py:~$ grep <span class="m">0312</span> /var/log/kubernetes/kubelet.INFO <span class="p">|</span> grep -E <span class="s2">&#34;10:42:26|10:42:27&#34;</span> <span class="p">|</span> grep -E <span class="s2">&#34;8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56|auto-srv-cwhttp-sf-30b71-0|bfde4b15-cb98-11e8-a3c8-6c92bf85beda&#34;</span> <span class="p">|</span> grep -v -i volume
+I0312 10:42:26.101676 <span class="m">2353235</span> kubelet.go:1887<span class="o">]</span> SyncLoop <span class="o">(</span>ADD, <span class="s2">&#34;api&#34;</span><span class="o">)</span>: <span class="s2">&#34;lifejuhe-pre-sf-d46e3-0_default(9c048a53-53b2-11ea-b6ae-6c92bf85be08), prime-manager-sf-71a2e-2_default(35bc54e5-4ef1-11ea-b6ae-6c92bf85be08), ai-business-sf-0cac5-19_default(b60c0a18-4d70-11ea-b6ae-6c92bf85be08), disconf-sf-92894-2_default(4ae4dfb8-fee4-11e9-b433-6c92bf85be08), am-base-api-new-sf-de855-4_default(e59f4da9-cd68-11e9-92ca-6c92bf85be08), auto-srv-menu-sf-96f75-1_default(eb6ef2a6-4c7c-11ea-b6ae-6c92bf85be08), pre-000_default(d8f7688a-cc39-11e8-a3c8-6c92bf85beda), auto-wechat-srv-sf-e680a-0_default(9a6e0fc8-051c-11ea-b433-6c92bf85be08), oracle-pre-sf-253a7-0_default(c0cef405-5fa8-11ea-b6ae-6c92bf85be08), auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda), auto-srv-chewu-sf-dc750-0_default(1d9eac73-620a-11ea-b6ae-6c92bf85be08), member-sf-747bb-64_default(4e761a14-634e-11ea-b6ae-6c92bf85be08), ep-arch-tmp-bh-sf-1eaad-4_default(7a2d3f79-001a-11e9-a95b-6c92bf85beda), nsky-htw-h5-extranet-sf-900e8-1_default(10ac4571-08c5-11e9-a95b-6c92bf85beda), fate-saver-pre-sf-5cee9-0_default(39915cd3-f70f-11e9-b433-6c92bf85be08), shortserver-sf-ab776-4_default(d1909587-6362-11ea-b6ae-6c92bf85be08), rainbow-h5-sf-c72e4-3_default(cba38b41-1cbe-11ea-b433-6c92bf85be08), agency-call-service-sf-674c2-29_default(e74635f4-5b46-11ea-b6ae-6c92bf85be08), hnc-ddrccp-sf-db379-1_default(f16fbe5f-9ba4-11e9-a777-6c92bf85be08), log-hnc-sf-6a5be-152_default(a87148b5-c002-11e9-92ca-6c92bf85be08), actinia-service-py-sf-61fb7-0_default(75ef3250-3998-11e9-a95b-6c92bf85beda), its-timing-test-sf-8dcfc-0_default(3ad3b185-d175-11e8-a3c8-6c92bf85beda), de-st-forecastor-sf-5a382-3_default(5c6c02b8-ea6c-11e9-8a9f-6c92bf85be08), transit-compass-sf-69886-3_default(5f28569f-7152-11e9-9a4a-6c92bf85be08), gundam-centos6-002_default(3d075c28-042a-11e9-b650-6c92bf85be08), loan-credit-server-sf-c411b-4_default(6455d8e9-61fe-11ea-b6ae-6c92bf85be08), marketingmodel-service-sf-b1260-16_default(9d570b88-5f31-11e9-9b14-6c92bf85beda), csi-hnc-sf-a8523-16_default(b6078000-5f60-11ea-b6ae-6c92bf85be08), ms-shutdown-datadriver-sf-30b86-4_default(805e9837-f0d7-11e9-a648-6c92bf85be08), abnormal-shutdown-service-sf-342c4-18_default(ccb413e6-d832-11e9-92ca-6c92bf85be08), fate-lancer-sf-49896-2_default(241ad7ce-5c53-11ea-b6ae-6c92bf85be08), jetfire-sf-7dbf2-2_default(13f50c1d-5de8-11ea-b6ae-6c92bf85be08), hnc-pre-v-sf-745f9-0_default(70a98be0-3fbe-11e9-a95b-6c92bf85beda), orderpre-sf-b433d-0_default(03f84b30-1760-11ea-b433-6c92bf85be08), gatewayserver-sf-fc2e7-9_default(310030c4-62b3-11ea-b6ae-6c92bf85be08), base-message-service-sf-1b6f0-2_default(f63261ce-d0aa-11e9-92ca-6c92bf85be08), athena-api-pre-sf-d61bf-0_default(9f7e4183-0089-11ea-b433-6c92bf85be08), soda-f-api-sf-c88f2-2_default(fc9520db-8211-11e9-913a-6c92bf85beda), soda-d-api-py-sf-c6659-5_default(af4a67f9-3216-11ea-b433-6c92bf85be08), rollsroyce-pre-sf-6ed43-0_default(78a053cf-6375-11ea-b6ae-6c92bf85be08), member-sf-747bb-74_default(7323a872-634e-11ea-b6ae-6c92bf85be08), settle-consumer-abtest-hnc-pre-v-sf-b18cf-0_default(d199f994-6363-11ea-b6ae-6c92bf85be08), dpub-vote-pre-sf-bc747-0_default(7388d4f7-1a82-11ea-b433-6c92bf85be08), delta-hub-web-sf-bc67e-2_default(35699c85-620c-11ea-b6ae-6c92bf85be08), drunkeness-model-service-sf-a38a4-43_default(c3cd5daa-5b47-11ea-b6ae-6c92bf85be08), lifeapi-hnc-sf-4a88c-2_default(46c7368a-026c-11e9-a95b-6c92bf85beda), prod-data-service-sf-a1520-0_default(21e423b0-d04f-11e9-92ca-6c92bf85be08), seed-pre-sf-53a95-0_default(c51e0a0f-592a-11ea-b6ae-6c92bf85be08)&#34;</span>
+I0312 10:42:26.101950 <span class="m">2353235</span> predicate.go:80<span class="o">]</span> pod auto-srv-cwhttp-sf-30b71-0 is running on <span class="nb">local</span> node, just admit it.
+I0312 10:42:26.101969 <span class="m">2353235</span> prober_manager.go:160<span class="o">]</span> DEFAULT_PROBER: pod auto-srv-cwhttp-sf-30b71-0 is notready state<span class="o">(</span>Running<span class="o">)</span> and has no readiness prober, add a default one.
+I0312 10:42:26.102104 <span class="m">2353235</span> kubelet_pods.go:1424<span class="o">]</span> Generating status <span class="k">for</span> <span class="s2">&#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;</span>
+I0312 10:42:26.101980 <span class="m">2353235</span> worker.go:95<span class="o">]</span> INITIAL_STATUS <span class="o">{</span>Running <span class="o">[{</span>Initialized True 0001-01-01 00:00:00 +0000 UTC 2018-10-09 15:55:54 +0800 CST  <span class="o">}</span> <span class="o">{</span>Ready False 0001-01-01 00:00:00 +0000 UTC 2018-12-26 12:14:26 +0800 CST  <span class="o">}</span> <span class="o">{</span>ContainersReady True 0001-01-01 00:00:00 +0000 UTC 2019-04-03 20:02:17 +0800 CST  <span class="o">}</span> <span class="o">{</span>PodScheduled True 0001-01-01 00:00:00 +0000 UTC 2018-10-09 15:55:54 +0800 CST  <span class="o">}]</span>    10.86.98.42 10.161.74.102 2018-10-09 15:55:54 +0800 CST <span class="o">[]</span> <span class="o">[{</span>auto-srv-cwhttp-py <span class="o">{</span>nil <span class="p">&amp;</span>ContainerStateRunning<span class="o">{</span>StartedAt:2018-12-26 12:14:25 +0800 CST,<span class="o">}</span> nil<span class="o">}</span> <span class="o">{</span>nil nil <span class="p">&amp;</span>ContainerStateTerminated<span class="o">{</span>ExitCode:137,Signal:0,Reason:Error,Message:,StartedAt:2018-10-09 15:55:55 +0800 CST,FinishedAt:2018-12-26 11:49:33 +0800 CST,ContainerID:docker://60fcdbc337b3b57fc16c9817de1f5314fefec1f532211972646a0ae7cb64a17d,<span class="o">}}</span> <span class="nb">true</span> <span class="m">1</span> registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67:20180912 docker-pullable://registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67@sha256:3fb5c481c184f0752db8832f15940c7d306d87a494039a6e667a7561a28fd98b docker://8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56<span class="o">}]</span> Burstable<span class="o">}</span>
+I0312 10:42:26.102147 <span class="m">2353235</span> worker.go:104<span class="o">]</span> LEOPOLD_INIT_PROBER: auto-srv-cwhttp-sf-30b71-0_default<span class="o">(</span>bfde4b15-cb98-11e8-a3c8-6c92bf85beda<span class="o">)</span><span class="s1">&#39;s container auto-srv-cwhttp-py has been already running on the host({auto-srv-cwhttp-py {nil &amp;ContainerStateRunning{StartedAt:2018-12-26 12:14:25 +0800 CST,} nil} {nil nil &amp;ContainerStateTerminated{ExitCode:137,Signal:0,Reason:Error,Message:,StartedAt:2018-10-09 15:55:55 +0800 CST,FinishedAt:2018-12-26 11:49:33 +0800 CST,ContainerID:docker://60fcdbc337b3b57fc16c9817de1f5314fefec1f532211972646a0ae7cb64a17d,}} true 1 registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67:20180912 docker-pullable://registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67@sha256:3fb5c481c184f0752db8832f15940c7d306d87a494039a6e667a7561a28fd98b docker://8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56})
+</span><span class="s1">I0312 10:42:26.102199 2353235 prober_manager.go:193] add a readiness prober for pod: auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda) - auto-srv-cwhttp-py: &amp;Probe{Handler:Handler{Exec:&amp;ExecAction{Command:[bash -ec [[ -f /etc/container/.ddcloud_initing ]] &amp;&amp; { [[ -f /etc/container/.ddcloud_inited ]] || exit 2; }; exit 0;],},HTTPGet:nil,TCPSocket:nil,},InitialDelaySeconds:0,TimeoutSeconds:1,PeriodSeconds:2,SuccessThreshold:1,FailureThreshold:10,}
+</span><span class="s1">W0312 10:42:26.102284 2353235 status_manager.go:205] Container readiness changed before pod has synced: &#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34; - &#34;docker://8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56&#34;
+</span><span class="s1">I0312 10:42:26.119238 2353235 status_manager.go:499] Patch status for pod &#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34; with &#34;{\&#34;status\&#34;:{\&#34;$setElementOrder/conditions\&#34;:[{\&#34;type\&#34;:\&#34;Initialized\&#34;},{\&#34;type\&#34;:\&#34;Ready\&#34;},{\&#34;type\&#34;:\&#34;ContainersReady\&#34;},{\&#34;type\&#34;:\&#34;PodScheduled\&#34;}],\&#34;conditions\&#34;:[{\&#34;message\&#34;:\&#34;containers with unready status: [auto-srv-cwhttp-py]\&#34;,\&#34;reason\&#34;:\&#34;ContainersNotReady\&#34;,\&#34;type\&#34;:\&#34;Ready\&#34;},{\&#34;lastTransitionTime\&#34;:\&#34;2020-03-12T02:42:26Z\&#34;,\&#34;message\&#34;:\&#34;containers with unready status: [auto-srv-cwhttp-py]\&#34;,\&#34;reason\&#34;:\&#34;ContainersNotReady\&#34;,\&#34;status\&#34;:\&#34;False\&#34;,\&#34;type\&#34;:\&#34;ContainersReady\&#34;}],\&#34;containerStatuses\&#34;:[{\&#34;containerID\&#34;:\&#34;docker://8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56\&#34;,\&#34;image\&#34;:\&#34;registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67:20180912\&#34;,\&#34;imageID\&#34;:\&#34;docker-pullable://registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67@sha256:3fb5c481c184f0752db8832f15940c7d306d87a494039a6e667a7561a28fd98b\&#34;,\&#34;lastState\&#34;:{\&#34;terminated\&#34;:{\&#34;containerID\&#34;:\&#34;docker://60fcdbc337b3b57fc16c9817de1f5314fefec1f532211972646a0ae7cb64a17d\&#34;,\&#34;exitCode\&#34;:137,\&#34;finishedAt\&#34;:\&#34;2018-12-26T03:49:33Z\&#34;,\&#34;reason\&#34;:\&#34;Error\&#34;,\&#34;startedAt\&#34;:\&#34;2018-10-09T07:55:55Z\&#34;}},\&#34;name\&#34;:\&#34;auto-srv-cwhttp-py\&#34;,\&#34;ready\&#34;:false,\&#34;restartCount\&#34;:1,\&#34;state\&#34;:{\&#34;running\&#34;:{\&#34;startedAt\&#34;:\&#34;2018-12-26T04:14:25Z\&#34;}}}]}}&#34;
+</span><span class="s1">I0312 10:42:26.119337 2353235 status_manager.go:506] Status for pod &#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34; updated successfully: (1, {Phase:Running Conditions:[{Type:Initialized Status:True LastProbeTime:0001-01-01 00:00:00 +0000 UTC LastTransitionTime:2018-10-09 15:55:54 +0800 CST Reason: Message:} {Type:Ready Status:False LastProbeTime:0001-01-01 00:00:00 +0000 UTC LastTransitionTime:2018-12-26 12:14:26 +0800 CST Reason:ContainersNotReady Message:containers with unready status: [auto-srv-cwhttp-py]} {Type:ContainersReady Status:False LastProbeTime:0001-01-01 00:00:00 +0000 UTC LastTransitionTime:2020-03-12 10:42:26 +0800 CST Reason:ContainersNotReady Message:containers with unready status: [auto-srv-cwhttp-py]} {Type:PodScheduled Status:True LastProbeTime:0001-01-01 00:00:00 +0000 UTC LastTransitionTime:2018-10-09 15:55:54 +0800 CST Reason: Message:}] Message: Reason: NominatedNodeName: HostIP:10.86.98.42 PodIP:10.161.74.102 StartTime:2018-10-09 15:55:54 +0800 CST InitContainerStatuses:[] ContainerStatuses:[{Name:auto-srv-cwhttp-py State:{Waiting:nil Running:&amp;ContainerStateRunning{StartedAt:2018-12-26 12:14:25 +0800 CST,} Terminated:nil} LastTerminationState:{Waiting:nil Running:nil Terminated:&amp;ContainerStateTerminated{ExitCode:137,Signal:0,Reason:Error,Message:,StartedAt:2018-10-09 15:55:55 +0800 CST,FinishedAt:2018-12-26 11:49:33 +0800 CST,ContainerID:docker://60fcdbc337b3b57fc16c9817de1f5314fefec1f532211972646a0ae7cb64a17d,}} Ready:false RestartCount:1 Image:registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67:20180912 ImageID:docker-pullable://registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67@sha256:3fb5c481c184f0752db8832f15940c7d306d87a494039a6e667a7561a28fd98b ContainerID:docker://8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56}] QOSClass:Burstable})
+</span><span class="s1">I0312 10:42:26.155955 2353235 kubelet.go:1932] SyncLoop (PLEG): &#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;, event: &amp;pleg.PodLifecycleEvent{ID:&#34;bfde4b15-cb98-11e8-a3c8-6c92bf85beda&#34;, Type:&#34;ContainerStarted&#34;, Data:&#34;8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56&#34;}
+</span><span class="s1">I0312 10:42:26.155986 2353235 kubelet.go:1932] SyncLoop (PLEG): &#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;, event: &amp;pleg.PodLifecycleEvent{ID:&#34;bfde4b15-cb98-11e8-a3c8-6c92bf85beda&#34;, Type:&#34;ContainerDied&#34;, Data:&#34;60fcdbc337b3b57fc16c9817de1f5314fefec1f532211972646a0ae7cb64a17d&#34;}
+</span><span class="s1">I0312 10:42:26.156016 2353235 kubelet_pods.go:1424] Generating status for &#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;
+</span><span class="s1">I0312 10:42:26.156102 2353235 kubelet.go:1932] SyncLoop (PLEG): &#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;, event: &amp;pleg.PodLifecycleEvent{ID:&#34;bfde4b15-cb98-11e8-a3c8-6c92bf85beda&#34;, Type:&#34;ContainerStarted&#34;, Data:&#34;e4c7483fc2e3611890959e017d5feb042b57f44fd53f4c470a41da4c45e91731&#34;}
+</span><span class="s1">I0312 10:42:26.156132 2353235 kubelet.go:1932] SyncLoop (PLEG): &#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;, event: &amp;pleg.PodLifecycleEvent{ID:&#34;bfde4b15-cb98-11e8-a3c8-6c92bf85beda&#34;, Type:&#34;ContainerDied&#34;, Data:&#34;1d945817797c26545c4b31a441fa5b09d157bff5dd38487d8ff9822b5c022e2f&#34;}
+</span><span class="s1">I0312 10:42:26.156156 2353235 kubelet_pods.go:1424] Generating status for &#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;
+</span><span class="s1">I0312 10:42:26.402848 2353235 kuberuntime_manager.go:580] computePodActions got {KillPod:false CreateSandbox:false SandboxID:e4c7483fc2e3611890959e017d5feb042b57f44fd53f4c470a41da4c45e91731 Attempt:1 NextInitContainerToStart:nil ContainersToStart:[] ContainersToKill:map[]} for pod &#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;
+</span><span class="s1">I0312 10:42:26.403129 2353235 server.go:460] Event(v1.ObjectReference{Kind:&#34;Pod&#34;, Namespace:&#34;default&#34;, Name:&#34;auto-srv-cwhttp-sf-30b71-0&#34;, UID:&#34;bfde4b15-cb98-11e8-a3c8-6c92bf85beda&#34;, APIVersion:&#34;v1&#34;, ResourceVersion:&#34;4098877133&#34;, FieldPath:&#34;&#34;}): type: &#39;</span>Warning<span class="s1">&#39; reason: &#39;</span>MissingClusterDNS<span class="err">&#39;</span> pod: <span class="s2">&#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;</span>. kubelet does not have ClusterDNS IP configured and cannot create Pod using <span class="s2">&#34;ClusterFirst&#34;</span> policy. Falling back to <span class="s2">&#34;Default&#34;</span> policy.
+I0312 10:42:26.539178 <span class="m">2353235</span> prober.go:118<span class="o">]</span> Readiness probe <span class="k">for</span> <span class="s2">&#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda):auto-srv-cwhttp-py&#34;</span> succeeded
+I0312 10:42:27.024882 <span class="m">2353235</span> kubelet_pods.go:1424<span class="o">]</span> Generating status <span class="k">for</span> <span class="s2">&#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;</span>
+I0312 10:42:27.032833 <span class="m">2353235</span> kuberuntime_container.go:561<span class="o">]</span> Killing container <span class="s2">&#34;docker://8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56&#34;</span> with <span class="m">5</span> second grace period
+I0312 10:42:27.032846 <span class="m">2353235</span> kuberuntime_container.go:466<span class="o">]</span> Running preStop hook <span class="k">for</span> container <span class="s2">&#34;docker://8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56&#34;</span>
+I0312 10:42:31.908195 <span class="m">2353235</span> status_manager.go:506<span class="o">]</span> Status <span class="k">for</span> pod <span class="s2">&#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;</span> updated successfully: <span class="o">(</span>2, <span class="o">{</span>Phase:Running Conditions:<span class="o">[{</span>Type:Initialized Status:True LastProbeTime:0001-01-01 00:00:00 +0000 UTC LastTransitionTime:2018-10-09 15:55:54 +0800 CST Reason: Message:<span class="o">}</span> <span class="o">{</span>Type:Ready Status:True LastProbeTime:0001-01-01 00:00:00 +0000 UTC LastTransitionTime:2020-03-12 10:42:27 +0800 CST Reason: Message:<span class="o">}</span> <span class="o">{</span>Type:ContainersReady Status:True LastProbeTime:0001-01-01 00:00:00 +0000 UTC LastTransitionTime:2020-03-12 10:42:27 +0800 CST Reason: Message:<span class="o">}</span> <span class="o">{</span>Type:PodScheduled Status:True LastProbeTime:0001-01-01 00:00:00 +0000 UTC LastTransitionTime:2018-10-09 15:55:54 +0800 CST Reason: Message:<span class="o">}]</span> Message:container restart <span class="nb">time</span> reaches the limit: <span class="m">1</span> Reason:RestartLimit NominatedNodeName: HostIP:10.86.98.42 PodIP:10.161.74.102 StartTime:2018-10-09 15:55:54 +0800 CST InitContainerStatuses:<span class="o">[]</span> ContainerStatuses:<span class="o">[{</span>Name:auto-srv-cwhttp-py State:<span class="o">{</span>Waiting:nil Running:<span class="p">&amp;</span>ContainerStateRunning<span class="o">{</span>StartedAt:2018-12-26 12:14:25 +0800 CST,<span class="o">}</span> Terminated:nil<span class="o">}</span> LastTerminationState:<span class="o">{</span>Waiting:nil Running:nil Terminated:<span class="p">&amp;</span>ContainerStateTerminated<span class="o">{</span>ExitCode:137,Signal:0,Reason:Error,Message:,StartedAt:2018-10-09 15:55:55 +0800 CST,FinishedAt:2018-12-26 11:49:33 +0800 CST,ContainerID:docker://60fcdbc337b3b57fc16c9817de1f5314fefec1f532211972646a0ae7cb64a17d,<span class="o">}}</span> Ready:true RestartCount:1 Image:registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67:20180912 ImageID:docker-pullable://registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67@sha256:3fb5c481c184f0752db8832f15940c7d306d87a494039a6e667a7561a28fd98b ContainerID:docker://8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56<span class="o">}]</span> QOSClass:Burstable<span class="o">})</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到一个有趣的现象，第19条日志在10:42:26的时候还显示readiness probe探测成功，等到第21条日志10:42:27就去kill容器了，用飞哥的话来说就是 <strong>上一秒还叫人家小甜甜，下一秒就叫人家牛夫人</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">I0312 10:42:26.539178 <span class="m">2353235</span> prober.go:118<span class="o">]</span> Readiness probe <span class="k">for</span> <span class="s2">&#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda):auto-srv-cwhttp-py&#34;</span> succeeded
+I0312 10:42:27.032833 <span class="m">2353235</span> kuberuntime_container.go:561<span class="o">]</span> Killing container <span class="s2">&#34;docker://8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56&#34;</span> with <span class="m">5</span> second grace period
+</code></pre></td></tr></table>
+</div>
+</div><p>这句话是在真正删除容器之前打印出来的，对应代码如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// killContainer kills a container through the following steps:
+</span><span class="c1">// * Run the pre-stop lifecycle hooks (if applicable).
+</span><span class="c1">// * Stop the container.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">kubeGenericRuntimeManager</span><span class="p">)</span> <span class="nf">killContainer</span><span class="p">(</span><span class="nx">pod</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span> <span class="nx">containerID</span> <span class="nx">kubecontainer</span><span class="p">.</span><span class="nx">ContainerID</span><span class="p">,</span> <span class="nx">containerName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">reason</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">gracePeriodOverride</span> <span class="o">*</span><span class="kt">int64</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="o">...</span>
+
+   <span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Killing container %q with %d second grace period&#34;</span><span class="p">,</span> <span class="nx">containerID</span><span class="p">.</span><span class="nf">String</span><span class="p">(),</span> <span class="nx">gracePeriod</span><span class="p">)</span>
+
+   <span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>我们不需要关注他具体的执行过程，只需要按照调用堆栈往上找。killContainer有三处调用，分别对应的情况为</p>
+<ul>
+<li>有PostStartHook且执行失败时（ContainersToStart包含了所有需要start的容器）</li>
+<li>killPod时</li>
+<li>pod中有需要kill的容器时（ContainersToKill包含了所有需要kill的容器）</li>
+</ul>
+<p>从第17条日志中computePodActions的结果可以看到没有需要start和kill的容器，所以调用方为killPod，而killPod也有三处调用，分别为</p>
+<ul>
+<li>updateType为<strong>SyncPodKill</strong>时（容器被驱逐时）</li>
+<li>admit失败或者pod被删除或者pod为failed时</li>
+<li>容器非首次创建且pod的cgroup不存在时</li>
+</ul>
+<p>因为我们没有开启驱逐功能，且此时虽然容器正在运行但是pod的cgroup是存在的，所以只能由中间一条规则触发，也就是必然满足中间的规则，且此时pod没有被删除，也不是failed的状态，所以可以大概判断出来是admit失败导致的容器重启，正好我们自定义了全局的restartcountlimit类型的admit handler，即容器重启次数大于等于1时即可认为admit失败，到这里似乎找到了问题的原因，即**RestartCount大于0的容器会在kubelet停止一段时间重启后导致该容器重启。**然后兴冲冲的跑到py04测试集群测试了一把，果然复现了，然后屁颠屁颠的到群里说发现问题了，但是，飞哥立马质疑说美东的那台宿主上也多个满足条件的容器，但是只有一个重启了。头皮发麻啊，看来还不是问题根本所在，还得继续往前找，为什么同样满足RestartCount大于0，有的admit失败，有的成功，有必要看一下具体实现了，如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">restartLimitAdmitHandler</span><span class="p">)</span> <span class="nf">Admit</span><span class="p">(</span><span class="nx">attrs</span> <span class="o">*</span><span class="nx">PodAdmitAttributes</span><span class="p">)</span> <span class="nx">PodAdmitResult</span> <span class="p">{</span>
+   <span class="nx">status</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">l</span><span class="p">.</span><span class="nx">statusManager</span><span class="p">.</span><span class="nf">GetPodStatus</span><span class="p">(</span><span class="nx">attrs</span><span class="p">.</span><span class="nx">Pod</span><span class="p">.</span><span class="nx">UID</span><span class="p">)</span>
+   <span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+      <span class="nx">status</span> <span class="p">=</span> <span class="nx">attrs</span><span class="p">.</span><span class="nx">Pod</span><span class="p">.</span><span class="nx">Status</span>
+   <span class="p">}</span>
+
+   <span class="nx">isPodReady</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ps</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodStatus</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+      <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">cond</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">ps</span><span class="p">.</span><span class="nx">Conditions</span> <span class="p">{</span>
+         <span class="k">if</span> <span class="nx">cond</span><span class="p">.</span><span class="nx">Type</span> <span class="o">==</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodReady</span> <span class="o">&amp;&amp;</span> <span class="nx">cond</span><span class="p">.</span><span class="nx">Status</span> <span class="o">==</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">ConditionTrue</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">true</span>
+         <span class="p">}</span>
+      <span class="p">}</span>
+      <span class="k">return</span> <span class="kc">false</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="nx">status</span><span class="p">.</span><span class="nx">Phase</span> <span class="o">==</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodRunning</span> <span class="o">&amp;&amp;</span> <span class="nf">isPodReady</span><span class="p">(</span><span class="nx">status</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">PodAdmitResult</span><span class="p">{</span><span class="nx">Admit</span><span class="p">:</span> <span class="kc">true</span><span class="p">}</span>
+   <span class="p">}</span>
+
+   <span class="nx">maxRestartCount</span> <span class="o">:=</span> <span class="nb">int32</span><span class="p">(</span><span class="nx">l</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">RestartCountLimit</span><span class="p">)</span>
+   <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">cs</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">status</span><span class="p">.</span><span class="nx">ContainerStatuses</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="nx">cs</span><span class="p">.</span><span class="nx">State</span><span class="p">.</span><span class="nx">Running</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">cs</span><span class="p">.</span><span class="nx">Ready</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="nx">PodAdmitResult</span><span class="p">{</span><span class="nx">Admit</span><span class="p">:</span> <span class="kc">true</span><span class="p">}</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="nx">maxRestartCount</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">cs</span><span class="p">.</span><span class="nx">RestartCount</span> <span class="o">&gt;=</span> <span class="nx">maxRestartCount</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="nx">PodAdmitResult</span><span class="p">{</span>
+            <span class="nx">Admit</span><span class="p">:</span>   <span class="kc">false</span><span class="p">,</span>
+            <span class="nx">Reason</span><span class="p">:</span>  <span class="s">&#34;RestartLimit&#34;</span><span class="p">,</span>
+            <span class="nx">Message</span><span class="p">:</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;container restart time reaches the limit: %v&#34;</span><span class="p">,</span> <span class="nx">maxRestartCount</span><span class="p">),</span>
+         <span class="p">}</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+
+   <span class="k">return</span> <span class="nx">PodAdmitResult</span><span class="p">{</span><span class="nx">Admit</span><span class="p">:</span> <span class="kc">true</span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里需要区分两个概念，Pod Ready和Container Ready。根据问题背景我们知道此时在做cgroup迁移，kubelet已经停了一段时间，且从apiserver的日志中也可以看到node controller检测到NodeNotReady的事件，把上面的所有Pod都设置为Ready:false。即前17行的执行逻辑都是一样的，因为isRodReady函数都是false，再往下看唯一原因就是重启的容器不满足这个条件</p>
+<p><strong>cs.State.Running != nil &amp;&amp; cs.Ready</strong></p>
+<p>但是具体哪个条件不一致导致的，还得继续看日志</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 有问题的容器的日志</span>
+I0312 10:42:26.119238 <span class="m">2353235</span> status_manager.go:499<span class="o">]</span> Patch status <span class="k">for</span> pod <span class="s2">&#34;auto-srv-cwhttp-sf-30b71-0_default(bfde4b15-cb98-11e8-a3c8-6c92bf85beda)&#34;</span> with <span class="s2">&#34;{\&#34;status\&#34;:{\&#34;</span><span class="nv">$setElementOrder</span><span class="s2">/conditions\&#34;:[{\&#34;type\&#34;:\&#34;Initialized\&#34;},{\&#34;type\&#34;:\&#34;Ready\&#34;},{\&#34;type\&#34;:\&#34;ContainersReady\&#34;},{\&#34;type\&#34;:\&#34;PodScheduled\&#34;}],\&#34;conditions\&#34;:[{\&#34;message\&#34;:\&#34;containers with unready status: [auto-srv-cwhttp-py]\&#34;,\&#34;reason\&#34;:\&#34;ContainersNotReady\&#34;,\&#34;type\&#34;:\&#34;Ready\&#34;},{\&#34;lastTransitionTime\&#34;:\&#34;2020-03-12T02:42:26Z\&#34;,\&#34;message\&#34;:\&#34;containers with unready status: [auto-srv-cwhttp-py]\&#34;,\&#34;reason\&#34;:\&#34;ContainersNotReady\&#34;,\&#34;status\&#34;:\&#34;False\&#34;,\&#34;type\&#34;:\&#34;ContainersReady\&#34;}],\&#34;containerStatuses\&#34;:[{\&#34;containerID\&#34;:\&#34;docker://8a61fda8d43e4c28d4092a1bc8e5f372846d955ffffe0353a754c2e42f271b56\&#34;,\&#34;image\&#34;:\&#34;registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67:20180912\&#34;,\&#34;imageID\&#34;:\&#34;docker-pullable://registry.xiaojukeji.com/didibuild/auto-srv-cwhttp.hnc-v.chewu-rest.bcar.carplatform.didi.com.centos67@sha256:3fb5c481c184f0752db8832f15940c7d306d87a494039a6e667a7561a28fd98b\&#34;,\&#34;lastState\&#34;:{\&#34;terminated\&#34;:{\&#34;containerID\&#34;:\&#34;docker://60fcdbc337b3b57fc16c9817de1f5314fefec1f532211972646a0ae7cb64a17d\&#34;,\&#34;exitCode\&#34;:137,\&#34;finishedAt\&#34;:\&#34;2018-12-26T03:49:33Z\&#34;,\&#34;reason\&#34;:\&#34;Error\&#34;,\&#34;startedAt\&#34;:\&#34;2018-10-09T07:55:55Z\&#34;}},\&#34;name\&#34;:\&#34;auto-srv-cwhttp-py\&#34;,\&#34;ready\&#34;:false,\&#34;restartCount\&#34;:1,\&#34;state\&#34;:{\&#34;running\&#34;:{\&#34;startedAt\&#34;:\&#34;2018-12-26T04:14:25Z\&#34;}}}]}}&#34;</span>
+
+<span class="c1"># 没问题的容器的日志</span>
+I0312 11:12:37.927828 <span class="m">2906779</span> status_manager.go:499<span class="o">]</span> Patch status <span class="k">for</span> pod <span class="s2">&#34;opensource-sf-dc750-2_default(67c1ba01-00f9-11e9-a60d-246e9693c184)&#34;</span> with <span class="s2">&#34;{\&#34;status\&#34;:{\&#34;</span><span class="nv">$setElementOrder</span><span class="s2">/conditions\&#34;:[{\&#34;type\&#34;:\&#34;Initialized\&#34;},{\&#34;type\&#34;:\&#34;Ready\&#34;},{\&#34;type\&#34;:\&#34;ContainersReady\&#34;},{\&#34;type\&#34;:\&#34;PodScheduled\&#34;}],\&#34;conditions\&#34;:[{\&#34;lastTransitionTime\&#34;:\&#34;2020-03-12T03:12:37Z\&#34;,\&#34;status\&#34;:\&#34;True\&#34;,\&#34;type\&#34;:\&#34;Ready\&#34;}]}}&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>对比差异可以看到有问题的容器ready:false，没问题的ready:true，也就对应之前条件里的cs.Ready，因此虽然RestartCount同为1，admit结果却不同。</p>
+<p>那ready为啥不一样啊，在哪里赋值的，继续看</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">manager</span><span class="p">)</span> <span class="nf">UpdatePodStatus</span><span class="p">(</span><span class="nx">podUID</span> <span class="nx">types</span><span class="p">.</span><span class="nx">UID</span><span class="p">,</span> <span class="nx">podStatus</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">PodStatus</span><span class="p">)</span> <span class="p">{</span>
+   <span class="k">for</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">c</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">podStatus</span><span class="p">.</span><span class="nx">ContainerStatuses</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">ready</span> <span class="kt">bool</span>
+      <span class="k">if</span> <span class="nx">c</span><span class="p">.</span><span class="nx">State</span><span class="p">.</span><span class="nx">Running</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="nx">ready</span> <span class="p">=</span> <span class="kc">false</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">result</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">readinessManager</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">kubecontainer</span><span class="p">.</span><span class="nf">ParseContainerID</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">ContainerID</span><span class="p">));</span> <span class="nx">ok</span> <span class="p">{</span>
+         <span class="nx">ready</span> <span class="p">=</span> <span class="nx">result</span> <span class="o">==</span> <span class="nx">results</span><span class="p">.</span><span class="nx">Success</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+         <span class="c1">// The check whether there is a probe which hasn&#39;t run yet.
+</span><span class="c1"></span>         <span class="nx">_</span><span class="p">,</span> <span class="nx">exists</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">getWorker</span><span class="p">(</span><span class="nx">podUID</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">readiness</span><span class="p">)</span>
+         <span class="nx">ready</span> <span class="p">=</span> <span class="p">!</span><span class="nx">exists</span>
+      <span class="p">}</span>
+      <span class="nx">podStatus</span><span class="p">.</span><span class="nx">ContainerStatuses</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Ready</span> <span class="p">=</span> <span class="nx">ready</span>
+   <span class="p">}</span>
+   <span class="c1">// init containers are ready if they have exited with success or if a readiness probe has
+</span><span class="c1"></span>   <span class="c1">// succeeded.
+</span><span class="c1"></span>   <span class="k">for</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">c</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">podStatus</span><span class="p">.</span><span class="nx">InitContainerStatuses</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">ready</span> <span class="kt">bool</span>
+      <span class="k">if</span> <span class="nx">c</span><span class="p">.</span><span class="nx">State</span><span class="p">.</span><span class="nx">Terminated</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">c</span><span class="p">.</span><span class="nx">State</span><span class="p">.</span><span class="nx">Terminated</span><span class="p">.</span><span class="nx">ExitCode</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+         <span class="nx">ready</span> <span class="p">=</span> <span class="kc">true</span>
+      <span class="p">}</span>
+      <span class="nx">podStatus</span><span class="p">.</span><span class="nx">InitContainerStatuses</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Ready</span> <span class="p">=</span> <span class="nx">ready</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>三处赋值的地方</p>
+<ul>
+<li>c.State.Running为空时（新start的container），此时ready为false，显然并不是这种情况，因为容器之前就已经在运行了</li>
+<li>readiness probe探测结果为success时设置ready:true否则设置false</li>
+<li>根据readiness探针判断，如果没有此类型探针，则设置ready:true，否则设置为false</li>
+</ul>
+<p>这三种情况也都很好理解，针对我们要查的问题，第一种不会触发，第二三种会根据情况触发（所有Pod都默认添加了readiness probe探针，探测容器里的一个指定的文件，dockerinit负责在所有初始化脚本执行成功后创建该文件），也就是先去找探测结果，有的话按探测结果设置，否则按照探针的设置情况来设置，因为我们有默认探针，所以如果走到最后的else里面的话，ready会被设置为false，此时就会触发容器重启。这就需要找不到探测结果才行，直接去找设置探测结果的代码，我们只关注第一次触发添加探测结果的代码，如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Creates and starts a new probe worker.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">newWorker</span><span class="p">(</span>
+   <span class="nx">m</span> <span class="o">*</span><span class="nx">manager</span><span class="p">,</span>
+   <span class="nx">probeType</span> <span class="nx">probeType</span><span class="p">,</span>
+   <span class="nx">pod</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span>
+   <span class="nx">container</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="o">*</span><span class="nx">worker</span> <span class="p">{</span>
+
+   <span class="nx">w</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">worker</span><span class="p">{</span>
+      <span class="nx">stopCh</span><span class="p">:</span>       <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{},</span> <span class="mi">1</span><span class="p">),</span> <span class="c1">// Buffer so stop() can be non-blocking.
+</span><span class="c1"></span>      <span class="nx">pod</span><span class="p">:</span>          <span class="nx">pod</span><span class="p">,</span>
+      <span class="nx">container</span><span class="p">:</span>    <span class="nx">container</span><span class="p">,</span>
+      <span class="nx">probeType</span><span class="p">:</span>    <span class="nx">probeType</span><span class="p">,</span>
+      <span class="nx">probeManager</span><span class="p">:</span> <span class="nx">m</span><span class="p">,</span>
+   <span class="p">}</span>
+   <span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;INITIAL_STATUS %v&#34;</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Status</span><span class="p">)</span>
+
+   <span class="k">switch</span> <span class="nx">probeType</span> <span class="p">{</span>
+   <span class="k">case</span> <span class="nx">readiness</span><span class="p">:</span>
+      <span class="nx">w</span><span class="p">.</span><span class="nx">spec</span> <span class="p">=</span> <span class="nx">container</span><span class="p">.</span><span class="nx">ReadinessProbe</span>
+      <span class="nx">w</span><span class="p">.</span><span class="nx">resultsManager</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">readinessManager</span>
+      <span class="nx">w</span><span class="p">.</span><span class="nx">initialValue</span> <span class="p">=</span> <span class="nx">results</span><span class="p">.</span><span class="nx">Failure</span>
+      <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">s</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Status</span><span class="p">.</span><span class="nx">ContainerStatuses</span> <span class="p">{</span>
+         <span class="k">if</span> <span class="nx">s</span><span class="p">.</span><span class="nx">Name</span> <span class="o">==</span> <span class="nx">w</span><span class="p">.</span><span class="nx">container</span><span class="p">.</span><span class="nx">Name</span> <span class="o">&amp;&amp;</span> <span class="nx">s</span><span class="p">.</span><span class="nx">Ready</span> <span class="p">{</span>
+            <span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;LEOPOLD_INIT_PROBER: %s&#39;s container %s has been already running on the host(%v)&#34;</span><span class="p">,</span>
+               <span class="nx">format</span><span class="p">.</span><span class="nf">Pod</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">pod</span><span class="p">),</span> <span class="nx">w</span><span class="p">.</span><span class="nx">container</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span>
+            <span class="nx">w</span><span class="p">.</span><span class="nx">containerID</span> <span class="p">=</span> <span class="nx">kubecontainer</span><span class="p">.</span><span class="nf">ParseContainerID</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">ContainerID</span><span class="p">)</span>
+            <span class="nx">w</span><span class="p">.</span><span class="nx">spec</span><span class="p">.</span><span class="nx">InitialDelaySeconds</span> <span class="p">=</span> <span class="mi">0</span>
+            <span class="nx">w</span><span class="p">.</span><span class="nx">initialValue</span> <span class="p">=</span> <span class="nx">results</span><span class="p">.</span><span class="nx">Success</span>
+            <span class="nx">w</span><span class="p">.</span><span class="nx">resultsManager</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">containerID</span><span class="p">,</span> <span class="nx">results</span><span class="p">.</span><span class="nx">Success</span><span class="p">,</span> <span class="nx">w</span><span class="p">.</span><span class="nx">pod</span><span class="p">)</span>
+            <span class="k">break</span>
+         <span class="p">}</span>
+      <span class="p">}</span>
+   <span class="k">case</span> <span class="nx">liveness</span><span class="p">:</span>
+      <span class="nx">w</span><span class="p">.</span><span class="nx">spec</span> <span class="p">=</span> <span class="nx">container</span><span class="p">.</span><span class="nx">LivenessProbe</span>
+      <span class="nx">w</span><span class="p">.</span><span class="nx">resultsManager</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">livenessManager</span>
+      <span class="nx">w</span><span class="p">.</span><span class="nx">initialValue</span> <span class="p">=</span> <span class="nx">results</span><span class="p">.</span><span class="nx">Success</span>
+   <span class="p">}</span>
+
+   <span class="nx">w</span><span class="p">.</span><span class="nx">proberResultsMetricLabels</span> <span class="p">=</span> <span class="nx">prometheus</span><span class="p">.</span><span class="nx">Labels</span><span class="p">{</span>
+      <span class="s">&#34;probe_type&#34;</span><span class="p">:</span>     <span class="nx">w</span><span class="p">.</span><span class="nx">probeType</span><span class="p">.</span><span class="nf">String</span><span class="p">(),</span>
+      <span class="s">&#34;container_name&#34;</span><span class="p">:</span> <span class="nx">w</span><span class="p">.</span><span class="nx">container</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span>
+      <span class="s">&#34;pod_name&#34;</span><span class="p">:</span>       <span class="nx">w</span><span class="p">.</span><span class="nx">pod</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span>
+      <span class="s">&#34;namespace&#34;</span><span class="p">:</span>      <span class="nx">w</span><span class="p">.</span><span class="nx">pod</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">,</span>
+      <span class="s">&#34;pod_uid&#34;</span><span class="p">:</span>        <span class="nb">string</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">pod</span><span class="p">.</span><span class="nx">UID</span><span class="p">),</span>
+   <span class="p">}</span>
+
+   <span class="k">return</span> <span class="nx">w</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>简单解释一下代码意思，kubelet启动时为每个Pod根据其设置的探针类型创建一个worker，用来进行相关的健康检查，而我们为了实现当kubelet停掉后容器正常运行且kubelet启动后容器不重启的效果，在worker初始化的时候就为每个readiness类型的探针添加了默认的探测结果：success，这样在上面设置ready时，从探测结果获取到success后会把ready设置为true。看到这里你可能会一个疑问</p>
+<ol>
+<li>添加默认探测结果的时候也用到了s.Ready，必须为true才能添加默认的探测结果，那为什么又要根据探测结果来设置ready的值？</li>
+</ol>
+<p>其实此Ready非彼Ready，添加默认探测结果时用到的Ready为直接从apiserver获取到的etcd中存储的数据，此时确实是Ready:true，因为node controller只设置了Pod Ready:false，并不会去更新Container的属性。而后续我们要设置的Ready才是真整Container的状态，而且此时用到的判断条件都是结合etcd的信息和docker 实际运行容器的状态信息之后做出的判断，用来更新etcd中存储的Pod及Containers的状态，后续会定时把实际运行状态同步到etcd中。</p>
+<p>无论有问题的容器还是没有问题的容器，都会进行默认探测结果的设置，都可以看到如下日志</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;INITIAL_STATUS %v&#34;</span><span class="p">,</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Status</span><span class="p">)</span>
+<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;LEOPOLD_INIT_PROBER: %s&#39;s container %s has been already running on the host(%v)&#34;</span><span class="p">,</span> <span class="nx">format</span><span class="p">.</span><span class="nf">Pod</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">pod</span><span class="p">),</span> <span class="nx">w</span><span class="p">.</span><span class="nx">container</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以根据这两条日志打印的内容验证上述的逻辑。</p>
+<p>那么最后的问题来了，<strong>为什么都设置了默认探测结果，最后的执行结果却不一样</strong>，一个都到了分支2（设置ready = true），一个走到了分支3（设置ready = false）呢？？？</p>
+<p>因为添加探测结果和使用探测结果的代码执行是在两个goroutine进行的！！！！！！！不信你看</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">kl</span> <span class="o">*</span><span class="nx">Kubelet</span><span class="p">)</span> <span class="nf">HandlePodAdditions</span><span class="p">(</span><span class="nx">pods</span> <span class="p">[]</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">)</span> <span class="p">{</span>
+   <span class="o">...</span>
+      <span class="c1">// 触发UpdatePod
+</span><span class="c1"></span>      <span class="nx">kl</span><span class="p">.</span><span class="nf">dispatchWork</span><span class="p">(</span><span class="nx">pod</span><span class="p">,</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">SyncPodCreate</span><span class="p">,</span> <span class="nx">mirrorPod</span><span class="p">,</span> <span class="nx">start</span><span class="p">)</span>
+      <span class="nx">kl</span><span class="p">.</span><span class="nx">probeManager</span><span class="p">.</span><span class="nf">AddPod</span><span class="p">(</span><span class="nx">pod</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">podWorkers</span><span class="p">)</span> <span class="nf">UpdatePod</span><span class="p">(</span><span class="nx">options</span> <span class="o">*</span><span class="nx">UpdatePodOptions</span><span class="p">)</span> <span class="p">{</span>
+   <span class="o">...</span>
+   <span class="k">if</span> <span class="nx">podUpdates</span><span class="p">,</span> <span class="nx">exists</span> <span class="p">=</span> <span class="nx">p</span><span class="p">.</span><span class="nx">podUpdates</span><span class="p">[</span><span class="nx">uid</span><span class="p">];</span> <span class="p">!</span><span class="nx">exists</span> <span class="p">{</span>
+      <span class="o">...</span>
+      <span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+         <span class="k">defer</span> <span class="nx">runtime</span><span class="p">.</span><span class="nf">HandleCrash</span><span class="p">()</span>
+         <span class="c1">// 触发syncPod, 里面进行ready的赋值
+</span><span class="c1"></span>         <span class="nx">p</span><span class="p">.</span><span class="nf">managePodLoop</span><span class="p">(</span><span class="nx">podUpdates</span><span class="p">)</span>
+      <span class="p">}()</span>
+   <span class="p">}</span>
+   <span class="o">...</span>
+<span class="p">}</span>
+
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">manager</span><span class="p">)</span> <span class="nf">AddPod</span><span class="p">(</span><span class="nx">pod</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">)</span> <span class="p">{</span>
+   <span class="nx">m</span><span class="p">.</span><span class="nx">workerLock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+   <span class="k">defer</span> <span class="nx">m</span><span class="p">.</span><span class="nx">workerLock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+   <span class="o">...</span>
+      
+      <span class="k">if</span> <span class="nx">c</span><span class="p">.</span><span class="nx">ReadinessProbe</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="nx">key</span><span class="p">.</span><span class="nx">probeType</span> <span class="p">=</span> <span class="nx">readiness</span>
+         <span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">workers</span><span class="p">[</span><span class="nx">key</span><span class="p">];</span> <span class="nx">ok</span> <span class="p">{</span>
+            <span class="nx">glog</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Readiness probe already exists! %v - %v&#34;</span><span class="p">,</span>
+               <span class="nx">format</span><span class="p">.</span><span class="nf">Pod</span><span class="p">(</span><span class="nx">pod</span><span class="p">),</span> <span class="nx">c</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+            <span class="k">return</span>
+         <span class="p">}</span>
+		 <span class="c1">// 添加默认探测成功的结果，分支2使用
+</span><span class="c1"></span>         <span class="nx">w</span> <span class="o">:=</span> <span class="nf">newWorker</span><span class="p">(</span><span class="nx">m</span><span class="p">,</span> <span class="nx">readiness</span><span class="p">,</span> <span class="nx">pod</span><span class="p">,</span> <span class="nx">c</span><span class="p">)</span>
+         <span class="nx">w</span><span class="p">.</span><span class="nx">isDefaultReadinessProber</span> <span class="p">=</span> <span class="nx">isDefaultReadinessProber</span>
+         <span class="c1">// 添加探针，分支3使用
+</span><span class="c1"></span>         <span class="nx">m</span><span class="p">.</span><span class="nx">workers</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="p">=</span> <span class="nx">w</span>
+         <span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;add a readiness prober for pod: %v - %v: %v&#34;</span><span class="p">,</span> <span class="nx">format</span><span class="p">.</span><span class="nf">Pod</span><span class="p">(</span><span class="nx">pod</span><span class="p">),</span> <span class="nx">c</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">w</span><span class="p">.</span><span class="nx">spec</span><span class="p">)</span>
+         <span class="k">go</span> <span class="nx">w</span><span class="p">.</span><span class="nf">run</span><span class="p">()</span>
+      <span class="p">}</span>
+
+     <span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>再根据日志打印时间来看</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">root@ddcloud-kube-node109.us01:~$ grep <span class="s2">&#34;LEOPOLD_INIT_PROBER: opensource-sf-dc750-2&#34;</span> /var/log/kubernetes/kubelet.INFO <span class="p">|</span> head -n <span class="m">1</span>
+I0312 11:12:37.907399 <span class="m">2906779</span> worker.go:104<span class="o">]</span> LEOPOLD_INIT_PROBER: opensource-sf-dc750-2_default<span class="o">(</span>67c1ba01-00f9-11e9-a60d-246e9693c184<span class="o">)</span><span class="s1">&#39;s container opensource-us01 has been already running on the host({opensource-us01 {nil &amp;ContainerStateRunning{StartedAt:2018-12-26 10:32:29 +0800 CST,} nil} {nil nil &amp;ContainerStateTerminated{ExitCode:255,Signal:0,Reason:Error,Message:,StartedAt:2018-12-16 14:11:20 +0800 CST,FinishedAt:2018-12-26 10:31:31 +0800 CST,ContainerID:docker://0ea96f4f19542f416bf1afba438f7e26d9ef31508829ef5c94d31c184bfb0a6a,}} true 1 registry.xiaojukeji.com/didibuild/opensource.us01-v.opensource.codeinsight.ep.didi.com.centos67:c2db70ab docker-pullable://registry.xiaojukeji.com/didibuild/opensource.us01-v.opensource.codeinsight.ep.didi.com.centos67@sha256:ce790b51ef3b617cfd78bf9c1108e66e1c95d87e4590952c5746a5bd4294282d docker://a29de66df4998058df97857223fe2c6c228d4d4ec2f7da7c9da05bcdd7ed214e})
+</span><span class="s1">
+</span><span class="s1">
+</span><span class="s1">root@ddcloud-kube-node109.us01:~$ grep &#34;Generating status for&#34; /var/log/kubernetes/kubelet.INFO | grep -i opensource | head -n 1
+</span><span class="s1">I0312 11:12:37.907439 2906779 kubelet_pods.go:1424] Generating status for &#34;opensource-sf-dc750-2_default(67c1ba01-00f9-11e9-a60d-246e9693c184)&#34;
+</span><span class="s1">
+</span><span class="s1">
+</span><span class="s1">root@ddcloud-kube-node109.us01:~$ grep &#34;Generating status for&#34; /var/log/kubernetes/kubelet.INFO | grep -i &#34;conf-master&#34; | head -n 1
+</span><span class="s1">I0312 11:12:37.907605 2906779 kubelet_pods.go:1424] Generating status for &#34;conf-master-sf-19cf6-0_default(8371b943-0840-11e9-a60d-246e9693c184)&#34;
+</span><span class="s1">
+</span><span class="s1">
+</span><span class="s1">root@ddcloud-kube-node109.us01:~$ grep &#34;LEOPOLD_INIT_PROBER: conf-master&#34; /var/log/kubernetes/kubelet.INFO | head -n 1
+</span><span class="s1">I0312 11:12:37.907629 2906779 worker.go:104] LEOPOLD_INIT_PROBER: conf-master-sf-19cf6-0_default(8371b943-0840-11e9-a60d-246e9693c184)&#39;</span>s container conf-master-us01 has been already running on the host<span class="o">({</span>conf-master-us01 <span class="o">{</span>nil <span class="p">&amp;</span>ContainerStateRunning<span class="o">{</span>StartedAt:2018-12-26 10:32:28 +0800 CST,<span class="o">}</span> nil<span class="o">}</span> <span class="o">{</span>nil nil <span class="p">&amp;</span>ContainerStateTerminated<span class="o">{</span>ExitCode:255,Signal:0,Reason:Error,Message:,StartedAt:2018-12-25 20:28:01 +0800 CST,FinishedAt:2018-12-26 10:31:31 +0800 CST,ContainerID:docker://6e0da293cf06d76938df6b1298595663c964c31c1abddc619a6fc5b5b34dfd04,<span class="o">}}</span> <span class="nb">true</span> <span class="m">1</span> registry.xiaojukeji.com/didibuild/conf-master.us01-v.cm-server.conf-master.public.engine.didi.com.centos72:268c0172 docker-pullable://registry.xiaojukeji.com/didibuild/conf-master.us01-v.cm-server.conf-master.public.engine.didi.com.centos72@sha256:f3b3fbf4a84b85c30f4a8564ce4293bffa440c345c143d9ad3a10904df2b0f7a docker://085089b20cb51d3e3ea6c6bbd04a0e0b467eb9db4e7b6a506bea1151e1d50643<span class="o">})</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到重启的容器先打印&quot;Generating status for&quot;（此处是给ready赋值之前打印的），再打印的LEOPOLD_INIT_PROBER（添加默认探测结果），也就是说在获取探测结果时其实还没有添加默认探测结果，所以走到了分支3，设置ready:false，而没问题的容器恰好相反，先添加的探测结果，再去使用，走到了分支2。</p>
+<h3 id="结论">结论</h3>
+<p>赋值和获取值的操作在两个goroutine，且严重依赖于第一次的赋值操作，所以应该在保证第一次赋值后在进行取值操作才能确保容器不重启，虽然分支3判断有没有默认探针中在设置和获取的时候都加了锁，但还是无法保证代码执行顺序，所以即使走分支3，也有可能会出现设置ready为true的情况（本该设置为false），但是因为这正是我们想要的效果，所以我们是不会觉察到这种情况的问题的，也就是说开源的代码中可能也是存在类似误判的风险的，至少1.12.4版本中是存在的。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-10-26</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" data-title="Kubelet重启导致容器重启" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" data-title="Kubelet重启导致容器重启" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" data-title="Kubelet重启导致容器重启"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" data-title="Kubelet重启导致容器重启"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" data-title="Kubelet重启导致容器重启" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" data-title="Kubelet重启导致容器重启" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" data-title="Kubelet重启导致容器重启"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/knative-healthcheck/" class="prev" rel="prev" title="Knative健康检查"><i class="fas fa-angle-left fa-fw"></i>Knative健康检查</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>
