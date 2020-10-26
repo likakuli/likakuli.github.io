@@ -11,7 +11,7 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://www.likakuli.com/" />
 <meta property="og:image" content="https://www.likakuli.com/logo.png"/>
-<meta property="og:updated_time" content="2020-10-16T19:11:01+08:00" />
+<meta property="og:updated_time" content="2020-10-26T21:20:47+08:00" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
@@ -118,20 +118,20 @@
         <a href="/posts/kubernetes-cni/">阅读全文</a><div class="post-tags">
                 <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
 </article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/cgroup-leak/">Cgroup泄露</a>
+        <a href="/posts/cgroup-leak/">Cgroup泄露1</a>
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2019-07-10">2019-07-10</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div><div class="content">背景 线上k8s节点创建容器时提示&quot;no space left on device&quot;，为已知问题，参考 https://tencentcloudcontainerteam.github.io/2018/12/29/cgroup-leaking/ http://www.linuxfly.org/kubernetes-19-conflict-with-centos7/?from=groupmessage 解决方案 按照上述链接中的提示，首先看ru</div><div class="post-footer">
         <a href="/posts/cgroup-leak/">阅读全文</a><div class="post-tags">
+                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/linux/">linux</a>,&nbsp;<a href="/tags/cgroup/">cgroup</a></div></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/cgroup-leak2/">Cgroup泄露2</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2019-07-10">2019-07-10</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div><div class="content">线上宿主使用的kubernetes版本是1.12 ，kubelet默认是开启了kmem accounting的功能。kernel memory 在内核4.0以</div><div class="post-footer">
+        <a href="/posts/cgroup-leak2/">阅读全文</a><div class="post-tags">
                 <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/linux/">linux</a>,&nbsp;<a href="/tags/cgroup/">cgroup</a></div></div>
 </article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
         <a href="/posts/dockerd-memory-leak1/">Dockerd内存泄露</a>
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2019-07-09">2019-07-09</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div><div class="content">背景 线上部分宿主机dockerd占用内存过大，有的甚至超过100G，而整个宿主上的容器使用的内存还不如dockerd一个进程使用的多，现在的</div><div class="post-footer">
         <a href="/posts/dockerd-memory-leak1/">阅读全文</a><div class="post-tags">
                 <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a></div></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/kubernetes-statefulset-sync/">Statefulset创建pod慢</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2019-03-26">2019-03-26</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a>&nbsp;<a href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"><i class="far fa-folder fa-fw"></i>性能优化</a></span></div><div class="content">背景 线上kubernetes集群从创建sts到创建pod需要时间很长，分钟级别，但是调度却很快。偶尔还会出现导致kube-odin任务失败（</div><div class="post-footer">
-        <a href="/posts/kubernetes-statefulset-sync/">阅读全文</a><div class="post-tags">
-                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
 </article><ul class="pagination"><li class="page-item ">
                     <span class="page-link">
                         <a href="/">1</a>

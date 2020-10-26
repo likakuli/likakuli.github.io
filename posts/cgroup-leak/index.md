@@ -1,4 +1,4 @@
-# Cgroup泄露
+# Cgroup泄露1
 
 
 ### 背景
@@ -103,3 +103,7 @@ func (s *MemoryGroup) Apply(d *cgroupData) (err error) {
 ![img](cgroup_memory_leak2.png)
 
 说明kmem已经关闭了。这里重点强调一下，必须重启宿主才能生效，只重启kubelet无法生效，因为需要修改/sys/fs/cgroup/memory/kubepods，kubelet启动时会检测此目录是否存在，不存在则创建，存在则直接使用，只重启kubelet时此目录依然存在，因为容器业务进程还在使用着相关的cgroup。新创建的Pod会以继承此目录下的cgroup的配置，所以需要重启宿主才能关闭kmem。
+
+### 总结
+
+本篇是一种快速暴力的解决问题手段，后经过调研测试，有不需要重启宿主的方案，在[这一篇](../cgroup-leak2)中介绍

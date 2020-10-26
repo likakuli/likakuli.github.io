@@ -54,12 +54,19 @@
     <guid>https://www.likakuli.com/posts/kubernetes-apiserver-refused/</guid>
     <description><![CDATA[现象 k8s master进行线上升级，notifier利用client-go提供的informer机制注册了EndPoint的Update Hand]]></description>
 </item><item>
-    <title>Cgroup泄露</title>
+    <title>Cgroup泄露1</title>
     <link>https://www.likakuli.com/posts/cgroup-leak/</link>
     <pubDate>Wed, 10 Jul 2019 09:54:43 &#43;0800</pubDate>
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/cgroup-leak/</guid>
     <description><![CDATA[背景 线上k8s节点创建容器时提示&quot;no space left on device&quot;，为已知问题，参考 https://tencentcloudcontainerteam.github.io/2018/12/29/cgroup-leaking/ http://www.linuxfly.org/kubernetes-19-conflict-with-centos7/?from=groupmessage 解决方案 按照上述链接中的提示，首先看ru]]></description>
+</item><item>
+    <title>Cgroup泄露2</title>
+    <link>https://www.likakuli.com/posts/cgroup-leak2/</link>
+    <pubDate>Wed, 10 Jul 2019 09:54:43 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/cgroup-leak2/</guid>
+    <description><![CDATA[线上宿主使用的kubernetes版本是1.12 ，kubelet默认是开启了kmem accounting的功能。kernel memory 在内核4.0以]]></description>
 </item><item>
     <title>Dockerd内存泄露</title>
     <link>https://www.likakuli.com/posts/dockerd-memory-leak1/</link>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/dockerd-memory-leak1/</guid>
     <description><![CDATA[背景 线上部分宿主机dockerd占用内存过大，有的甚至超过100G，而整个宿主上的容器使用的内存还不如dockerd一个进程使用的多，现在的]]></description>
-</item><item>
-    <title>Statefulset创建pod慢</title>
-    <link>https://www.likakuli.com/posts/kubernetes-statefulset-sync/</link>
-    <pubDate>Tue, 26 Mar 2019 11:16:03 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-statefulset-sync/</guid>
-    <description><![CDATA[背景 线上kubernetes集群从创建sts到创建pod需要时间很长，分钟级别，但是调度却很快。偶尔还会出现导致kube-odin任务失败（]]></description>
 </item></channel>
 </rss>
