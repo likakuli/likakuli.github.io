@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 26 Oct 2020 21:27:30 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 26 Oct 2020 21:42:48 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>netns泄露</title>
+    <link>https://www.likakuli.com/posts/netns-leak/</link>
+    <pubDate>Mon, 26 Oct 2020 21:42:48 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/netns-leak/</guid>
+    <description><![CDATA[1. 揭开面纱 周一，接到RD反馈线上容器网络访问存在异常，具体线上描述如下： 上游服务driver-api所有容器访问下游服务duse-api某一]]></description>
+</item><item>
     <title>Kubelet重启导致容器重启</title>
     <link>https://www.likakuli.com/posts/kubernetes-kubelet-restart/</link>
     <pubDate>Mon, 26 Oct 2020 21:27:30 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kubernetes-controllerrevisionhistory-bug/</guid>
     <description><![CDATA[背景 版本1.12.4 线上遇到kube-controller-manager重启慢的问题，具体表现为进程重启虽然速度快，但是重启完所有数据都同]]></description>
-</item><item>
-    <title>Flannel key not found</title>
-    <link>https://www.likakuli.com/posts/kubernetes-flannel/</link>
-    <pubDate>Mon, 16 Dec 2019 17:58:20 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-flannel/</guid>
-    <description><![CDATA[问题描述 etcd 3.3.1 flannel 0.11.0 flannel启动时报错，启动参数如下 1 ./flannel -etcd-keyfile=/etc/kubernetes/ssl/etcd-client-key.pem -etcd-cafile=/etc/kubernetes/ssl/ca.pem -etcd-endpoints=https://ip:port -etcd-certfile=/etc/kubernetes/ssl/etcd-client.pem -etcd-prefix=/coreos.com/network 错误信息如下： 1 2 3 4 5 E0908 20:27:17.671602 2331 main.go:382] Couldn&#39;t fetch network config: 100: Key not found (/coreos.com) [22] timed out E0908 20:27:18.680096 2331 main.go:382] Couldn&#39;t fetch network config:]]></description>
 </item></channel>
 </rss>

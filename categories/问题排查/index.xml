@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/</link>
         <description>问题排查 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 26 Oct 2020 21:27:30 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 26 Oct 2020 21:42:48 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" rel="self" type="application/rss+xml" /><item>
+    <title>netns泄露</title>
+    <link>https://www.likakuli.com/posts/netns-leak/</link>
+    <pubDate>Mon, 26 Oct 2020 21:42:48 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/netns-leak/</guid>
+    <description><![CDATA[1. 揭开面纱 周一，接到RD反馈线上容器网络访问存在异常，具体线上描述如下： 上游服务driver-api所有容器访问下游服务duse-api某一]]></description>
+</item><item>
     <title>Kubelet重启导致容器重启</title>
     <link>https://www.likakuli.com/posts/kubernetes-kubelet-restart/</link>
     <pubDate>Mon, 26 Oct 2020 21:27:30 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/cgroup-leak/</guid>
     <description><![CDATA[背景 线上k8s节点创建容器时提示&quot;no space left on device&quot;，为已知问题，参考 https://tencentcloudcontainerteam.github.io/2018/12/29/cgroup-leaking/ http://www.linuxfly.org/kubernetes-19-conflict-with-centos7/?from=groupmessage 解决方案 按照上述链接中的提示，首先看ru]]></description>
-</item><item>
-    <title>Cgroup泄露2</title>
-    <link>https://www.likakuli.com/posts/cgroup-leak2/</link>
-    <pubDate>Wed, 10 Jul 2019 09:54:43 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/cgroup-leak2/</guid>
-    <description><![CDATA[线上宿主使用的kubernetes版本是1.12 ，kubelet默认是开启了kmem accounting的功能。kernel memory 在内核4.0以]]></description>
 </item></channel>
 </rss>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>netns泄露 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="netns泄露" />
+<meta property="og:description" content="1. 揭开面纱 周一，接到RD反馈线上容器网络访问存在异常，具体线上描述如下： 上游服务driver-api所有容器访问下游服务duse-api某一" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/netns-leak/" />
+<meta property="og:image" content="https://www.likakuli.com/logo.png"/>
+<meta property="article:published_time" content="2020-10-26T21:42:48+08:00" />
+<meta property="article:modified_time" content="2020-10-26T21:49:17+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="netns泄露"/>
+<meta name="twitter:description" content="1. 揭开面纱 周一，接到RD反馈线上容器网络访问存在异常，具体线上描述如下： 上游服务driver-api所有容器访问下游服务duse-api某一"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/netns-leak/" /><link rel="prev" href="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "netns泄露",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/netns-leak\/"
+        },"genre": "posts","keywords": "cni","wordcount":  3062 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/netns-leak\/","datePublished": "2020-10-26T21:42:48+08:00","dateModified": "2020-10-26T21:49:17+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">netns泄露</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-10-26">2020-10-26</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3062 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/netns-leak/" class="leancloud_visitors" data-flag-title="netns泄露">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#1-揭开面纱">1. 揭开面纱</a></li>
+            <li><a href="#2-误入迷障">2. 误入迷障</a></li>
+            <li><a href="#3-拨云现月">3. 拨云现月</a></li>
+            <li><a href="#4-亡羊补牢">4. 亡羊补牢</a></li>
+            <li><a href="#5-事后诸葛">5. 事后诸葛</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h3 id="1-揭开面纱">1. 揭开面纱</h3>
+<p>周一，接到RD反馈线上容器网络访问存在异常，具体线上描述如下：</p>
+<ul>
+<li>上游服务driver-api所有容器访问下游服务duse-api某一容器TCP【telnet测试】连接不通，访问其余下游容器均正常</li>
+<li>上游服务容器测试下游容器IP连通性【ping测试】正常</li>
+</ul>
+<p>从以上两点现象可以得出一个结论：</p>
+<ul>
+<li>容器的网络设备存在，IP地址连通，但是容器服务进程未启动，端口未启动</li>
+</ul>
+<p>但是，当我们和业务RD确认之后，发现业务容器状态正常，业务进程也正运行着。嗯，问题不简单。</p>
+<p>此外，飞哥这边排查还有一个结论：</p>
+<ul>
+<li>arp反向解析duse-api特殊容器IP时，不返回MAC地址信息</li>
+<li>当telnet失败后，立即执行arp，会返回MAC地址信息</li>
+</ul>
+<p>当我们拿着arp解析的MAC地址与容器当前的MAC地址作比较时，发现MAC地址不一致。唔，基本上确定问题所在了，net ns泄漏了。执行如下命令验证：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">sudo ip netns ls <span class="p">|</span> <span class="k">while</span> <span class="nb">read</span> ns<span class="p">;</span> <span class="k">do</span> sudo ip netns <span class="nb">exec</span> <span class="nv">$ns</span> ip addr<span class="p">;</span> <span class="k">done</span> <span class="p">|</span> grep inet <span class="p">|</span> grep -v <span class="m">127</span> <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span> <span class="p">|</span> sort <span class="p">|</span> uniq -c
+</code></pre></td></tr></table>
+</div>
+</div><p>确实发现该容器对应的IP出现了两次，该容器IP对应了两个网络命名空间，也即该容器的网络命名空间出现了泄漏。</p>
+<h3 id="2-误入迷障">2. 误入迷障</h3>
+<p>当确定了问题所在之后，我们立马调转排查方向，重新投入到net ns泄漏的排查事业当中。</p>
+<p>既然net ns出现了泄漏，我们只需要排查被泄露的net ns的成因即可。在具体定位之前，首先补充一个背景：</p>
+<ul>
+<li>ip netns 命令默认扫描 /var/run/netns 目录，从该目录下的文件读取net ns的信息</li>
+<li>默认情况下，kubelet调用docker创建容器时，docker会将net ns文件隐藏，如果不做特殊处理，我们执行 ip netns 命令将看不到任何数据</li>
+<li>当前弹性云为了方便排查问题，做了一个特殊处理，将容器的网络命名空间mount到 /var/run/netns 目录 【<strong>注意，这里有个大坑</strong>】</li>
+</ul>
+<p>有了弹性云当前的特殊处理，我们就可以知道所有net ns的创建时间，也即 /var/run/netns 目录下对应文件的创建时间。</p>
+<p>我们查看该泄漏ns文件的创建时间为2020-04-17 11:34:07，排查范围进一步缩小，只需从该时间点附近排查即可。</p>
+<p>接下来，我们分析了该附近时间段，容器究竟遭遇了什么：</p>
+<ul>
+<li>2020-04-17 11:33:26 用户执行发布更新操作</li>
+<li>2020-04-17 11:34:24 平台显示容器已启动</li>
+<li>2020-04-17 11:34:28 平台显示容器启动脚本执行失败</li>
+<li>2020-04-17 11:36:22 用户重新部署该容器</li>
+<li>2020-04-17 11:36:31 平台显示容器已删除成功</li>
+</ul>
+<p>既然是容器网络命名空间泄漏，则说明再删除容器的时候，没有执行ns的清理操作。【<strong>注：这里由于基础知识不足，导致问题****排查绕了地球一圈</strong>】</p>
+<p>我们梳理kubelet在该时间段对该容器的清理日志，核心相关日志展示如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">I0417 11:36:30.974674   <span class="m">37736</span> kubelet_pods.go:1180<span class="o">]</span> Killing unwanted pod <span class="s2">&#34;duse-api-sf-xxxxx-0&#34;</span>
+I0417 11:36:30.976803   <span class="m">37736</span> plugins.go:391<span class="o">]</span> Calling network plugin cni to tear down pod <span class="s2">&#34;duse-api-sf-80819-0_default&#34;</span>
+I0417 11:36:30.983499   <span class="m">37736</span> kubelet_pods.go:1780<span class="o">]</span> Orphaned pod <span class="s2">&#34;4ae28778-805c-11ea-a54c-b4055d1e6372&#34;</span> found, removing pod cgroups
+I0417 11:36:30.986360   <span class="m">37736</span> pod_container_manager_linux.go:167<span class="o">]</span> Attempt to <span class="nb">kill</span> process with pid: <span class="m">48892</span>
+I0417 11:36:30.986382   <span class="m">37736</span> pod_container_manager_linux.go:174<span class="o">]</span> successfully killed all unwanted processes.
+</code></pre></td></tr></table>
+</div>
+</div><p>简单描述流程：</p>
+<ul>
+<li>I0417 11:36:30.974674 根据删除容器执行，执行杀死Pod操作</li>
+<li>I0417 11:36:30.976803 调用cni插件清理网络命名空间</li>
+<li>I0417 11:36:30.983499 常驻协程检测到Pod已终止运行，开始执行清理操作，包括清理目录、cgroup</li>
+<li>I0417 11:36:30.986360 清理cgroup时杀死容器中还未退出的进程</li>
+<li>I0417 11:36:30.986382 显示所有容器进程都已被杀死</li>
+</ul>
+<p>这里提示一点：正常情况下，容器退出时，容器内所有进程都已退出。而上面之所以出现清理cgroup时需要杀死容器内未退出进程，是由于常驻协程的检测机制导致的，常驻协程判定Pod已终止运行的条件是：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// podIsTerminated returns true if pod is in the terminated state (&#34;Failed&#34; or &#34;Succeeded&#34;).
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">kl</span> <span class="o">*</span><span class="nx">Kubelet</span><span class="p">)</span> <span class="nf">podIsTerminated</span><span class="p">(</span><span class="nx">pod</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+   <span class="c1">// Check the cached pod status which was set after the last sync.
+</span><span class="c1"></span>   <span class="nx">status</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">statusManager</span><span class="p">.</span><span class="nf">GetPodStatus</span><span class="p">(</span><span class="nx">pod</span><span class="p">.</span><span class="nx">UID</span><span class="p">)</span>
+   <span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+      <span class="c1">// If there is no cached status, use the status from the
+</span><span class="c1"></span>      <span class="c1">// apiserver. This is useful if kubelet has recently been
+</span><span class="c1"></span>      <span class="c1">// restarted.
+</span><span class="c1"></span>      <span class="nx">status</span> <span class="p">=</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Status</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="nx">status</span><span class="p">.</span><span class="nx">Phase</span> <span class="o">==</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodFailed</span> <span class="o">||</span> <span class="nx">status</span><span class="p">.</span><span class="nx">Phase</span> <span class="o">==</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodSucceeded</span> <span class="o">||</span> <span class="p">(</span><span class="nx">pod</span><span class="p">.</span><span class="nx">DeletionTimestamp</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nf">notRunning</span><span class="p">(</span><span class="nx">status</span><span class="p">.</span><span class="nx">ContainerStatuses</span><span class="p">))</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这个容器命中了第三个或条件：容器已被标记删除，并且所有业务容器都不在运行中（业务容器启动失败，根本就没运行起来过），但是Pod的sandbox容器可能仍然处于运行状态。</p>
+<p>仅依据上面的kubelet日志，难以发现问题所在。我们接着又分析了cni插件的日志，截取cni在删除该Pod容器网络时的日志如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[</span>pid:98497<span class="o">]</span> 2020/04/17 11:36:30.990707 main.go:89: <span class="o">=====</span> start cni <span class="nv">process</span> <span class="o">=====</span>
+<span class="o">[</span>pid:98497<span class="o">]</span> 2020/04/17 11:36:30.990761 main.go:90: os env: <span class="o">[</span><span class="nv">CNI_COMMAND</span><span class="o">=</span>DEL <span class="nv">CNI_CONTAINERID</span><span class="o">=</span>c2ef79f7596b6b558f0c01c0715bac46714eefd1e9966625a09414c7218e1013 <span class="nv">CNI_NETNS</span><span class="o">=</span>/proc/48892/ns/net <span class="nv">CNI_ARGS</span><span class="o">=</span><span class="nv">IgnoreUnknown</span><span class="o">=</span>1<span class="p">;</span><span class="nv">K8S_POD_NAMESPACE</span><span class="o">=</span>default<span class="p">;</span><span class="nv">K8S_POD_NAME</span><span class="o">=</span>duse-api-sf-xxxxx-0<span class="p">;</span><span class="nv">K8S_POD_INFRA_CONTAINER_ID</span><span class="o">=</span>c2ef79f7596b6b558f0c01c0715bac46714eefd1e9966625a09414c7218e1013 <span class="nv">CNI_IFNAME</span><span class="o">=</span>eth0 <span class="nv">CNI_PATH</span><span class="o">=</span>/home/xiaoju/didicloud/cni-plugins/bin <span class="nv">LANG</span><span class="o">=</span>en_US.UTF-8 <span class="nv">PATH</span><span class="o">=</span>/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin <span class="nv">KUBE_LOGTOSTDERR</span><span class="o">=</span>--logtostderr<span class="o">=</span><span class="nb">false</span> <span class="nv">KUBE_LOG_LEVEL</span><span class="o">=</span>--v<span class="o">=</span><span class="m">3</span> <span class="nv">KUBE_ALLOW_PRIV</span><span class="o">=</span>--allow-privileged<span class="o">=</span><span class="nb">true</span> <span class="nv">KUBE_MASTER</span><span class="o">=</span>--master<span class="o">=</span>https://10.xxx.xxx.xxx:xxxx <span class="nv">KUBELET_ADDRESS</span><span class="o">=</span>--address<span class="o">=</span>0.0.0.0 <span class="nv">KUBELET_HOSTNAME</span><span class="o">=</span>--hostname_override<span class="o">=</span>10.xxx.xxx.xxx <span class="nv">KUBELET_POD_INFRA_CONTAINER</span><span class="o">=</span> <span class="nv">KUBELET_ARGS</span><span class="o">=</span>--network-plugin<span class="o">=</span>cni --cni-bin-dir<span class="o">=</span>/home/xiaoju/didicloud/cni-plugins/bin --cni-conf-dir<span class="o">=</span>/home/xiaoju/didicloud/cni-plugins/conf --kubeconfig<span class="o">=</span>/etc/kubernetes/kubeconfig/kubelet.kubeconfig --cert-dir<span class="o">=</span>/etc/kubernetes/ssl --log-dir<span class="o">=</span>/var/log/kubernetes --stderrthreshold<span class="o">=</span><span class="m">3</span> --allowed-unsafe-sysctls<span class="o">=</span>net.*,kernel.shm*,kernel.msg*,kernel.sem,fs.mqueue.* --pod-infra-container-image<span class="o">=</span>registry.xiaojukeji.com/didik8s/pause:3.0 --eviction-hard<span class="o">=</span>  --image-gc-high-threshold<span class="o">=</span><span class="m">75</span> --image-gc-low-threshold<span class="o">=</span><span class="m">65</span> --feature-gates<span class="o">=</span><span class="nv">KubeletPluginsWatcher</span><span class="o">=</span><span class="nb">false</span> --restart-count-limit<span class="o">=</span><span class="m">5</span> --last-upgrade-time<span class="o">=</span>2019-07-01<span class="o">]</span>
+<span class="o">[</span>pid:98497<span class="o">]</span> 2020/04/17 11:36:30.990771 main.go:91: stdin : <span class="o">{</span><span class="s2">&#34;cniVersion&#34;</span>:<span class="s2">&#34;0.3.0&#34;</span>,<span class="s2">&#34;logDir&#34;</span>:<span class="s2">&#34;/home/xiaoju/didicloud/cni-plugins/acllogs&#34;</span>,<span class="s2">&#34;name&#34;</span>:<span class="s2">&#34;ddcloudcni&#34;</span>,<span class="s2">&#34;type&#34;</span>:<span class="s2">&#34;aclCni&#34;</span><span class="o">}</span>
+<span class="o">[</span>pid:98497<span class="o">]</span> 2020/04/17 11:36:30.990790 main.go:181: failed to Statfs <span class="s2">&#34;/proc/48892/ns/net&#34;</span>: no such file or directory
+<span class="o">[</span>pid:98497<span class="o">]</span> 2020/04/17 11:36:30.990814 main.go:94: <span class="o">=====</span> end cni <span class="nv">process</span> <span class="o">=====</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其中，main.go:181行的错误日志一下就抓住了我们的眼球，结合代码分析下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">cmdDel</span><span class="p">(</span><span class="nx">args</span> <span class="o">*</span><span class="nx">skel</span><span class="p">.</span><span class="nx">CmdArgs</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">n</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">loadConf</span><span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">StdinData</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="nx">netns</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ns</span><span class="p">.</span><span class="nf">GetNS</span><span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">Netns</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>     <span class="c1">//// Line 181
+</span><span class="c1"></span>		<span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to open netns %q: %v&#34;</span><span class="p">,</span> <span class="nx">netns</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">defer</span> <span class="nx">netns</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+	<span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到，cni在调用该插件清理容器网络命名空间时，由于181行的错误，导致cni插件提前退出，并没有执行后面的清理操作。唔，终于找到你，小虫子。</p>
+<p>这里，我们先简单总结下问题排查至此，得出的阶段性结论：</p>
+<ul>
+<li>由于容器启动失败，在删除Pod时，常驻协程定时清理非运行状态Pod的cgroup，杀死了Pod的sandbox容器</li>
+<li>当删除容器命令触发的cni清理操作执行时，发现sandbox的pause进程已退出，定位不到容器的网络命名空间，因此退出cni的清理操作</li>
+<li>最终容器网络命名空间泄漏</li>
+</ul>
+<p>既然，明确了问题所在，我们就赶紧来定制修复方案吧，甚至与，我们很快就给出了一版修复：</p>
+<ul>
+<li>保证在Pod的所有容器退出之前，不会执行cgroup清理操作</li>
+</ul>
+<p>这样就保证了删除容器命令触发的清理操作能够按照顺序执行：</p>
+<ul>
+<li>杀死所有业务容器</li>
+<li>执行cni插件清理工作</li>
+<li>杀死sandbox容器</li>
+<li>执行cgroup清理工作</li>
+</ul>
+<p>我们风风火火的修复了内部版本之后，还验证了社区新版本代码中这块逻辑仍旧保持原样，就想着给社区送温暖（事实证明是妄想）。我们就去开源版本搭建的集群中，复现这个问题。然后噩梦就来了。。。</p>
+<p>相同的Pod配置文件，我们在弹性云内部版本几乎能够百分百复现net ns泄漏的问题，而在开源社区版本中，从未出现过一次net ns泄漏。难不成，搞不好，莫不是说，不是我们定位的这个原因？</p>
+<h3 id="3-拨云现月">3. 拨云现月</h3>
+<p>这个结论对我们来说，不是一个好消息。费力不小，不说南辕北辙，但是确实还未发现问题的根因。</p>
+<p>为了进一步缩小问题排查范围，我们找内核组同学请教了一个基础知识：</p>
+<ul>
+<li>在删除net ns时，如果该ns内仍有网络设备，系统自动先删除网络设备，然后再删除ns</li>
+</ul>
+<p>掌握了这个基础知识，我们再来排查。既然原生k8s集群不存在net ns泄漏问题，那问题一定由我们定制的某个模块引起。由于net ns泄漏发生在node上，当前弹性云在node节点上部署的模块包含：</p>
+<ul>
+<li>kubelet</li>
+<li>cni plugins</li>
+<li>other tools</li>
+</ul>
+<p>由于kubelet已经被排除嫌疑，那么罪魁祸首基本就是cni插件了。对比原生集群与弹性云线上集群的cni插件，发现一个极有可能会造成net ns泄漏的点：</p>
+<ul>
+<li>定制的cni插件为了排查问题的方便，将容器的网络命名空间文件绑定挂载到了/var/run/netns 目录下 【参考上面的大坑】</li>
+</ul>
+<p>我们赶紧着手验证元凶是否就是它。修改cni插件代码，删除绑定挂载操作，然后在测试环境验证。验证结果符合预期，net ns不在泄漏。至此，真相终于大白于天下了。</p>
+<h3 id="4-亡羊补牢">4. 亡羊补牢</h3>
+<p>当初为net ns做一个绑定挂载，其目的就是为了方便我们排查问题，使得 ip netns 命令能够访问当前宿主上所有Pod的网络命名空间。</p>
+<p>但其实一个简单的软链操作就能够实现这个目标。Pod退出时，如果这个软链文件未被清理，也不会引起net ns的泄漏，同时 ls -la /var/run/netns 命令可以清晰的看到哪些net ns仍有效，哪些已无效。</p>
+<h3 id="5-事后诸葛">5. 事后诸葛</h3>
+<p>为什么绑定挂载能够导致net ns泄漏呢？这是由linux 网络命名空间特性决定的：</p>
+<ul>
+<li>只要该命名空间中仍有一个进程存活，或者存在绑定挂载的情况（可能还存在其他情况），该ns就不会被回收</li>
+<li>而一旦所有进程都已退出，并且也无特殊状况，linux将自动回收该ns</li>
+</ul>
+<p>最后，这个问题本身并不复杂，之所以问题存在如此之久，排查如此曲折，主要暴露了我们的基础知识有所欠缺。</p>
+<p>好好学习，天天向上，方是王道！</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-10-26</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/netns-leak/" data-title="netns泄露" data-hashtags="cni"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/netns-leak/" data-hashtag="cni"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/netns-leak/" data-title="netns泄露" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/netns-leak/" data-title="netns泄露"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/netns-leak/" data-title="netns泄露"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/netns-leak/" data-title="netns泄露" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/netns-leak/" data-title="netns泄露" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/netns-leak/" data-title="netns泄露"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/cni/">cni</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/kubernetes-kubelet-restart/" class="prev" rel="prev" title="Kubelet重启导致容器重启"><i class="fas fa-angle-left fa-fw"></i>Kubelet重启导致容器重启</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

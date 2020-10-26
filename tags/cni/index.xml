@@ -1,0 +1,15 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>cni - 标签 - kaku&#39;s blog</title>
+        <link>https://www.likakuli.com/tags/cni/</link>
+        <description>cni - 标签 - kaku&#39;s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 26 Oct 2020 21:42:48 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/cni/" rel="self" type="application/rss+xml" /><item>
+    <title>netns泄露</title>
+    <link>https://www.likakuli.com/posts/netns-leak/</link>
+    <pubDate>Mon, 26 Oct 2020 21:42:48 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/netns-leak/</guid>
+    <description><![CDATA[1. 揭开面纱 周一，接到RD反馈线上容器网络访问存在异常，具体线上描述如下： 上游服务driver-api所有容器访问下游服务duse-api某一]]></description>
+</item></channel>
+</rss>
