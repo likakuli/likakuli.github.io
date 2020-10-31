@@ -4,7 +4,21 @@
         <link>https://www.likakuli.com/tags/docker/</link>
         <description>docker - 标签 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 26 Oct 2020 21:52:54 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/docker/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 31 Oct 2020 10:51:39 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/docker/" rel="self" type="application/rss+xml" /><item>
+    <title>Pod terminating2</title>
+    <link>https://www.likakuli.com/posts/docker-pod-terminating2/</link>
+    <pubDate>Sat, 31 Oct 2020 10:51:39 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/docker-pod-terminating2/</guid>
+    <description><![CDATA[1. 背景 承接上文，近期我们排查弹性云线上几起故障时，故障由多个因素共同引起，列举如下： 弹性云在逐步灰度升级docker版本至 18.06.3-ce 由于历史原因，弹]]></description>
+</item><item>
+    <title>Pod terminating</title>
+    <link>https://www.likakuli.com/posts/docker-pod-terminating/</link>
+    <pubDate>Sat, 31 Oct 2020 10:37:37 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/docker-pod-terminating/</guid>
+    <description><![CDATA[转载自组内同事stupig 1. 背景 近期，弹性云线上集群发生了几起特殊的容器漂移失败事件，其特殊之处在于容器处于Pod Terminating状态]]></description>
+</item><item>
     <title>docker hang问题排查</title>
     <link>https://www.likakuli.com/posts/docker-hang/</link>
     <pubDate>Mon, 26 Oct 2020 21:52:54 &#43;0800</pubDate>

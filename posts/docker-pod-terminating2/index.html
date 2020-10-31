@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Pod terminating2 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Pod terminating2" />
+<meta property="og:description" content="1. 背景 承接上文，近期我们排查弹性云线上几起故障时，故障由多个因素共同引起，列举如下： 弹性云在逐步灰度升级docker版本至 18.06.3-ce 由于历史原因，弹" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/docker-pod-terminating2/" />
+<meta property="og:image" content="https://www.likakuli.com/logo.png"/>
+<meta property="article:published_time" content="2020-10-31T10:51:39+08:00" />
+<meta property="article:modified_time" content="2020-10-31T10:55:05+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="Pod terminating2"/>
+<meta name="twitter:description" content="1. 背景 承接上文，近期我们排查弹性云线上几起故障时，故障由多个因素共同引起，列举如下： 弹性云在逐步灰度升级docker版本至 18.06.3-ce 由于历史原因，弹"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/docker-pod-terminating2/" /><link rel="prev" href="https://www.likakuli.com/posts/docker-pod-terminating/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Pod terminating2",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/docker-pod-terminating2\/"
+        },"genre": "posts","keywords": "docker","wordcount":  3339 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/docker-pod-terminating2\/","datePublished": "2020-10-31T10:51:39+08:00","dateModified": "2020-10-31T10:55:05+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Pod terminating2</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-10-31">2020-10-31</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3339 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/docker-pod-terminating2/" class="leancloud_visitors" data-flag-title="Pod terminating2">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#1-背景">1. 背景</a></li>
+            <li><a href="#2-对比实验">2. 对比实验</a></li>
+            <li><a href="#3-蛛丝马迹">3. 蛛丝马迹</a></li>
+            <li><a href="#4-刨根问底">4. 刨根问底</a></li>
+            <li><a href="#5-结语">5. 结语</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h3 id="1-背景">1. 背景</h3>
+<p>承接<a href="../docker-pod-terminating" rel="">上文</a>，近期我们排查弹性云线上几起故障时，故障由多个因素共同引起，列举如下：</p>
+<ul>
+<li>弹性云在逐步灰度升级docker版本至 <code>18.06.3-ce</code></li>
+<li>由于历史原因，弹性云启用了docker服务的systemd配置选项 <code>MountFlags=slave</code></li>
+<li>为了避免dockerd重启引起业务容器重建，弹性云启用了 <code>live-restore=true</code> 配置，docker服务发生重启，dockerd与shim进程mnt ns不一致</li>
+</ul>
+<p>在以上三个因素合力作用下，线上容器在重建与漂移场景下，出现删除失败的事件。</p>
+<p>同样，文章最后也给出了两种解决方案：</p>
+<ul>
+<li>长痛：修改代码，忽略错误</li>
+<li>短痛：修改配置，一劳永逸</li>
+</ul>
+<p>作为优秀的社会主义接班人，我们当然选择短痛了！依据官方提示 <code>MountFlags=slave</code> 与 <code>live-restore=true</code> 不能协同工作，那么我们只需关闭二者之一就能解决问题。</p>
+<p>与我们而言，docker提供的 <code>live-restore</code> 能力是一个很关键的特性。docker重启的原因多种多样，既可能是人为调试因素，也可能是机器的非预期行为，当docker重启后，我们并不希望用户的容器也发生重建。似乎关闭 <code>MountFlags=slave</code> 成了我们唯一的选择。</p>
+<p>等等，回想一下<a href="https://blog.terminus.io/docker-device-is-busy/" target="_blank" rel="noopener noreffer">docker device busy问题解决方案</a>，别人正是为了避免docker挂载泄漏而引起删除容器失败才开启的这个特性。</p>
+<p>但是，这个17年的结论真的还具有普适性吗？是与不是，我们亲自验证即可。</p>
+<h3 id="2-对比实验">2. 对比实验</h3>
+<p>为了验证在关闭 <code>MountFlags=slave</code> 选项后，docker是否存在挂载点泄漏的问题，我们分别挑选了一台 <code>1.13.1</code> 与 <code>18.06.3-ce</code> 的宿主进行实验。实验步骤正如<a href="https://blog.terminus.io/docker-device-is-busy/" target="_blank" rel="noopener noreffer">docker device busy问题解决方案</a>所提示，在验证之前，环境准备如下：</p>
+<ul>
+<li>删除docker服务的systemd配置项 <code>MountFlags=slave</code></li>
+<li>挑选启用systemd配置项 <code>PrivateTmp=true</code> 的任意服务，本文以 <code>httpd</code> 为例</li>
+</ul>
+<p>下面开始验证：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">////// docker 1.13.1 验证步骤及结果
+// 1. 重新加载配置
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ sudo systemctl daemon-reload
+ 
+ 
+// 2. 重启docker
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ sudo systemctl restart docker
+ 
+ 
+// 3. 创建容器
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ sudo docker run -d nginx
+c89c2aeff6e3e6414dfc7f448b4a560b4aac96d69a82ba021b78ee576bf6771c
+ 
+ 
+// 4. 重启httpd
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ sudo systemctl restart httpd
+ 
+ 
+// 5. 停止容器
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ sudo docker stop c89c2aeff6e3e6414dfc7f448b4a560b4aac96d69a82ba021b78ee576bf6771c
+c89c2aeff6e3e6414dfc7f448b4a560b4aac96d69a82ba021b78ee576bf6771c
+ 
+ 
+// 6. 清理容器
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ sudo docker rm c89c2aeff6e3e6414dfc7f448b4a560b4aac96d69a82ba021b78ee576bf6771c
+Error response from daemon: Driver overlay2 failed to remove root filesystem c89c2aeff6e3e6414dfc7f448b4a560b4aac96d69a82ba021b78ee576bf6771c: remove /home/docker_rt/overlay2/6c77cfb6c0c4b1e809c47af3c5ff6a4732a783cc14ff53270a7709c837c96346/merged: device or resource busy
+ 
+ 
+// 7. 定位挂载点
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ grep -rwn /home/docker_rt/overlay2/6c77cfb6c0c4b1e809c47af3c5ff6a4732a783cc14ff53270a7709c837c96346/merged /proc/*/mountinfo
+/proc/19973/mountinfo:40:231 <span class="m">227</span> 0:40 / /home/docker_rt/overlay2/6c77cfb6c0c4b1e809c47af3c5ff6a4732a783cc14ff53270a7709c837c96346/merged rw,relatime shared:119 - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+/proc/19974/mountinfo:40:231 <span class="m">227</span> 0:40 / /home/docker_rt/overlay2/6c77cfb6c0c4b1e809c47af3c5ff6a4732a783cc14ff53270a7709c837c96346/merged rw,relatime shared:119 - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+/proc/19975/mountinfo:40:231 <span class="m">227</span> 0:40 / /home/docker_rt/overlay2/6c77cfb6c0c4b1e809c47af3c5ff6a4732a783cc14ff53270a7709c837c96346/merged rw,relatime shared:119 - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+/proc/19976/mountinfo:40:231 <span class="m">227</span> 0:40 / /home/docker_rt/overlay2/6c77cfb6c0c4b1e809c47af3c5ff6a4732a783cc14ff53270a7709c837c96346/merged rw,relatime shared:119 - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+/proc/19977/mountinfo:40:231 <span class="m">227</span> 0:40 / /home/docker_rt/overlay2/6c77cfb6c0c4b1e809c47af3c5ff6a4732a783cc14ff53270a7709c837c96346/merged rw,relatime shared:119 - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+/proc/19978/mountinfo:40:231 <span class="m">227</span> 0:40 / /home/docker_rt/overlay2/6c77cfb6c0c4b1e809c47af3c5ff6a4732a783cc14ff53270a7709c837c96346/merged rw,relatime shared:119 - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+ 
+ 
+// 8. 定位目标进程
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ ps -ef<span class="p">|</span>egrep <span class="s1">&#39;19973|19974|19975|19976|19977|19978&#39;</span>
+root     <span class="m">19973</span>     <span class="m">1</span>  <span class="m">0</span> 15:13 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache   <span class="m">19974</span> <span class="m">19973</span>  <span class="m">0</span> 15:13 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache   <span class="m">19975</span> <span class="m">19973</span>  <span class="m">0</span> 15:13 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache   <span class="m">19976</span> <span class="m">19973</span>  <span class="m">0</span> 15:13 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache   <span class="m">19977</span> <span class="m">19973</span>  <span class="m">0</span> 15:13 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache   <span class="m">19978</span> <span class="m">19973</span>  <span class="m">0</span> 15:13 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+</code></pre></td></tr></table>
+</div>
+</div><p>docker <code>1.13.1</code> 版本的实验结果正如网文所料，容器读写层挂载点出现了泄漏，并且 <code>docker rm</code> 无法清理该容器（注意 <code>docker rm -f</code> 仍然可以清理，原因参考上文）。</p>
+<p>弹性云启用docker配置 <code>MountFlags=slave</code> 也是为了避免该问题发生。</p>
+<p>那么现在压力转移到 docker <code>18.06.3-ce</code> 这边来了，新版本是否仍然存在这个问题呢？</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">////// docker 18.06.3-ce 验证步骤及结果
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo systemctl daemon-reload
+ 
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo systemctl restart docker
+ 
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo docker run -d nginx
+718114321d67a817c1498e530b943c2514ed4200f2d0d138880f8c345df7048f
+ 
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo systemctl restart httpd
+ 
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo docker stop 718114321d67a817c1498e530b943c2514ed4200f2d0d138880f8c345df7048f
+718114321d67a817c1498e530b943c2514ed4200f2d0d138880f8c345df7048f
+ 
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo docker rm 718114321d67a817c1498e530b943c2514ed4200f2d0d138880f8c345df7048f
+718114321d67a817c1498e530b943c2514ed4200f2d0d138880f8c345df7048f
+</code></pre></td></tr></table>
+</div>
+</div><p>针对docker <code>18.06.3-ce</code> 的实验非常丝滑顺畅，不存在任何问题。回顾上文知识点，当容器读写层挂载点出现泄漏后，docker <code>18.06.3-ce</code> 清理容器必定失败，而现在的结果却成功了，说明容器读写层挂载点没有泄漏。</p>
+<p>这简直就是黎明的曙光。</p>
+<h3 id="3-蛛丝马迹">3. 蛛丝马迹</h3>
+<p>上一节对比实验的结果给了我们莫大的鼓励，本节我们探索两个版本的docker的表现差异，以期定位症结所在。</p>
+<p>既然核心问题在于挂载点是否被泄漏，那么我们就以挂载点为切入点，深入分析两个版本docker的差异性。我们对比在两个环境下执行完 <code>步骤4</code> 后，不同进程内的挂载详情，结果如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">// docker 1.13.1
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ sudo docker run -d nginx
+0fe8d412f99a53229ea0df3ec44c93496e150a39f724ea304adb7f924910d61b
+ 
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ sudo docker inspect -f <span class="o">{{</span>.GraphDriver.Data.MergedDir<span class="o">}}</span> 0fe8d412f99a53229ea0df3ec44c93496e150a39f724ea304adb7f924910d61b
+/home/docker_rt/overlay2/4e09fa6803feab9d96fe72a44fb83d757c1788812ff60071ac2e62a5cf14cd97/merged
+ 
+// 共享命名空间
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ grep -rw /home/docker_rt/overlay2/4e09fa6803feab9d96fe72a44fb83d757c1788812ff60071ac2e62a5cf14cd97/merged /proc/<span class="nv">$$</span>/mountinfo
+<span class="m">223</span> <span class="m">1143</span> 0:40 / /home/docker_rt/overlay2/4e09fa6803feab9d96fe72a44fb83d757c1788812ff60071ac2e62a5cf14cd97/merged rw,relatime - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+ 
+ 
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ sudo systemctl restart httpd
+ 
+<span class="o">[</span>stupig@hostname2 ps -ef<span class="p">|</span>grep httpd<span class="p">|</span>head -n <span class="m">1</span>
+root     <span class="m">16715</span>     <span class="m">1</span>  <span class="m">2</span> 16:09 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+ 
+// httpd进程命名空间
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ grep -rw /home/docker_rt/overlay2/4e09fa6803feab9d96fe72a44fb83d757c1788812ff60071ac2e62a5cf14cd97/merged /proc/16715/mountinfo
+<span class="m">257</span> <span class="m">235</span> 0:40 / /home/docker_rt/overlay2/4e09fa6803feab9d96fe72a44fb83d757c1788812ff60071ac2e62a5cf14cd97/merged rw,relatime shared:123 - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+// docker 18.06.3-ce
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo docker run -d nginx
+ce75d4fdb6df6d13a7bf4270f71b3752ee2d3849df1f64d5d5d19a478ac7db8d
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo docker inspect -f <span class="o">{{</span>.GraphDriver.Data.MergedDir<span class="o">}}</span> ce75d4fdb6df6d13a7bf4270f71b3752ee2d3849df1f64d5d5d19a478ac7db8d
+/home/docker_rt/overlay2/a9823ed6b3c5a752eaa92072ff9d91dbe1467ceece3eedf613bf6ffaa5183b76/merged
+ 
+// 共享命名空间
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ grep -rw /home/docker_rt/overlay2/a9823ed6b3c5a752eaa92072ff9d91dbe1467ceece3eedf613bf6ffaa5183b76/merged /proc/<span class="nv">$$</span>/mountinfo
+<span class="m">218</span> <span class="m">43</span> 0:105 / /home/docker_rt/overlay2/a9823ed6b3c5a752eaa92072ff9d91dbe1467ceece3eedf613bf6ffaa5183b76/merged rw,relatime shared:109 - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo systemctl restart httpd
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ ps -ef<span class="p">|</span>grep httpd<span class="p">|</span>head -n <span class="m">1</span>
+root      <span class="m">63694</span>      <span class="m">1</span>  <span class="m">0</span> 16:14 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+ 
+// httpd进程命名空间
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ grep -rw /home/docker_rt/overlay2/a9823ed6b3c5a752eaa92072ff9d91dbe1467ceece3eedf613bf6ffaa5183b76/merged /proc/63694/mountinfo
+<span class="m">435</span> <span class="m">376</span> 0:105 / /home/docker_rt/overlay2/a9823ed6b3c5a752eaa92072ff9d91dbe1467ceece3eedf613bf6ffaa5183b76/merged rw,relatime shared:122 master:109 - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+</code></pre></td></tr></table>
+</div>
+</div><p>咋一看，好像没啥区别啊！睁大你们的火眼金睛，是否发现差异所在了？</p>
+<p>如果细心对比，还是很容易分辨出差异所在的：</p>
+<ul>
+<li>共享命名空间中
+<ul>
+<li>docker <code>18.06.3-ce</code> 版本创建的挂载点是shared的</li>
+<li>而docker <code>1.13.1</code> 版本创建的挂载点是private的</li>
+</ul>
+</li>
+<li>httpd进程命名空间中
+<ul>
+<li>docker <code>18.06.3-ce</code> 创建的挂载点仍然是共享的，并且接收共享组109传递的挂载与卸载事件，注意：共享组109正好就是共享命名空间中对应的挂载点</li>
+<li>而docker <code>1.13.1</code> 版本创建的挂载点虽然也是共享的，但是却与共享命名空间中对应的挂载点没有关联关系</li>
+</ul>
+</li>
+</ul>
+<p>可能会有用户不禁要问：怎么分辨挂载点是什么类型？以及不同类型挂载点的传递属性呢？请参阅：<a href="https://man7.org/linux/man-pages/man7/mount_namespaces.7.html" target="_blank" rel="noopener noreffer">mount命名空间说明文档</a>。</p>
+<p>问题已然明了，由于两个版本docker所创建的容器读写层挂载点具备不同的属性，导致它们之间的行为差异。</p>
+<h3 id="4-刨根问底">4. 刨根问底</h3>
+<p>相信大家如果理解了上一节的内容，就已经了解了问题的本质。本节我们继续探索问题的根因。</p>
+<p>为什么两个版本的docker行为表现不一致？不外乎两个主要原因：</p>
+<ol>
+<li>docker处理逻辑发生变动</li>
+<li>宿主环境不一致，主要指内核</li>
+</ol>
+<p>第二个因素很好排除，我们对比了两个测试环境的宿主内核版本，结果是一致的。所以，基本还是因docker代码升级而产生的行为不一致。理论上，我们只需逐个分析docker <code>1.13.1</code> 与 docker <code>18.06.3-ce</code> 两个版本间的所有提交记录，就一定能够定位到关键提交信息，大力总是会出现奇迹。</p>
+<p>但是，我们还是希望能够从现场中发现有用信息，缩小检索范围。</p>
+<p>仍然从挂载点切入，既然两个版本的docker所创建的挂载点在共享命名空间中就已经出现差异，我们顺藤摸瓜，找找容器读写层挂载点链路上是否存在差异：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">// docker 1.13.1
+// 本挂载点
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ grep -rw /home/docker_rt/overlay2/4e09fa6803feab9d96fe72a44fb83d757c1788812ff60071ac2e62a5cf14cd97/merged /proc/<span class="nv">$$</span>/mountinfo
+<span class="m">223</span> <span class="m">1143</span> 0:40 / /home/docker_rt/overlay2/4e09fa6803feab9d96fe72a44fb83d757c1788812ff60071ac2e62a5cf14cd97/merged rw,relatime - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+ 
+ 
+// 定位本挂载点的父挂载点
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ grep -rw <span class="m">1143</span> /proc/<span class="nv">$$</span>/mountinfo
+<span class="m">1143</span> <span class="m">44</span> 8:4 /docker_rt/overlay2 /home/docker_rt/overlay2 rw,relatime - xfs /dev/sda4 rw,attr2,inode64,logbsize<span class="o">=</span>256k,sunit<span class="o">=</span>512,swidth<span class="o">=</span>512,prjquota
+ 
+ 
+// 继续定位祖父挂载点
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ grep -rw <span class="m">44</span> /proc/<span class="nv">$$</span>/mountinfo
+<span class="m">44</span> <span class="m">39</span> 8:4 / /home rw,relatime shared:28 - xfs /dev/sda4 rw,attr2,inode64,logbsize<span class="o">=</span>256k,sunit<span class="o">=</span>512,swidth<span class="o">=</span>512,prjquota
+ 
+ 
+// 继续往上
+<span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ grep -rw <span class="m">39</span> /proc/<span class="nv">$$</span>/mountinfo
+<span class="m">39</span> <span class="m">1</span> 8:3 / / rw,relatime shared:1 - ext4 /dev/sda3 rw,stripe<span class="o">=</span>64,data<span class="o">=</span>ordered
+ 
+ 
+// docker 18.06.3-ce
+// 本挂载点
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ grep -rw /home/docker_rt/overlay2/a9823ed6b3c5a752eaa92072ff9d91dbe1467ceece3eedf613bf6ffaa5183b76/merged /proc/<span class="nv">$$</span>/mountinfo
+<span class="m">218</span> <span class="m">43</span> 0:105 / /home/docker_rt/overlay2/a9823ed6b3c5a752eaa92072ff9d91dbe1467ceece3eedf613bf6ffaa5183b76/merged rw,relatime shared:109 - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+ 
+ 
+// 定位本挂在点的父挂载点
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ grep -rw <span class="m">43</span> /proc/<span class="nv">$$</span>/mountinfo
+<span class="m">43</span> <span class="m">61</span> 8:17 / /home rw,noatime shared:29 - xfs /dev/sdb1 rw,attr2,nobarrier,inode64,prjquota
+ 
+ 
+// 继续定位祖父挂载点
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ grep -rw <span class="m">61</span> /proc/<span class="nv">$$</span>/mountinfo
+<span class="m">61</span> <span class="m">1</span> 8:3 / / rw,relatime shared:1 - ext4 /dev/sda3 rw,data<span class="o">=</span>ordered
+</code></pre></td></tr></table>
+</div>
+</div><p>两个版本的docker所创建的容器读写层挂载点链路上差异还是非常明显的：</p>
+<ul>
+<li>容器读写层挂载点的父级挂载点不同
+<ul>
+<li>docker <code>18.06.3-ce</code> 创建的容器读写层挂载点的父级挂载点是 <code>/home/</code> ，并且是共享的</li>
+<li>docker <code>1.13.1</code> 创建的容器读写层挂载点的父级挂载点是 <code>/home/docker_rt/overlay2</code> ，并且是私有的</li>
+</ul>
+</li>
+</ul>
+<p>这里补充一个背景，弹性云机器在初始化阶段，会将 <code>/home</code> 初始化为xfs文件系统类型，因此所有宿主上 <code>/home</code> 挂载点都具备相同属性。</p>
+<p>那么，问题基本就是由 docker <code>1.13.1</code> 中多出的一层挂载层 <code>/home/docker_rt/overlay2</code> 引起。</p>
+<p>如何验证这个猜想呢？现在，其实我们已经具备了检索代码的关键目标，docker <code>1.13.1</code> 会设置容器镜像层根目录的传递属性。拿着这个先验知识，我们直接查代码，检索过程基本没费什么功夫，直接展示相关代码：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// filepath: daemon/graphdriver/overlay2/overlay.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">init</span><span class="p">()</span> <span class="p">{</span>
+   <span class="nx">graphdriver</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="nx">driverName</span><span class="p">,</span> <span class="nx">Init</span><span class="p">)</span>
+<span class="p">}</span>
+ 
+<span class="kd">func</span> <span class="nf">Init</span><span class="p">(</span><span class="nx">home</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">options</span> <span class="p">[]</span><span class="kt">string</span><span class="p">,</span> <span class="nx">uidMaps</span><span class="p">,</span> <span class="nx">gidMaps</span> <span class="p">[]</span><span class="nx">idtools</span><span class="p">.</span><span class="nx">IDMap</span><span class="p">)</span> <span class="p">(</span><span class="nx">graphdriver</span><span class="p">.</span><span class="nx">Driver</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">mount</span><span class="p">.</span><span class="nf">MakePrivate</span><span class="p">(</span><span class="nx">home</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+   <span class="p">}</span>
+ 
+   <span class="nx">supportsDType</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">fsutils</span><span class="p">.</span><span class="nf">SupportsDType</span><span class="p">(</span><span class="nx">home</span><span class="p">)</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="p">!</span><span class="nx">supportsDType</span> <span class="p">{</span>
+      <span class="c1">// not a fatal error until v1.16 (#27443)
+</span><span class="c1"></span>      <span class="nx">logrus</span><span class="p">.</span><span class="nf">Warn</span><span class="p">(</span><span class="nx">overlayutils</span><span class="p">.</span><span class="nf">ErrDTypeNotSupported</span><span class="p">(</span><span class="s">&#34;overlay2&#34;</span><span class="p">,</span> <span class="nx">backingFs</span><span class="p">))</span>
+   <span class="p">}</span>
+ 
+   <span class="nx">d</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">Driver</span><span class="p">{</span>
+      <span class="nx">home</span><span class="p">:</span>          <span class="nx">home</span><span class="p">,</span>
+      <span class="nx">uidMaps</span><span class="p">:</span>       <span class="nx">uidMaps</span><span class="p">,</span>
+      <span class="nx">gidMaps</span><span class="p">:</span>       <span class="nx">gidMaps</span><span class="p">,</span>
+      <span class="nx">ctr</span><span class="p">:</span>           <span class="nx">graphdriver</span><span class="p">.</span><span class="nf">NewRefCounter</span><span class="p">(</span><span class="nx">graphdriver</span><span class="p">.</span><span class="nf">NewFsChecker</span><span class="p">(</span><span class="nx">graphdriver</span><span class="p">.</span><span class="nx">FsMagicOverlay</span><span class="p">)),</span>
+      <span class="nx">supportsDType</span><span class="p">:</span> <span class="nx">supportsDType</span><span class="p">,</span>
+   <span class="p">}</span>
+ 
+   <span class="nx">d</span><span class="p">.</span><span class="nx">naiveDiff</span> <span class="p">=</span> <span class="nx">graphdriver</span><span class="p">.</span><span class="nf">NewNaiveDiffDriver</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span> <span class="nx">uidMaps</span><span class="p">,</span> <span class="nx">gidMaps</span><span class="p">)</span>
+ 
+   <span class="k">if</span> <span class="nx">backingFs</span> <span class="o">==</span> <span class="s">&#34;xfs&#34;</span> <span class="p">{</span>
+      <span class="c1">// Try to enable project quota support over xfs.
+</span><span class="c1"></span>      <span class="k">if</span> <span class="nx">d</span><span class="p">.</span><span class="nx">quotaCtl</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">quota</span><span class="p">.</span><span class="nf">NewControl</span><span class="p">(</span><span class="nx">home</span><span class="p">);</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="nx">projectQuotaSupported</span> <span class="p">=</span> <span class="kc">true</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+ 
+   <span class="k">return</span> <span class="nx">d</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>很明显，问题就出在 <code>mount.MakePrivate</code> 函数调用上。</p>
+<p>官方将 <code>GraphDriver</code> 根目录设置为 <code>Private</code>，本意是为了避免容器读写层挂载点泄漏。那为什么在高版本中去掉了这个逻辑呢？显然官方也意识到这么做并不能实现期望的目的，官方也在<a href="https://github.com/moby/moby/pull/36047" target="_blank" rel="noopener noreffer">修复</a>中给出了详细说明。</p>
+<p>实际上，不设置 <code>GraphDriver</code> 根目录的传播属性，反而能避免绝大多数挂载点泄漏的问题。。。</p>
+<h3 id="5-结语">5. 结语</h3>
+<p>现在，我们已经了解了问题的来龙去脉，我们总结下问题的解决方案：</p>
+<ul>
+<li>针对 <code>1.13.1</code> 版本docker，存量宿主较多，我们可以忽略 <code>device or resource busy</code> 问题，基本也不会给线上服务带来什么影响</li>
+<li>针对 <code>18.06.3-ce</code> 版本docker，存量宿主较少，我们删除docker服务的systemd配置项 <code>MountFlags</code>，通过故障自愈解决docker卡在问题
+<ul>
+<li>在容器创建后，卸载容器读写层挂载，如果不影响容器内文件访问。那么可以直接卸载所有挂载点，修改docker配置，并重启docker服务【本方案尚未验证】</li>
+</ul>
+</li>
+<li>针对增量宿主，全部删除docker服务的systemd配置项 <code>MountFlags</code></li>
+</ul>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-10-31</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/docker-pod-terminating2/" data-title="Pod terminating2" data-hashtags="docker"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/docker-pod-terminating2/" data-hashtag="docker"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/docker-pod-terminating2/" data-title="Pod terminating2" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/docker-pod-terminating2/" data-title="Pod terminating2"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/docker-pod-terminating2/" data-title="Pod terminating2"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/docker-pod-terminating2/" data-title="Pod terminating2" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/docker-pod-terminating2/" data-title="Pod terminating2" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/docker-pod-terminating2/" data-title="Pod terminating2"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/docker-pod-terminating/" class="prev" rel="prev" title="Pod terminating"><i class="fas fa-angle-left fa-fw"></i>Pod terminating</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

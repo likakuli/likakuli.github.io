@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Pod terminating - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Pod terminating" />
+<meta property="og:description" content="转载自组内同事stupig 1. 背景 近期，弹性云线上集群发生了几起特殊的容器漂移失败事件，其特殊之处在于容器处于Pod Terminating状态" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/docker-pod-terminating/" />
+<meta property="og:image" content="https://www.likakuli.com/logo.png"/>
+<meta property="article:published_time" content="2020-10-31T10:37:37+08:00" />
+<meta property="article:modified_time" content="2020-10-31T10:55:05+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="Pod terminating"/>
+<meta name="twitter:description" content="转载自组内同事stupig 1. 背景 近期，弹性云线上集群发生了几起特殊的容器漂移失败事件，其特殊之处在于容器处于Pod Terminating状态"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/docker-pod-terminating/" /><link rel="prev" href="https://www.likakuli.com/posts/docker-hang/" /><link rel="next" href="https://www.likakuli.com/posts/docker-pod-terminating2/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Pod terminating",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/docker-pod-terminating\/"
+        },"genre": "posts","keywords": "docker","wordcount":  4140 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/docker-pod-terminating\/","datePublished": "2020-10-31T10:37:37+08:00","dateModified": "2020-10-31T10:55:05+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Pod terminating</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-10-31">2020-10-31</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 4140 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 9 分钟&nbsp;<span id="/posts/docker-pod-terminating/" class="leancloud_visitors" data-flag-title="Pod terminating">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#1-背景">1. 背景</a></li>
+            <li><a href="#2-抽丝剥茧">2. 抽丝剥茧</a>
+              <ul>
+                <li><a href="#21-排除kubelet嫌疑">2.1 排除kubelet嫌疑</a></li>
+                <li><a href="#22-google大法">2.2 Google大法</a></li>
+                <li><a href="#23-docker处理流程">2.3 docker处理流程</a></li>
+                <li><a href="#24-提审docker">2.4 提审docker</a></li>
+                <li><a href="#25-一波又起">2.5 一波又起</a></li>
+              </ul>
+            </li>
+            <li><a href="#3-问题影响">3. 问题影响</a></li>
+            <li><a href="#4-解决方案">4. 解决方案</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><blockquote>
+<p>转载自组内同事stupig</p>
+</blockquote>
+<h3 id="1-背景">1. 背景</h3>
+<p>近期，弹性云线上集群发生了几起特殊的容器漂移失败事件，其特殊之处在于容器处于Pod Terminating状态，而宿主则处于Ready状态。</p>
+<p>宿主状态为Ready说明其能够正常处理Pod事件，但是Pod却卡在了退出阶段，说明此问题并非由kubelet引起，那么docker就是1号犯罪嫌疑人了。</p>
+<p>下文将详细介绍问题的排查与分析全过程。</p>
+<h3 id="2-抽丝剥茧">2. 抽丝剥茧</h3>
+<h4 id="21-排除kubelet嫌疑">2.1 排除kubelet嫌疑</h4>
+<p>Pod状态如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[</span>stupig@master ~<span class="o">]</span>$ kubectl get pod -owide
+pod-976a0-5              0/1     Terminating        <span class="m">0</span>          112m
+</code></pre></td></tr></table>
+</div>
+</div><p>尽管kubelet的犯罪嫌疑已经很小，但是我们还是需要排查kubelet日志进一步确认。截取kubelet关键日志片段如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">I1014 10:56:46.492682   <span class="m">34976</span> kubelet_pods.go:1017<span class="o">]</span> Pod <span class="s2">&#34;pod-976a0-5_default(f1e03a3d-0dc7-11eb-b4b1-246e967c4efc)&#34;</span> is terminated, but some containers have not been cleaned up: <span class="o">{</span>ID:<span class="o">{</span>Type:docker ID:41020461ed4d801afa8d10847a16907e65f6e8ca34d1704edf15b0d0e72bf4ef<span class="o">}</span> Name:stupig State:exited CreatedAt:2020-10-14 10:49:57.859913657 +0800 CST StartedAt:2020-10-14 10:49:57.928654495 +0800 CST FinishedAt:2020-10-14 10:50:28.661263065 +0800 CST ExitCode:0 Hash:2101852810 HashWithoutResources:2673273670 RestartCount:0 Reason:Completed Message: Resources:map<span class="o">[</span>CpuQuota:200000 Memory:2147483648 MemorySwap:2147483648<span class="o">]}</span>
+E1014 10:56:46.709255   <span class="m">34976</span> remote_runtime.go:250<span class="o">]</span> RemoveContainer <span class="s2">&#34;41020461ed4d801afa8d10847a16907e65f6e8ca34d1704edf15b0d0e72bf4ef&#34;</span> from runtime service failed: rpc error: <span class="nv">code</span> <span class="o">=</span> Unknown <span class="nv">desc</span> <span class="o">=</span> failed to remove container <span class="s2">&#34;41020461ed4d801afa8d10847a16907e65f6e8ca34d1704edf15b0d0e72bf4ef&#34;</span>: Error response from daemon: container 41020461ed4d801afa8d10847a16907e65f6e8ca34d1704edf15b0d0e72bf4ef: driver <span class="s2">&#34;overlay2&#34;</span> failed to remove root filesystem: unlinkat /home/docker_rt/overlay2/e5dab77be213d9f9cfc0b0b3281dbef9c2878fee3b8e406bc8ab97adc30ae4d5/merged: device or resource busy
+E1014 10:56:46.709292   <span class="m">34976</span> kuberuntime_gc.go:126<span class="o">]</span> Failed to remove container <span class="s2">&#34;41020461ed4d801afa8d10847a16907e65f6e8ca34d1704edf15b0d0e72bf4ef&#34;</span>: rpc error: <span class="nv">code</span> <span class="o">=</span> Unknown <span class="nv">desc</span> <span class="o">=</span> failed to remove container <span class="s2">&#34;41020461ed4d801afa8d10847a16907e65f6e8ca34d1704edf15b0d0e72bf4ef&#34;</span>: Error response from daemon: container 41020461ed4d801afa8d10847a16907e65f6e8ca34d1704edf15b0d0e72bf4ef: driver <span class="s2">&#34;overlay2&#34;</span> failed to remove root filesystem: unlinkat /home/docker_rt/overlay2/e5dab77be213d9f9cfc0b0b3281dbef9c2878fee3b8e406bc8ab97adc30ae4d5/merged: device or resource busy
+</code></pre></td></tr></table>
+</div>
+</div><p>日志显示kubelet处于Pod Terminating状态的原因很清楚：清理容器失败。</p>
+<p>kubelet清理容器的命令是 <code>docker rm -f</code> ，其失败的原因在于删除容器目录 <code>xxx/merged</code> 时报错，错误提示为 <code>device or resource busy</code> 。</p>
+<p>除此之外，kubelet无法再提供其他关键信息。</p>
+<p>登陆宿主，我们验证对应容器的状态：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo docker ps -a <span class="p">|</span> grep pod-976a0-5
+41020461ed4d            Removal In Progress                            k8s_stupig_pod-976a0-5_default_f1e03a3d-0dc7-11eb-b4b1-246e967c4efc_0
+f0a75e10b252            Exited <span class="o">(</span>0<span class="o">)</span> <span class="m">2</span> minutes ago                       k8s_POD_pod-976a0-5_default_f1e03a3d-0dc7-11eb-b4b1-246e967c4efc_0
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo docker rm -f 41020461ed4d
+Error response from daemon: container 41020461ed4d801afa8d10847a16907e65f6e8ca34d1704edf15b0d0e72bf4ef: driver <span class="s2">&#34;overlay2&#34;</span> failed to remove root filesystem: unlinkat /home/docker_rt/overlay2/e5dab77be213d9f9cfc0b0b3281dbef9c2878fee3b8e406bc8ab97adc30ae4d5/merged: device or resource busy
+</code></pre></td></tr></table>
+</div>
+</div><p>问题已然清楚，现在我们有两种排查思路：</p>
+<ul>
+<li>参考Google上解决 <code>device or resource busy</code> 问题的思路</li>
+<li>结合现象分析代码</li>
+</ul>
+<h4 id="22-google大法">2.2 Google大法</h4>
+<p>有问题找Google！所以，我们首先咨询了Google，检索结果显示很多人都碰到了类似的问题。</p>
+<p>而网络上主流的解决方案：配置docker服务MountFlags为slave，避免docker挂载点信息泄漏到其他mnt命名空间，详细原因请参阅：<a href="https://blog.terminus.io/docker-device-is-busy/" target="_blank" rel="noopener noreffer">docker device busy问题解决方案</a>。</p>
+<p>这么简单？？？显然不能，检查发现docker服务当前已配置MountFlags为slave。网络银弹再次失去功效。</p>
+<p>so，我们还是老老实实结合现场分析代码吧。</p>
+<h4 id="23-docker处理流程">2.3 docker处理流程</h4>
+<p>在具体分析docker代码之前，先简单介绍下docker的处理流程，避免作为一只无头苍蝇处处碰壁。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="docker-process.png"
+        data-srcset="/posts/docker-pod-terminating/docker-process.png, docker-process.png 1.5x, /posts/docker-pod-terminating/docker-process.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-pod-terminating/docker-process.png"
+        title="img" /></p>
+<p>清楚了docker的处理流程之后，我们再来分析现场。</p>
+<h4 id="24-提审docker">2.4 提审docker</h4>
+<p>问题发生在docker清理阶段，docker清理容器读写层出错，报错信息为 <code>device or resource busy</code>，说明docker读写层并没有被正确卸载，或者是没有完全卸载。下面的命令可以验证这个结论：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ grep -rwn <span class="s1">&#39;/home/docker_rt/overlay2/e5dab77be213d9f9cfc0b0b3281dbef9c2878fee3b8e406bc8ab97adc30ae4d5/merged&#39;</span> /proc/*/mountinfo
+/proc/22283/mountinfo:50:386 <span class="m">542</span> 0:92 / /home/docker_rt/overlay2/e5dab77be213d9f9cfc0b0b3281dbef9c2878fee3b8e406bc8ab97adc30ae4d5/merged rw,relatime - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+/proc/22407/mountinfo:50:386 <span class="m">542</span> 0:92 / /home/docker_rt/overlay2/e5dab77be213d9f9cfc0b0b3281dbef9c2878fee3b8e406bc8ab97adc30ae4d5/merged rw,relatime - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+/proc/28454/mountinfo:50:386 <span class="m">542</span> 0:92 / /home/docker_rt/overlay2/e5dab77be213d9f9cfc0b0b3281dbef9c2878fee3b8e406bc8ab97adc30ae4d5/merged rw,relatime - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+/proc/28530/mountinfo:50:386 <span class="m">542</span> 0:92 / /home/docker_rt/overlay2/e5dab77be213d9f9cfc0b0b3281dbef9c2878fee3b8e406bc8ab97adc30ae4d5/merged rw,relatime - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
+</code></pre></td></tr></table>
+</div>
+</div><p>不出所料，容器读写层仍然被以上四个进程所挂载，进而导致docker在清理读写层目录时报错。</p>
+<p>随之而来的问题是，为什么docker没有正确卸载容器读写层？我们先展示下 <code>docker stop</code> 中卸载容器读写层挂载的相关部分代码：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">daemon</span> <span class="o">*</span><span class="nx">Daemon</span><span class="p">)</span> <span class="nf">Cleanup</span><span class="p">(</span><span class="nx">container</span> <span class="o">*</span><span class="nx">container</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="p">{</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nf">conditionalUnmountOnCleanup</span><span class="p">(</span><span class="nx">container</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="nx">mountid</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nx">imageService</span><span class="p">.</span><span class="nf">GetLayerMountID</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">container</span><span class="p">.</span><span class="nx">OS</span><span class="p">);</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="nx">daemon</span><span class="p">.</span><span class="nf">cleanupMountsByID</span><span class="p">(</span><span class="nx">mountid</span><span class="p">)</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">daemon</span> <span class="o">*</span><span class="nx">Daemon</span><span class="p">)</span> <span class="nf">conditionalUnmountOnCleanup</span><span class="p">(</span><span class="nx">container</span> <span class="o">*</span><span class="nx">container</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="k">return</span> <span class="nx">daemon</span><span class="p">.</span><span class="nf">Unmount</span><span class="p">(</span><span class="nx">container</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">daemon</span> <span class="o">*</span><span class="nx">Daemon</span><span class="p">)</span> <span class="nf">Unmount</span><span class="p">(</span><span class="nx">container</span> <span class="o">*</span><span class="nx">container</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="k">if</span> <span class="nx">container</span><span class="p">.</span><span class="nx">RWLayer</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">errors</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;RWLayer of container &#34;</span> <span class="o">+</span> <span class="nx">container</span><span class="p">.</span><span class="nx">ID</span> <span class="o">+</span> <span class="s">&#34; is unexpectedly nil&#34;</span><span class="p">)</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">container</span><span class="p">.</span><span class="nx">RWLayer</span><span class="p">.</span><span class="nf">Unmount</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="nx">logrus</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Error unmounting container %s: %s&#34;</span><span class="p">,</span> <span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nx">err</span>
+   <span class="p">}</span>
+ 
+   <span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">rl</span> <span class="o">*</span><span class="nx">referencedRWLayer</span><span class="p">)</span> <span class="nf">Unmount</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="k">return</span> <span class="nx">rl</span><span class="p">.</span><span class="nx">layerStore</span><span class="p">.</span><span class="nx">driver</span><span class="p">.</span><span class="nf">Put</span><span class="p">(</span><span class="nx">rl</span><span class="p">.</span><span class="nx">mountedLayer</span><span class="p">.</span><span class="nx">mountID</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">d</span> <span class="o">*</span><span class="nx">Driver</span><span class="p">)</span> <span class="nf">Put</span><span class="p">(</span><span class="nx">id</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="nx">d</span><span class="p">.</span><span class="nx">locker</span><span class="p">.</span><span class="nf">Lock</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span>
+   <span class="k">defer</span> <span class="nx">d</span><span class="p">.</span><span class="nx">locker</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span>
+   <span class="nx">dir</span> <span class="o">:=</span> <span class="nx">d</span><span class="p">.</span><span class="nf">dir</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span>
+   <span class="nx">mountpoint</span> <span class="o">:=</span> <span class="nx">path</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="s">&#34;merged&#34;</span><span class="p">)</span>
+   <span class="nx">logger</span> <span class="o">:=</span> <span class="nx">logrus</span><span class="p">.</span><span class="nf">WithField</span><span class="p">(</span><span class="s">&#34;storage-driver&#34;</span><span class="p">,</span> <span class="s">&#34;overlay2&#34;</span><span class="p">)</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">unix</span><span class="p">.</span><span class="nf">Unmount</span><span class="p">(</span><span class="nx">mountpoint</span><span class="p">,</span> <span class="nx">unix</span><span class="p">.</span><span class="nx">MNT_DETACH</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="nx">logger</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;Failed to unmount %s overlay: %s - %v&#34;</span><span class="p">,</span> <span class="nx">id</span><span class="p">,</span> <span class="nx">mountpoint</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">unix</span><span class="p">.</span><span class="nf">Rmdir</span><span class="p">(</span><span class="nx">mountpoint</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">os</span><span class="p">.</span><span class="nf">IsNotExist</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">logger</span><span class="p">.</span><span class="nf">Debugf</span><span class="p">(</span><span class="s">&#34;Failed to remove %s overlay: %v&#34;</span><span class="p">,</span> <span class="nx">id</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>代码处理流程清晰明了，最终docker会发起 <code>SYS_UMOUNT2</code> 系统调用卸载容器读写层。</p>
+<p>但是，docker在清理容器读写层时却提示错误，并且容器读写层挂载信息也出现在其他进程中。难不成docker没有执行卸载操作？结合docker日志分析：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">Oct <span class="m">14</span> 10:50:28 hostname dockerd: <span class="nv">time</span><span class="o">=</span><span class="s2">&#34;2020-10-14T10:50:28.769199725+08:00&#34;</span> <span class="nv">level</span><span class="o">=</span>debug <span class="nv">msg</span><span class="o">=</span><span class="s2">&#34;Failed to unmount e5dab77be213d9f9cfc0b0b3281dbef9c2878fee3b8e406bc8ab97adc30ae4d5 overlay: /home/docker_rt/overlay2/e5dab77be213d9f9cfc0b0b3281dbef9c2878fee3b8e406bc8ab97adc30ae4d5/merged - invalid argument&#34;</span> storage-driver<span class="o">=</span>overlay2
+Oct <span class="m">14</span> 10:50:28 hostname dockerd: <span class="nv">time</span><span class="o">=</span><span class="s2">&#34;2020-10-14T10:50:28.769213547+08:00&#34;</span> <span class="nv">level</span><span class="o">=</span>debug <span class="nv">msg</span><span class="o">=</span><span class="s2">&#34;Failed to remove e5dab77be213d9f9cfc0b0b3281dbef9c2878fee3b8e406bc8ab97adc30ae4d5 overlay: device or resource busy&#34;</span> storage-driver<span class="o">=</span>overlay2
+</code></pre></td></tr></table>
+</div>
+</div><p>日志显示docker在执行卸载容器读写层命令时出错，提示 <code>invalid argument</code>。结合 <a href="https://man7.org/linux/man-pages/man2/umount.2.html" target="_blank" rel="noopener noreffer">umount2</a> 文档可知，容器读写层并非是dockerd（docker后台进程）的挂载点？？？</p>
+<p>现在，回过头来分析拥有容器读写层挂载信息的进程，我们发现一个惊人的信息：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ ps -ef<span class="p">|</span>grep -E <span class="s2">&#34;22283|22407|28454|28530&#34;</span>
+root      <span class="m">22283</span>      <span class="m">1</span>  <span class="m">0</span> 10:48 ?        00:00:00 docker-containerd-shim -namespace moby
+root      <span class="m">22407</span>      <span class="m">1</span>  <span class="m">0</span> 10:48 ?        00:00:00 docker-containerd-shim -namespace moby
+root      <span class="m">28454</span>      <span class="m">1</span>  <span class="m">0</span> 10:49 ?        00:00:00 docker-containerd-shim -namespace moby
+root      <span class="m">28530</span>      <span class="m">1</span>  <span class="m">0</span> 10:49 ?        00:00:00 docker-containerd-shim -namespace moby
+</code></pre></td></tr></table>
+</div>
+</div><p>容器读写层挂载信息没有出现在dockerd进程命名空间中，却出现在其他容器的托管服务shim进程的命名空间内，推断dockerd进程发生了重启，对比进程启动时间与命名空间详情可以进行验证：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ ps -eo pid,cmd,lstart<span class="p">|</span>grep dockerd
+ <span class="m">34836</span> /usr/bin/dockerd --storage- Wed Oct <span class="m">14</span> 10:50:15 <span class="m">2020</span>
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo ls -la /proc/<span class="k">$(</span>pidof dockerd<span class="k">)</span>/ns
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 ipc -&gt; ipc:<span class="o">[</span>4026531839<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 mnt -&gt; mnt:<span class="o">[</span>4026533327<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 net -&gt; net:<span class="o">[</span>4026531968<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 pid -&gt; pid:<span class="o">[</span>4026531836<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 user -&gt; user:<span class="o">[</span>4026531837<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 uts -&gt; uts:<span class="o">[</span>4026531838<span class="o">]</span>
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ ps -eo pid,cmd,lstart<span class="p">|</span>grep -w containerd<span class="p">|</span>grep -v shim
+ <span class="m">34849</span> docker-containerd --config  Wed Oct <span class="m">14</span> 10:50:15 <span class="m">2020</span>
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo ls -la /proc/<span class="k">$(</span>pidof docker-containerd<span class="k">)</span>/ns
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 ipc -&gt; ipc:<span class="o">[</span>4026531839<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 mnt -&gt; mnt:<span class="o">[</span>4026533327<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 net -&gt; net:<span class="o">[</span>4026531968<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 pid -&gt; pid:<span class="o">[</span>4026531836<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 user -&gt; user:<span class="o">[</span>4026531837<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 uts -&gt; uts:<span class="o">[</span>4026531838<span class="o">]</span>
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ ps -eo pid,cmd,lstart<span class="p">|</span>grep -w containerd-shim
+ <span class="m">22283</span> docker-containerd-shim -nam Wed Oct <span class="m">14</span> 10:48:50 <span class="m">2020</span>
+ <span class="m">22407</span> docker-containerd-shim -nam Wed Oct <span class="m">14</span> 10:48:55 <span class="m">2020</span>
+ <span class="m">28454</span> docker-containerd-shim -nam Wed Oct <span class="m">14</span> 10:49:53 <span class="m">2020</span>
+ <span class="m">28530</span> docker-containerd-shim -nam Wed Oct <span class="m">14</span> 10:49:53 <span class="m">2020</span>
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo ls -la /proc/28454/ns
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 ipc -&gt; ipc:<span class="o">[</span>4026531839<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 mnt -&gt; mnt:<span class="o">[</span>4026533200<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 net -&gt; net:<span class="o">[</span>4026531968<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 pid -&gt; pid:<span class="o">[</span>4026531836<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 user -&gt; user:<span class="o">[</span>4026531837<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> root root <span class="m">0</span> Oct <span class="m">14</span> 10:50 uts -&gt; uts:<span class="o">[</span>4026531838<span class="o">]</span>
+ 
+<span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo ls -la /proc/<span class="nv">$$</span>/ns
+lrwxrwxrwx <span class="m">1</span> panpeilong panpeilong <span class="m">0</span> Oct <span class="m">14</span> 21:49 ipc -&gt; ipc:<span class="o">[</span>4026531839<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> panpeilong panpeilong <span class="m">0</span> Oct <span class="m">14</span> 21:49 mnt -&gt; mnt:<span class="o">[</span>4026531840<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> panpeilong panpeilong <span class="m">0</span> Oct <span class="m">14</span> 21:49 net -&gt; net:<span class="o">[</span>4026531968<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> panpeilong panpeilong <span class="m">0</span> Oct <span class="m">14</span> 21:49 pid -&gt; pid:<span class="o">[</span>4026531836<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> panpeilong panpeilong <span class="m">0</span> Oct <span class="m">14</span> 21:49 user -&gt; user:<span class="o">[</span>4026531837<span class="o">]</span>
+lrwxrwxrwx <span class="m">1</span> panpeilong panpeilong <span class="m">0</span> Oct <span class="m">14</span> 21:49 uts -&gt; uts:<span class="o">[</span>4026531838<span class="o">]</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>结果验证了我们推断的正确性。现在再补充下docker组件的进程树模型，用以解释这个现象，模型如下：</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="containerd-process-model.png"
+        data-srcset="/posts/docker-pod-terminating/containerd-process-model.png, containerd-process-model.png 1.5x, /posts/docker-pod-terminating/containerd-process-model.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-pod-terminating/containerd-process-model.png"
+        title="img" /></p>
+<p>dockerd进程启动时，会自动拉起containerd进程；当用户创建并启动容器时，containerd会启动containerd-shim进程用于托管容器进程，最终由containerd-shim调用runc启动容器进程。runc负责初始化进程命名空间，并exec容器启动命令。</p>
+<p>上述模型中shim进程存在的意义是：允许dockerd/containerd升级或重启，同时不影响已运行容器。docker提供了 <code>live-restore</code> 的能力，而我们的集群也的确启用了该配置。</p>
+<p>此外，由于我们在systemd的docker配置选项中配置了 <code>MountFlags=slave</code>，参考<a href="https://freedesktop.org/software/systemd/man/systemd.exec.html#MountFlags=" target="_blank" rel="noopener noreffer">systemd配置说明</a>，systemd在启动dockerd进程时，会创建一个新的mnt命名空间。</p>
+<p>至此，问题已基本定位清楚：</p>
+<ul>
+<li>systemd在启动dockerd服务时，将dockerd安置在一个新的mnt命名空间中</li>
+<li>用户创建并启动容器时，dockerd会在本mnt命名空间内挂载容器读写层目录，并启动shim进程托管容器进程</li>
+<li>由于某种原因，dockerd服务发生重启，systemd会将其安置在另一个新的mnt命名空间内</li>
+<li>用户删除容器时，容器退出时，dockerd在清理容器读写层挂载时报错，因为挂载并非在当前dockerd的mnt命名空间内</li>
+</ul>
+<p>后来，我们在docker issue中也发现了<a href="https://github.com/moby/moby/issues/35873#issuecomment-386467562" target="_blank" rel="noopener noreffer">官方给出的说明</a>，<code>MountFlags=slave</code> 与 <code>live-restore</code> 确实不能同时使用。</p>
+<h4 id="25-一波又起">2.5 一波又起</h4>
+<p>还没当我们沉浸在解决问题的喜悦之中，另一个疑问接踵而来。我们线上集群好多宿主同时配置了 <code>MountFlags=slave</code> 和 <code>live-restore=true</code>，为什么问题直到最近才报出来呢？</p>
+<p>当我们分析了几起 <code>Pod Terminating</code> 的涉事宿主后，发现它们的一个通性是docker版本为 <code>18.06.3-ce</code>，而我们当前主流的版本仍然是 <code>1.13.1</code>。</p>
+<p>难道是新版本中才引入的问题？我们首先在测试环境中对 <code>1.13.1</code> 版本的docker进行了验证，Pod确实没有被阻塞在 Terminating 状态，这是不是说明低版本docker不存在挂载点泄漏的问题呢？</p>
+<p>事实并非如此。当我们再次进行验证时，在删除Pod前记录了测试容器的读写层，之后发送删除Pod指令，Pod顺利退出，但此时，我们登录Pod之前所在宿主，发现docker日志中同样也存在如下日志：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">Oct <span class="m">14</span> 22:12:43 hostname2 dockerd: <span class="nv">time</span><span class="o">=</span><span class="s2">&#34;2020-10-14T22:12:43.730726978+08:00&#34;</span> <span class="nv">level</span><span class="o">=</span>debug <span class="nv">msg</span><span class="o">=</span><span class="s2">&#34;Failed to unmount fb41efa2cfcbfbb8d90bd1d8d77d299e17518829faf52af40f7a1552ec8aa165 overlay: /home/docker_rt/overlay2/fb41efa2cfcbfbb8d90bd1d8d77d299e17518829faf52af40f7a1552ec8aa165/merged - invalid argument&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>同样存在卸载问题的情况下，高低版本的docker却呈现出了不同的结果，这显然是docker的处理逻辑发生了变更，这里我们对比源码能够很快得出结论：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 1.13.1 版本处理逻辑
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">daemon</span> <span class="o">*</span><span class="nx">Daemon</span><span class="p">)</span> <span class="nf">cleanupContainer</span><span class="p">(</span><span class="nx">container</span> <span class="o">*</span><span class="nx">container</span><span class="p">.</span><span class="nx">Container</span><span class="p">,</span> <span class="nx">forceRemove</span><span class="p">,</span> <span class="nx">removeVolume</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="c1">// If force removal is required, delete container from various
+</span><span class="c1"></span>   <span class="c1">// indexes even if removal failed.
+</span><span class="c1"></span>   <span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="o">||</span> <span class="nx">forceRemove</span> <span class="p">{</span>
+         <span class="nx">daemon</span><span class="p">.</span><span class="nx">nameIndex</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+         <span class="nx">daemon</span><span class="p">.</span><span class="nx">linkIndex</span><span class="p">.</span><span class="nb">delete</span><span class="p">(</span><span class="nx">container</span><span class="p">)</span>
+         <span class="nf">selinuxFreeLxcContexts</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">ProcessLabel</span><span class="p">)</span>
+         <span class="nx">daemon</span><span class="p">.</span><span class="nx">idIndex</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+         <span class="nx">daemon</span><span class="p">.</span><span class="nx">containers</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+         <span class="k">if</span> <span class="nx">e</span> <span class="o">:=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nf">removeMountPoints</span><span class="p">(</span><span class="nx">container</span><span class="p">,</span> <span class="nx">removeVolume</span><span class="p">);</span> <span class="nx">e</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">logrus</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span>
+         <span class="p">}</span>
+         <span class="nx">daemon</span><span class="p">.</span><span class="nf">LogContainerEvent</span><span class="p">(</span><span class="nx">container</span><span class="p">,</span> <span class="s">&#34;destroy&#34;</span><span class="p">)</span>
+      <span class="p">}</span>
+   <span class="p">}()</span>
+ 
+   <span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">RemoveAll</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">Root</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Unable to remove filesystem for %v: %v&#34;</span><span class="p">,</span> <span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+   <span class="p">}</span>
+ 
+   <span class="c1">// When container creation fails and `RWLayer` has not been created yet, we
+</span><span class="c1"></span>   <span class="c1">// do not call `ReleaseRWLayer`
+</span><span class="c1"></span>   <span class="k">if</span> <span class="nx">container</span><span class="p">.</span><span class="nx">RWLayer</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="nx">metadata</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nx">layerStore</span><span class="p">.</span><span class="nf">ReleaseRWLayer</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">RWLayer</span><span class="p">)</span>
+      <span class="nx">layer</span><span class="p">.</span><span class="nf">LogReleaseMetadata</span><span class="p">(</span><span class="nx">metadata</span><span class="p">)</span>
+      <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">err</span> <span class="o">!=</span> <span class="nx">layer</span><span class="p">.</span><span class="nx">ErrMountDoesNotExist</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Driver %s failed to remove root filesystem %s: %s&#34;</span><span class="p">,</span> <span class="nx">daemon</span><span class="p">.</span><span class="nf">GraphDriverName</span><span class="p">(),</span> <span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+ 
+   <span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+ 
+ 
+<span class="c1">// 18.06.3-ce 版本处理逻辑
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">daemon</span> <span class="o">*</span><span class="nx">Daemon</span><span class="p">)</span> <span class="nf">cleanupContainer</span><span class="p">(</span><span class="nx">container</span> <span class="o">*</span><span class="nx">container</span><span class="p">.</span><span class="nx">Container</span><span class="p">,</span> <span class="nx">forceRemove</span><span class="p">,</span> <span class="nx">removeVolume</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="c1">// When container creation fails and `RWLayer` has not been created yet, we
+</span><span class="c1"></span>   <span class="c1">// do not call `ReleaseRWLayer`
+</span><span class="c1"></span>   <span class="k">if</span> <span class="nx">container</span><span class="p">.</span><span class="nx">RWLayer</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="nx">err</span> <span class="o">:=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nx">imageService</span><span class="p">.</span><span class="nf">ReleaseLayer</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">RWLayer</span><span class="p">,</span> <span class="nx">container</span><span class="p">.</span><span class="nx">OS</span><span class="p">)</span>
+      <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="nx">err</span> <span class="p">=</span> <span class="nx">errors</span><span class="p">.</span><span class="nf">Wrapf</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;container %s&#34;</span><span class="p">,</span> <span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+         <span class="nx">container</span><span class="p">.</span><span class="nf">SetRemovalError</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+         <span class="k">return</span> <span class="nx">err</span>
+      <span class="p">}</span>
+      <span class="nx">container</span><span class="p">.</span><span class="nx">RWLayer</span> <span class="p">=</span> <span class="kc">nil</span>
+   <span class="p">}</span>
+ 
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">system</span><span class="p">.</span><span class="nf">EnsureRemoveAll</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">Root</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="nx">e</span> <span class="o">:=</span> <span class="nx">errors</span><span class="p">.</span><span class="nf">Wrapf</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;unable to remove filesystem for %s&#34;</span><span class="p">,</span> <span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+      <span class="nx">container</span><span class="p">.</span><span class="nf">SetRemovalError</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nx">e</span>
+   <span class="p">}</span>
+ 
+   <span class="nx">linkNames</span> <span class="o">:=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nx">linkIndex</span><span class="p">.</span><span class="nb">delete</span><span class="p">(</span><span class="nx">container</span><span class="p">)</span>
+   <span class="nf">selinuxFreeLxcContexts</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">ProcessLabel</span><span class="p">)</span>
+   <span class="nx">daemon</span><span class="p">.</span><span class="nx">idIndex</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+   <span class="nx">daemon</span><span class="p">.</span><span class="nx">containers</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+   <span class="nx">daemon</span><span class="p">.</span><span class="nx">containersReplica</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">container</span><span class="p">)</span>
+   <span class="k">if</span> <span class="nx">e</span> <span class="o">:=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nf">removeMountPoints</span><span class="p">(</span><span class="nx">container</span><span class="p">,</span> <span class="nx">removeVolume</span><span class="p">);</span> <span class="nx">e</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="nx">logrus</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span>
+   <span class="p">}</span>
+   <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">name</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">linkNames</span> <span class="p">{</span>
+      <span class="nx">daemon</span><span class="p">.</span><span class="nf">releaseName</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span>
+   <span class="p">}</span>
+   <span class="nx">container</span><span class="p">.</span><span class="nf">SetRemoved</span><span class="p">()</span>
+   <span class="nx">stateCtr</span><span class="p">.</span><span class="nf">del</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+   <span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>改动一目了然，官方在<a href="https://github.com/moby/moby/pull/31012" target="_blank" rel="noopener noreffer">清理容器变更</a>中给出了详细的说明。也即在低版本docker中，问题并非不存在，仅仅是被隐藏了，并在高版本中被暴露出来。</p>
+<h3 id="3-问题影响">3. 问题影响</h3>
+<p>既然所有版本的docker都存在这个问题，那么其影响是什么呢？</p>
+<p>在高版本docker中，其影响是显式的，会引起容器清理失败，进而造成Pod删除失败。</p>
+<p>而在低版本docker中，其影响是隐式的，造成挂载点泄漏，进而可能会造成的影响如下：</p>
+<ul>
+<li>inode被打满：由于挂载点泄漏，容器读写层不会被清理，长时间累计可能会造成inode耗尽问题，但是是小概率事件</li>
+<li>容器ID复用：由于挂载点未被卸载，当docker复用了原来已经退出的容器ID时，在挂载容器init层与读写层时会失败。由于docker生成容器ID是随机的，因此也是小概率事件</li>
+</ul>
+<h3 id="4-解决方案">4. 解决方案</h3>
+<p>问题已然明确，如何解决问题成了当务之急。思路有二：</p>
+<ol>
+<li>治标：对标 <code>1.13.1</code> 版本的处理逻辑，修改 <code>18.06.3-ce</code> 处理代码</li>
+<li>治本：既然官方也提及 <code>MountFlags=slave</code> 与 <code>live-restore</code> 不能同时使用，那么我们修改两个配置选项之一即可</li>
+</ol>
+<p>考虑到 <strong>重启docker不重启容器</strong> 这样一个强需求的存在，似乎我们唯一的解决方案就是关闭 <code>MountFlags=slave</code> 配置。关闭该配置后，与之而来的疑问如下：</p>
+<ul>
+<li>能够解决本问题？</li>
+<li>网传其他systemd托管服务启用PrivateTmp是否会造成挂载点泄漏？</li>
+</ul>
+<p>欲知后事如何，且听下回分解！</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-10-31</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/docker-pod-terminating/" data-title="Pod terminating" data-hashtags="docker"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/docker-pod-terminating/" data-hashtag="docker"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/docker-pod-terminating/" data-title="Pod terminating" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/docker-pod-terminating/" data-title="Pod terminating"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/docker-pod-terminating/" data-title="Pod terminating"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/docker-pod-terminating/" data-title="Pod terminating" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/docker-pod-terminating/" data-title="Pod terminating" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/docker-pod-terminating/" data-title="Pod terminating"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/docker-hang/" class="prev" rel="prev" title="docker hang问题排查"><i class="fas fa-angle-left fa-fw"></i>docker hang问题排查</a>
+            <a href="/posts/docker-pod-terminating2/" class="next" rel="next" title="Pod terminating2">Pod terminating2<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>
