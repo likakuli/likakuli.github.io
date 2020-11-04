@@ -46,3 +46,4 @@ etcdctl --cacert=/etc/kubernetes/ssl/ca.pem --cert=/etc/kubernetes/ssl/etcd-clie
 ### 收获
 
 etcd不同版本的api对应的url path的prefix不同，v2前缀为/v2/keys，v3前缀为/v3[alpha|beta]/kv，用法也不同，具体可以参考官网API说明。平时直接使用client包时这些信息都会忽略掉，封装的太好了会使使用者变傻，还是有必要看看源码是怎么实现的。
+

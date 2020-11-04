@@ -670,3 +670,4 @@ kubectl create configmap alertmanager-templates --from-file=alertmanager-templat
 ![](alert.png)
 
 为了能收到报警，我这里特意将报警条件设置为了cpu实用率超过10%，一会就会收到报警邮件了，想要收到slack的报警信息的话，alertmanager所在的pod必须可以科学上网才行。
+

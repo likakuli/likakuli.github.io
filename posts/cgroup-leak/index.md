@@ -107,3 +107,4 @@ func (s *MemoryGroup) Apply(d *cgroupData) (err error) {
 ### 总结
 
 本篇是一种快速暴力的解决问题手段，后经过调研测试，有不需要重启宿主的方案，在[这一篇](../cgroup-leak2)中介绍
+

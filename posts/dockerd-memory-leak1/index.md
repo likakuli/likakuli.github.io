@@ -381,3 +381,4 @@ func UpdateContainerStat() {
 ### 总结
 
 出现内存和unix socket泄露的条件：odin-agent版本是1.20.0（其他版本可能也有问题） 且 live-restore: true 且 设置了live-restore之后重启过dockerd。
+

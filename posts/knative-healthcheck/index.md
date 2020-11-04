@@ -90,7 +90,7 @@ func (l *gatewayPodTargetLister) ListProbeTargets(ctx context.Context, ing *v1al
 				newURL.Host = host + ":" + target.Port
 				var usn string
 				if ing.Annotations != nil {
-					usn = ing.Annotations["serverless.didichuxing.com/usn"]
+					usn = ing.Annotations["serverless.kakuchuxing.com/usn"]
 				}
 				newURL.Path = path.Join(newURL.Path, usn)
 				qualifiedTarget.URLs[i] = &newURL
@@ -101,3 +101,4 @@ func (l *gatewayPodTargetLister) ListProbeTargets(ctx context.Context, ing *v1al
 ### 总结
 
 通过这个问题也看到了对于一些细节和关键流程掌握的还不够，还是需要进行系统性的学习。至于健康检查的逻辑，和k8s的健康检查稍有不同，参考[这篇文章](https://zhuanlan.zhihu.com/p/88459310)
+

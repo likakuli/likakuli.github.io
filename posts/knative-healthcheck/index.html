@@ -294,7 +294,7 @@
 				<span class="nx">newURL</span><span class="p">.</span><span class="nx">Host</span> <span class="p">=</span> <span class="nx">host</span> <span class="o">+</span> <span class="s">&#34;:&#34;</span> <span class="o">+</span> <span class="nx">target</span><span class="p">.</span><span class="nx">Port</span>
 				<span class="kd">var</span> <span class="nx">usn</span> <span class="kt">string</span>
 				<span class="k">if</span> <span class="nx">ing</span><span class="p">.</span><span class="nx">Annotations</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-					<span class="nx">usn</span> <span class="p">=</span> <span class="nx">ing</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="s">&#34;serverless.didichuxing.com/usn&#34;</span><span class="p">]</span>
+					<span class="nx">usn</span> <span class="p">=</span> <span class="nx">ing</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="s">&#34;serverless.kakuchuxing.com/usn&#34;</span><span class="p">]</span>
 				<span class="p">}</span>
 				<span class="nx">newURL</span><span class="p">.</span><span class="nx">Path</span> <span class="p">=</span> <span class="nx">path</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">newURL</span><span class="p">.</span><span class="nx">Path</span><span class="p">,</span> <span class="nx">usn</span><span class="p">)</span>
 				<span class="nx">qualifiedTarget</span><span class="p">.</span><span class="nx">URLs</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">newURL</span>

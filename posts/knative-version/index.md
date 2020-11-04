@@ -26,7 +26,7 @@ func MakeIngressSpec(
 	...
 
 	// add custom external domains
-	customHostStr := r.Annotations["serverless.didichuxing.com/domains"]
+	customHostStr := r.Annotations["serverless.kakuchuxing.com/domains"]
   // 倒序，否则不生效，因为访问指定版本时name不为空，不区分版本时name默认为空
 	sort.Sort(sort.Reverse(sort.StringSlice(names)))
 	if len(customHostStr) > 0 {

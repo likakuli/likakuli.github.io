@@ -469,7 +469,7 @@ runc init → runc exec → containerd-shim exec → containerd exec → dockerd
 
 如果常态下runc init就需要往os.Stdout或者os.Stderr中写入很多数据，那么所有容器的创建都应该有问题。所以，我们可以确定是该异常容器出现了什么未知原因，导致runc init非预期往os.Stderr写入了大量数据。而这被写入的数据就很有可能揭示非预期的异常。
 
-所以，我们需要获取runc init当前正在写入的数据。由于runc init的2号FD是个匿名pipe，我们无法使用常规文件读取的方式获取pipe内的数据。这里感谢鹤哥（本人...）趟坑，找到了一种读取匿名pipe内容的方法：
+所以，我们需要获取runc init当前正在写入的数据。由于runc init的2号FD是个匿名pipe，我们无法使用常规文件读取的方式获取pipe内的数据。这里找到了一种读取匿名pipe内容的方法：
 
 ```shell
 # cat /proc/15638/fd/2
@@ -704,10 +704,5 @@ func (r *Runc) Exec(context context.Context, id string, spec specs.Process, opts
 
 ### 5. 后续
 
-其实我们在读pipe的时候还引起了一个其他的问题，后续我再来为大家介绍。
+docker hang死的原因远非这一种，本次排查的结果也并非适用于所有场景。希望各位看官能够根据自己的现场排查问题。另外查看[linux文档](https://man7.org/linux/man-pages/man7/pipe.7.html)，pipe capacity是可以设置的，高版本中since 4.5也可以通过设置/proc/sys/fs/pipe-user-pages-soft来解决，但是如文档所说，在4.9之前/proc/sys/fs/pipe-user-pages-soft还是存在一些bug的，至于采用什么办法解决，还得根据自己情况来做选择。
 
-另外，docker hang死的原因远飞这一种，本次排查的结果也并非适用于所有场景。希望各位看官能够根据自己的现场排查问题。
-
-本次docker hang死的排查之旅已然告终。
-
-本次排查由四人小分队 @飞哥 @鹤哥（本人） @博哥 @我 （培龙） 一起排查长达数天的结论

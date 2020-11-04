@@ -33,7 +33,7 @@ func makeVirtualServiceSpec(ing *v1alpha1.Ingress, gateways map[v1alpha1.Ingress
 	}
 
   // 自定义功能
-	usn := ing.Annotations["serverless.didichuxing.com/usn"]
+	usn := ing.Annotations["serverless.kakuchuxing.com/usn"]
 	if usn != "" {
 		usn = "/" + strings.Trim(usn, "/") + "/"
 	}

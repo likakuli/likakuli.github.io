@@ -298,3 +298,4 @@ func Init(home string, options []string, uidMaps, gidMaps []idtools.IDMap) (grap
 - 针对 `18.06.3-ce` 版本docker，存量宿主较少，我们删除docker服务的systemd配置项 `MountFlags`，通过故障自愈解决docker卡在问题
   - 在容器创建后，卸载容器读写层挂载，如果不影响容器内文件访问。那么可以直接卸载所有挂载点，修改docker配置，并重启docker服务【本方案尚未验证】
 - 针对增量宿主，全部删除docker服务的systemd配置项 `MountFlags`
+

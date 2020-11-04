@@ -212,3 +212,4 @@ func (r *Reflector) ListAndWatch(stopCh <-chan struct{}) error {
 2. 退出前接收到的最后一个Event的type为delete，而且是之前创建的，也就是resourceVersion是旧的。
 
 这个bug影响确实严重，但是不会经常出现，像bug的发现者说的那样频繁出现的情况，可能还需要继续排查下为什么watchHander的调用会频繁的正常退出，可能这才是问题真正所在。
+

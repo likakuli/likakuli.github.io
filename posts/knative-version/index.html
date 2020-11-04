@@ -232,7 +232,7 @@
 	<span class="o">...</span>
 
 	<span class="c1">// add custom external domains
-</span><span class="c1"></span>	<span class="nx">customHostStr</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="s">&#34;serverless.didichuxing.com/domains&#34;</span><span class="p">]</span>
+</span><span class="c1"></span>	<span class="nx">customHostStr</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="s">&#34;serverless.kakuchuxing.com/domains&#34;</span><span class="p">]</span>
   <span class="c1">// 倒序，否则不生效，因为访问指定版本时name不为空，不区分版本时name默认为空
 </span><span class="c1"></span>	<span class="nx">sort</span><span class="p">.</span><span class="nf">Sort</span><span class="p">(</span><span class="nx">sort</span><span class="p">.</span><span class="nf">Reverse</span><span class="p">(</span><span class="nx">sort</span><span class="p">.</span><span class="nf">StringSlice</span><span class="p">(</span><span class="nx">names</span><span class="p">)))</span>
 	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">customHostStr</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>

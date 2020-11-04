@@ -186,12 +186,12 @@
 </span><span class="lnt">33
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">curl -v -H <span class="s2">&#34;Host: api-test.sls.intra.xiaojukeji.com&#34;</span> http://api-test.sls.intra.xiaojukeji.com/
+<pre class="chroma"><code class="language-shell" data-lang="shell">curl -v -H <span class="s2">&#34;Host: api-test.sls.intra.kaku.com&#34;</span> http://api-test.sls.intra.kaku.com/
 *   Trying 10.88.128.112...
 * TCP_NODELAY <span class="nb">set</span>
-* Connected to api-test.sls.intra.xiaojukeji.com <span class="o">(</span>10.88.128.112<span class="o">)</span> port <span class="m">80</span> <span class="o">(</span><span class="c1">#0)</span>
+* Connected to api-test.sls.intra.kaku.com <span class="o">(</span>10.88.128.112<span class="o">)</span> port <span class="m">80</span> <span class="o">(</span><span class="c1">#0)</span>
 &gt; GET / HTTP/1.1
-&gt; Host: api-test.sls.intra.xiaojukeji.com
+&gt; Host: api-test.sls.intra.kaku.com
 &gt; User-Agent: curl/7.54.0
 &gt; Accept: */*
 &gt;
@@ -201,15 +201,15 @@
 &lt; Connection: keep-alive
 &lt; server: istio-envoy
 &lt;
-* Connection <span class="c1">#0 to host api-test.sls.intra.xiaojukeji.com left intact</span>
+* Connection <span class="c1">#0 to host api-test.sls.intra.kaku.com left intact</span>
 
 <span class="c1"># 10.190.16.26 为 knative-ingress-gateway的容器IP</span>
-curl -v -H <span class="s2">&#34;Host:api-test.sls.intra.xiaojukeji.com&#34;</span> http://10.190.16.26/
+curl -v -H <span class="s2">&#34;Host:api-test.sls.intra.kaku.com&#34;</span> http://10.190.16.26/
 *   Trying 10.190.16.26...
 * TCP_NODELAY <span class="nb">set</span>
 * Connected to 10.190.16.26 <span class="o">(</span>10.190.16.26<span class="o">)</span> port <span class="m">80</span> <span class="o">(</span><span class="c1">#0)</span>
 &gt; GET / HTTP/1.1
-&gt; Host:api-test.sls.intra.xiaojukeji.com
+&gt; Host:api-test.sls.intra.kaku.com
 &gt; User-Agent: curl/7.54.0
 &gt; Accept: */*
 &gt;
@@ -356,7 +356,7 @@ curl -v -H <span class="s2">&#34;Host:api-test.sls.intra.xiaojukeji.com&#34;</sp
 	<span class="o">...</span>
 
 	<span class="c1">// add custom external domains
-</span><span class="c1"></span>	<span class="nx">customHostStr</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="s">&#34;serverless.didichuxing.com/domains&#34;</span><span class="p">]</span>
+</span><span class="c1"></span>	<span class="nx">customHostStr</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Annotations</span><span class="p">[</span><span class="s">&#34;serverless.kakuchuxing.com/domains&#34;</span><span class="p">]</span>
 	<span class="nx">sort</span><span class="p">.</span><span class="nf">Sort</span><span class="p">(</span><span class="nx">sort</span><span class="p">.</span><span class="nf">Reverse</span><span class="p">(</span><span class="nx">sort</span><span class="p">.</span><span class="nf">StringSlice</span><span class="p">(</span><span class="nx">names</span><span class="p">)))</span>
 	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">customHostStr</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
 		<span class="nx">customHosts</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">Split</span><span class="p">(</span><span class="nx">customHostStr</span><span class="p">,</span> <span class="s">&#34;;&#34;</span><span class="p">)</span>

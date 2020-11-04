@@ -133,3 +133,4 @@ Note: It can take several seconds if you move charges much.
 那我们梳理下，memcg 需要迁移内容包含哪些。 迁移后需要保证容器内存quota不变，容器的内存使用量不变，容器内的进程（对于cgroup来说，都是task）迁移后不丢。这三项分别对应的是memory.limit_in_bytes/memory.usage_in_bytes/tasks
 
 因为内存使用量是memcg来控制的，我们看到的memory.usage_in_bytes 是只读的，所以这个文件中的数据迁移是依赖于task迁移来实现。
+
