@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Dockerd资源泄露系列 - 3 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Dockerd资源泄露系列 - 3" />
+<meta property="og:description" content="现象 线上k8s集群报警，宿主fd利用率超过80%，登陆查看dockerd内存使用26G 排查思路 由于之前已经遇到过多次dockerd资源泄露的" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/docker-leak3/" />
+<meta property="og:image" content="https://www.likakuli.com/logo.png"/>
+<meta property="article:published_time" content="2020-12-24T17:26:12+08:00" />
+<meta property="article:modified_time" content="2020-12-24T17:26:12+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="Dockerd资源泄露系列 - 3"/>
+<meta name="twitter:description" content="现象 线上k8s集群报警，宿主fd利用率超过80%，登陆查看dockerd内存使用26G 排查思路 由于之前已经遇到过多次dockerd资源泄露的"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/docker-leak3/" /><link rel="prev" href="https://www.likakuli.com/posts/docker-pod-terminating2/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Dockerd资源泄露系列 - 3",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/docker-leak3\/"
+        },"genre": "posts","keywords": "docker","wordcount":  3255 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/docker-leak3\/","datePublished": "2020-12-24T17:26:12+08:00","dateModified": "2020-12-24T17:26:12+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Dockerd资源泄露系列 - 3</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-24">2020-12-24</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3255 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/docker-leak3/" class="leancloud_visitors" data-flag-title="Dockerd资源泄露系列 - 3">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#现象">现象</a></li>
+        <li><a href="#排查思路">排查思路</a>
+          <ul>
+            <li><a href="#fd的对端是谁">fd的对端是谁？</a></li>
+            <li><a href="#内存为什么泄露">内存为什么泄露？</a></li>
+            <li><a href="#goroutine也泄露">Goroutine也泄露？</a>
+              <ul>
+                <li><a href="#泄露位置">泄露位置</a></li>
+                <li><a href="#为什么泄露">为什么泄露？</a></li>
+                <li><a href="#为什么没收到task-exit事件">为什么没收到task exit事件？</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li><a href="#总结">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="现象">现象</h2>
+<p>线上k8s集群报警，宿主fd利用率超过80%，登陆查看dockerd内存使用26G</p>
+<h2 id="排查思路">排查思路</h2>
+<p>由于之前已经遇到过多次dockerd资源泄露的问题，先看是否是已知原因导致的，参考前面两篇</p>
+<h3 id="fd的对端是谁">fd的对端是谁？</h3>
+<p>执行ss -anp | grep dockerd，结果如下图，可以看到和之前遇到的问题不同，第8列显示为0，与之前遇到的的情况不符，无法找到对端。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="leak3-1.png"
+        data-srcset="/posts/docker-leak3/leak3-1.png, leak3-1.png 1.5x, /posts/docker-leak3/leak3-1.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-leak3/leak3-1.png"
+        title="/posts/docker-leak3/leak3-1.png" /></p>
+<h3 id="内存为什么泄露">内存为什么泄露？</h3>
+<p>为了可以使用pprof分析内存泄露位置，首先为dockerd打开debug模式，需要修改service文件，添加如下两句</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash"><span class="nv">ExecReload</span><span class="o">=</span>/bin/kill -s HUP <span class="nv">$MAINPID</span> 
+<span class="nv">KillMode</span><span class="o">=</span>process
+</code></pre></td></tr></table>
+</div>
+</div><p>同时在/etc/docker/daemon.json文件中添加 &ldquo;debug&rdquo;: true的配置，修改完之后执行systemctl daemon-reload重新加载docker服务配置，然后执行systemctl reload docker，重进加载docker配置，开启debug模式</p>
+<p>dockerd默认使用uds对未提供服务，为了方便我们调试，可以使用socat对docker进行端口转发，如下 <strong>sudo socat -d -d TCP-LISTEN:8080,fork,bind=0.0.0.0 UNIX:/var/run/docker.sock</strong>，意思是外部可以通过访问宿主机的8080端口来调用docker api，至此一切就绪</p>
+<p>在本地执行go tool pprof http://ip:8080/debug/pprof/heap查看内存使用情况，如下图</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="leak3-2.png"
+        data-srcset="/posts/docker-leak3/leak3-2.png, leak3-2.png 1.5x, /posts/docker-leak3/leak3-2.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-leak3/leak3-2.png"
+        title="/posts/docker-leak3/leak3-2.png" /></p>
+<p>可以看到占用多的地方在golang自带的bufio NewWriterSize和NewReaderSize处，每次http调用都会都这里，也看出来有什么问题。</p>
+<h3 id="goroutine也泄露">Goroutine也泄露？</h3>
+<h4 id="泄露位置">泄露位置</h4>
+<p>通过内存还是无法知道具体出问题的位置，问题不大，再看看goroutine的情况，直接在浏览器访问http://ip:8080/debug/pprof/goroutine?debug=1，如下图</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="leak3-3.png"
+        data-srcset="/posts/docker-leak3/leak3-3.png, leak3-3.png 1.5x, /posts/docker-leak3/leak3-3.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-leak3/leak3-3.png"
+        title="/posts/docker-leak3/leak3-3.png" /></p>
+<p>一共1572822个goroutine，两个大头各占一半，各有786212个。看到这里基本就可以沿着文件行数去源码中查看了，这里我们用的docker 18.09.2版本，把源码切换到对应版本下，通过查看源码可以知道这两大类的goroutine泄露的原因，dockerd与containerd相关处理流程如下图</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="leak3-4.png"
+        data-srcset="/posts/docker-leak3/leak3-4.png, leak3-4.png 1.5x, /posts/docker-leak3/leak3-4.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-leak3/leak3-4.png"
+        title="/posts/docker-leak3/leak3-4.png" /></p>
+<p>对应上图的话，goroutine泄露是由上面最后docker kill时的wait chan close导致的，wait的时候会启动另一个goroutine，每次docker kill都会造成这两个goroutine的泄露。对应代码如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Kill forcefully terminates a container.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">daemon</span> <span class="o">*</span><span class="nx">Daemon</span><span class="p">)</span> <span class="nf">Kill</span><span class="p">(</span><span class="nx">container</span> <span class="o">*</span><span class="nx">containerpkg</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="k">if</span> <span class="p">!</span><span class="nx">container</span><span class="p">.</span><span class="nf">IsRunning</span><span class="p">()</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nf">errNotRunning</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+   <span class="p">}</span>
+
+   <span class="c1">// 1. Send SIGKILL
+</span><span class="c1"></span>   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">daemon</span><span class="p">.</span><span class="nf">killPossiblyDeadProcess</span><span class="p">(</span><span class="nx">container</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGKILL</span><span class="p">));</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="c1">// While normally we might &#34;return err&#34; here we&#39;re not going to
+</span><span class="c1"></span>      <span class="c1">// because if we can&#39;t stop the container by this point then
+</span><span class="c1"></span>      <span class="c1">// it&#39;s probably because it&#39;s already stopped. Meaning, between
+</span><span class="c1"></span>      <span class="c1">// the time of the IsRunning() call above and now it stopped.
+</span><span class="c1"></span>      <span class="c1">// Also, since the err return will be environment specific we can&#39;t
+</span><span class="c1"></span>      <span class="c1">// look for any particular (common) error that would indicate
+</span><span class="c1"></span>      <span class="c1">// that the process is already dead vs something else going wrong.
+</span><span class="c1"></span>      <span class="c1">// So, instead we&#39;ll give it up to 2 more seconds to complete and if
+</span><span class="c1"></span>      <span class="c1">// by that time the container is still running, then the error
+</span><span class="c1"></span>      <span class="c1">// we got is probably valid and so we return it to the caller.
+</span><span class="c1"></span>      <span class="k">if</span> <span class="nf">isErrNoSuchProcess</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="kc">nil</span>
+      <span class="p">}</span>
+
+      <span class="nx">ctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithTimeout</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="mi">2</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+      <span class="k">defer</span> <span class="nf">cancel</span><span class="p">()</span>
+
+      <span class="k">if</span> <span class="nx">status</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">container</span><span class="p">.</span><span class="nf">Wait</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">containerpkg</span><span class="p">.</span><span class="nx">WaitConditionNotRunning</span><span class="p">);</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Err</span><span class="p">()</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="nx">err</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+
+   <span class="c1">// 2. Wait for the process to die, in last resort, try to kill the process directly
+</span><span class="c1"></span>   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">killProcessDirectly</span><span class="p">(</span><span class="nx">container</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="nf">isErrNoSuchProcess</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="kc">nil</span>
+      <span class="p">}</span>
+      <span class="k">return</span> <span class="nx">err</span>
+   <span class="p">}</span>
+
+   <span class="c1">// Wait for exit with no timeout.
+</span><span class="c1"></span>   <span class="c1">// Ignore returned status.
+</span><span class="c1"></span>   <span class="o">&lt;-</span><span class="nx">container</span><span class="p">.</span><span class="nf">Wait</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="nx">containerpkg</span><span class="p">.</span><span class="nx">WaitConditionNotRunning</span><span class="p">)</span>
+
+   <span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// Wait waits until the container is in a certain state indicated by the given
+</span><span class="c1">// condition. A context must be used for cancelling the request, controlling
+</span><span class="c1">// timeouts, and avoiding goroutine leaks. Wait must be called without holding
+</span><span class="c1">// the state lock. Returns a channel from which the caller will receive the
+</span><span class="c1">// result. If the container exited on its own, the result&#39;s Err() method will
+</span><span class="c1">// be nil and its ExitCode() method will return the container&#39;s exit code,
+</span><span class="c1">// otherwise, the results Err() method will return an error indicating why the
+</span><span class="c1">// wait operation failed.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">State</span><span class="p">)</span> <span class="nf">Wait</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">condition</span> <span class="nx">WaitCondition</span><span class="p">)</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="nx">StateStatus</span> <span class="p">{</span>
+   <span class="nx">s</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+   <span class="k">defer</span> <span class="nx">s</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+   <span class="k">if</span> <span class="nx">condition</span> <span class="o">==</span> <span class="nx">WaitConditionNotRunning</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">s</span><span class="p">.</span><span class="nx">Running</span> <span class="p">{</span>
+      <span class="c1">// Buffer so we can put it in the channel now.
+</span><span class="c1"></span>      <span class="nx">resultC</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="nx">StateStatus</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+      <span class="c1">// Send the current status.
+</span><span class="c1"></span>      <span class="nx">resultC</span> <span class="o">&lt;-</span> <span class="nx">StateStatus</span><span class="p">{</span>
+         <span class="nx">exitCode</span><span class="p">:</span> <span class="nx">s</span><span class="p">.</span><span class="nf">ExitCode</span><span class="p">(),</span>
+         <span class="nx">err</span><span class="p">:</span>      <span class="nx">s</span><span class="p">.</span><span class="nf">Err</span><span class="p">(),</span>
+      <span class="p">}</span>
+
+      <span class="k">return</span> <span class="nx">resultC</span>
+   <span class="p">}</span>
+
+   <span class="c1">// If we are waiting only for removal, the waitStop channel should
+</span><span class="c1"></span>   <span class="c1">// remain nil and block forever.
+</span><span class="c1"></span>   <span class="kd">var</span> <span class="nx">waitStop</span> <span class="kd">chan</span> <span class="kd">struct</span><span class="p">{}</span>
+   <span class="k">if</span> <span class="nx">condition</span> <span class="p">&lt;</span> <span class="nx">WaitConditionRemoved</span> <span class="p">{</span>
+      <span class="nx">waitStop</span> <span class="p">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">waitStop</span>
+   <span class="p">}</span>
+
+   <span class="c1">// Always wait for removal, just in case the container gets removed
+</span><span class="c1"></span>   <span class="c1">// while it is still in a &#34;created&#34; state, in which case it is never
+</span><span class="c1"></span>   <span class="c1">// actually stopped.
+</span><span class="c1"></span>   <span class="nx">waitRemove</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">waitRemove</span>
+
+   <span class="nx">resultC</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="nx">StateStatus</span><span class="p">)</span>
+
+   <span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+      <span class="k">select</span> <span class="p">{</span>
+      <span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+         <span class="c1">// Context timeout or cancellation.
+</span><span class="c1"></span>         <span class="nx">resultC</span> <span class="o">&lt;-</span> <span class="nx">StateStatus</span><span class="p">{</span>
+            <span class="nx">exitCode</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="nx">err</span><span class="p">:</span>      <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">(),</span>
+         <span class="p">}</span>
+         <span class="k">return</span>
+      <span class="k">case</span> <span class="o">&lt;-</span><span class="nx">waitStop</span><span class="p">:</span>
+      <span class="k">case</span> <span class="o">&lt;-</span><span class="nx">waitRemove</span><span class="p">:</span>
+      <span class="p">}</span>
+
+      <span class="nx">s</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+      <span class="nx">result</span> <span class="o">:=</span> <span class="nx">StateStatus</span><span class="p">{</span>
+         <span class="nx">exitCode</span><span class="p">:</span> <span class="nx">s</span><span class="p">.</span><span class="nf">ExitCode</span><span class="p">(),</span>
+         <span class="nx">err</span><span class="p">:</span>      <span class="nx">s</span><span class="p">.</span><span class="nf">Err</span><span class="p">(),</span>
+      <span class="p">}</span>
+      <span class="nx">s</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+      <span class="nx">resultC</span> <span class="o">&lt;-</span> <span class="nx">result</span>
+   <span class="p">}()</span>
+
+   <span class="k">return</span> <span class="nx">resultC</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>对照goroutine的图片，两个goroutine分别走到了Kill最后一次的container.Wait处、Wait的select处，正因为Wait方法的select一直不返回，导致resultC无数据，外面也就无法从container.Wait返回的chan中读到数据，从而导致每次docker stop调用阻塞两个goroutine。</p>
+<h4 id="为什么泄露">为什么泄露？</h4>
+<p>为什么select一直不返回呢？可以看到select在等三个chan，任意一个有数据或者关闭都会返回</p>
+<ol>
+<li>ctx.Done()：不返回是因为最后一次调用Wait的时候传入的是context.Background()。这里其实也是dockerd对请求的处理方式，既然客户端要删除容器，那我就等着容器删除，什么时间删除什么时间退出，只要容器没删，就一直有个goroutine在等待。</li>
+<li>waitStop和waitRemove：不返回是因为没收到containerd发来的task exit的信号，可以对照上图看下，在收到task exit后才会关闭chan</li>
+</ol>
+<h4 id="为什么没收到task-exit事件">为什么没收到task exit事件？</h4>
+<p>问题逐渐明确，但还需要进一步排查为什么没有收到task exit的事件，两种可能</p>
+<ul>
+<li>发出但没收收到：这里首先想到的是之前腾讯遇到的一个问题，也是在18版本的docker上，processEvent的goroutine异常退出了，导致无法接收到containerd发来的信号，参考<a href="https://segmentfault.com/a/1190000023809654" target="_blank" rel="noopener noreffer">这里</a></li>
+<li>没有发出</li>
+</ul>
+<p>首先看有没有收到，还是看goroutine的内容，如下图，可以看到处理事件的goroutine:processEventStream和接收事件的goroutine:Subscribe都存在，可以排除第一种可能</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="leak3-5.png"
+        data-srcset="/posts/docker-leak3/leak3-5.png, leak3-5.png 1.5x, /posts/docker-leak3/leak3-5.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-leak3/leak3-5.png"
+        title="运维部 &amp;gt; dockerd 内存泄露 - 3 &amp;gt; image2020-12-23_13-51-12.png" /></p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="leak3-6.png"
+        data-srcset="/posts/docker-leak3/leak3-6.png, leak3-6.png 1.5x, /posts/docker-leak3/leak3-6.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-leak3/leak3-6.png"
+        title="运维部 &amp;gt; dockerd 内存泄露 - 3 &amp;gt; image2020-12-23_13-50-34.png" /></p>
+<p>接着看第二种可能，根本没发出task exit事件。经过上面分析，已知存在goroutine泄露，且是通过docker stop引起的，所以可以肯定kubelet发起了删除容器的请求，并且是在一直尝试，要不然也不会一直泄露。那剩下唯一的问题就是找出来是在不断的删除哪个容器，又为什么删不掉。其实这个时候，聪明的你们可能已经想到容器里大概率是有D进程了，所有即使发送Kill信号容器进程无法正常退出。接下来就是去验证一下这个猜想，首先去找一下哪个容器出的问题，先看Kubelet日志和docker日志，如下</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="leak3-7.png"
+        data-srcset="/posts/docker-leak3/leak3-7.png, leak3-7.png 1.5x, /posts/docker-leak3/leak3-7.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-leak3/leak3-7.png"
+        title="运维部 &amp;gt; dockerd 内存泄露 - 3 &amp;gt; image2020-12-23_14-4-3.png" /></p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="leak3-8.png"
+        data-srcset="/posts/docker-leak3/leak3-8.png, leak3-8.png 1.5x, /posts/docker-leak3/leak3-8.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-leak3/leak3-8.png"
+        title="运维部 &amp;gt; dockerd 内存泄露 - 3 &amp;gt; image2020-12-23_14-5-55.png" /></p>
+<p>好家伙，不止一个容器删不掉。验证了确实在不断删除容器，但是删不掉，接下来看下是不是有D进程，如下</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="leak3-9.png"
+        data-srcset="/posts/docker-leak3/leak3-9.png, leak3-9.png 1.5x, /posts/docker-leak3/leak3-9.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-leak3/leak3-9.png"
+        title="运维部 &amp;gt; dockerd 内存泄露 - 3 &amp;gt; image2020-12-23_14-10-19.png" /></p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="leak3-10.png"
+        data-srcset="/posts/docker-leak3/leak3-10.png, leak3-10.png 1.5x, /posts/docker-leak3/leak3-10.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-leak3/leak3-10.png"
+        title="运维部 &amp;gt; dockerd 内存泄露 - 3 &amp;gt; image2020-12-23_14-11-31.png" /></p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="leak3-11.png"
+        data-srcset="/posts/docker-leak3/leak3-11.png, leak3-11.png 1.5x, /posts/docker-leak3/leak3-11.png 2x"
+        data-sizes="auto"
+        alt="/posts/docker-leak3/leak3-11.png"
+        title="运维部 &amp;gt; dockerd 内存泄露 - 3 &amp;gt; image2020-12-23_14-9-23.png" /></p>
+<p>确实容器内有D进程了，可以去宿主上看下，ps aux | awk &lsquo;$8=&ldquo;D&rdquo;'，特别多的D进程</p>
+<h2 id="总结">总结</h2>
+<p>Kubelet为了保证最终一致性，发现宿主上还有不应该存在的容器就会一直不断的去尝试删除，每次删除都会调用docker stop的api，与dockerd建立一个uds连接，dockerd删除容器的时候会启动一个goroutine通过rpc形式调用containerd来删除容器并等待最终删除完毕才返回，等待的过程中会另起一个goroutine来获取结果，然而containerd在调用runc去真正执行删除的时候因为容器内D进程，无法删除容器，导致没有发出task exit信号，dockerd的两个相关的goroutine也就不会退出。整个过程不断重复，最终就导致fd、内存、goroutine一步步的泄露，系统逐渐走向不可用。</p>
+<p>回过头来想想，其实kubelet本身的处理都没有问题，kubelet是为了确保一致性，要去删除不应该存在的容器，直到容器被彻底删除，每次调用docker api都设置了timeout。dockerd的逻辑有待商榷，至少可以做一些改进，因为客户端请求时带了timeout，且dockerd后端在接收到task exit事件后是会去做container remove操作的，即使当前没有docker stop请求。所以可以考虑把最后传入context.Background()的Wait函数调用去掉，当前面带超时的Wait返回后直接退出就可以，这样就不会造成资源泄露了。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-12-24</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/docker-leak3/" data-title="Dockerd资源泄露系列 - 3" data-hashtags="docker"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/docker-leak3/" data-hashtag="docker"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/docker-leak3/" data-title="Dockerd资源泄露系列 - 3" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/docker-leak3/" data-title="Dockerd资源泄露系列 - 3"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/docker-leak3/" data-title="Dockerd资源泄露系列 - 3"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/docker-leak3/" data-title="Dockerd资源泄露系列 - 3" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/docker-leak3/" data-title="Dockerd资源泄露系列 - 3" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/docker-leak3/" data-title="Dockerd资源泄露系列 - 3"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/docker-pod-terminating2/" class="prev" rel="prev" title="Pod terminating2"><i class="fas fa-angle-left fa-fw"></i>Pod terminating2</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

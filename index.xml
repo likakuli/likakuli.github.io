@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 31 Oct 2020 10:51:39 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 24 Dec 2020 17:26:12 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>Dockerd资源泄露系列 - 3</title>
+    <link>https://www.likakuli.com/posts/docker-leak3/</link>
+    <pubDate>Thu, 24 Dec 2020 17:26:12 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/docker-leak3/</guid>
+    <description><![CDATA[现象 线上k8s集群报警，宿主fd利用率超过80%，登陆查看dockerd内存使用26G 排查思路 由于之前已经遇到过多次dockerd资源泄露的]]></description>
+</item><item>
     <title>Pod terminating2</title>
     <link>https://www.likakuli.com/posts/docker-pod-terminating2/</link>
     <pubDate>Sat, 31 Oct 2020 10:51:39 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/knative-build/</guid>
     <description><![CDATA[背景 knative 0.14.0 最近在搭建公司级的serverless平台，遇到某些问题，看了源码发现无法通过其扩展机制来解决，遂决定修改源码来解决 过程 源码很快修改]]></description>
-</item><item>
-    <title>Knative通过外部域名访问集群内服务</title>
-    <link>https://www.likakuli.com/posts/knative-ingress-gateway/</link>
-    <pubDate>Thu, 09 Jul 2020 21:00:07 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/knative-ingress-gateway/</guid>
-    <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
 </item></channel>
 </rss>
