@@ -1,0 +1,29 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>informer - 标签 - kaku&#39;s blog</title>
+        <link>https://www.likakuli.com/tags/informer/</link>
+        <description>informer - 标签 - kaku&#39;s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 18 Mar 2021 20:40:39 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/informer/" rel="self" type="application/rss+xml" /><item>
+    <title>Kubernetes Informer</title>
+    <link>https://www.likakuli.com/posts/kubernetes-informer/</link>
+    <pubDate>Thu, 18 Mar 2021 20:40:39 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kubernetes-informer/</guid>
+    <description><![CDATA[开局一张图，剩下全靠编 详细内容参考： Informer DeltaFIFO Informer LocalStore 未完待续]]></description>
+</item><item>
+    <title>Informer LocalStore源码解析</title>
+    <link>https://www.likakuli.com/posts/kubernetes-informer-localstore/</link>
+    <pubDate>Thu, 18 Mar 2021 20:35:51 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kubernetes-informer-localstore/</guid>
+    <description><![CDATA[按照惯例，先上图，cache对应Informer中的Local Store。 直接撸源码（基于1.12版本，有删减，不影响主要逻辑） 1 2 3 4 5 6]]></description>
+</item><item>
+    <title>Informer DeltaFIFO源码解析</title>
+    <link>https://www.likakuli.com/posts/kubernetes-informer-deltafifo/</link>
+    <pubDate>Thu, 18 Mar 2021 17:33:44 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kubernetes-informer-deltafifo/</guid>
+    <description><![CDATA[DeltaFIFO位于Reflector和LocalStore之间，看名字知道是个先进先出的队列，作用就是缓存数据变化，直接看代码 1 2 3 4 5]]></description>
+</item></channel>
+</rss>

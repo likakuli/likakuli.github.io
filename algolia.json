@@ -65,6 +65,30 @@
         "author": "Kaku Li"
     },
     {
+        "title": "cgroup mount destination: unknown",
+        "uri": "posts/docker-cgroup-unknown",
+        "content": "k8s                Failed create pod sandbox  rpc error  code   Unknown desc   failed start sandbox container pod  xxx sf 32c80 0   Error response daemon  cgroups  cannot find cgroup mount destination  unknown      cgroup                                   issue  cgroups  cannot found cgroup mount destination  unknown                                                         cgroup             kubelet  docker docker    docker 18 06                                                  docker               containerd               PidPath will return correct cgroup paths existing process running inside cgroup    commonly used Load function restore existing container func PidPath pid int  Path   p    fmt Sprintf   proc  d cgroup   pid  paths  err    parseCgroupFile p  err    nil   return errorPath errors Wrapf err   parse cgroup file  s   p     return existingPath paths        func existingPath paths map string string  suffix string  Path      localize paths based root mount dest nested cgroups n  p    range paths   dest  err    getCgroupDestination string n   err    nil   return errorPath err    rel  err    filepath Rel dest  p  err    nil   return errorPath err    rel          rel   dest   paths n    filepath Join      rel    return func name Name   string  error    root  ok    paths string name    ok   root  ok   paths fmt Sprintf  name  s   name     ok   return     fmt Errorf  unable find  q controller set   name      suffix         return filepath Join root  suffix   nil   return root  nil     func getCgroupDestination subsystem string   string  error    f  err    os Open   proc self mountinfo   err    nil   return     err   defer f Close   s    bufio NewScanner f  s Scan     fields    strings Split s Text         len fields    10      broken mountinfo  continue   fields len fields  3      cgroup    continue   _  opt    range strings Split fields len fields  1          opt    subsystem   return fields 3   nil       err    s Err    err    nil   return     err   return     ErrNoCgroupMountDestination   func parseCgroupFile path string   map string string  error    f  err    os Open path  err    nil   return nil  err   defer f Close   return parseCgroupFromReader f    func parseCgroupFromReader r io Reader   map string string  error    var   cgroups   make map string string  s   bufio NewScanner r    s Scan     err    s Err    err    nil   return nil  err   var   text   s Text   parts   strings SplitN text       3    len parts    3   return nil  fmt Errorf  invalid cgroup entry   q   text    _  subs    range strings Split parts 1          subs         cgroups subs    parts 2        return cgroups  nil             proc id cgroup        subsystem     parseCgroupFromReader    proc id cgroup                     2                                existingPath                  getCgroupDestination                    getCgroupDestination       proc id mountinfo                            cgroup                                                                                                     agent     mount      cpumirror cgroup          java                    umount      umount   proc id cgroup    cpumirror      proc id mountinfo                                  docker     1 13 1          1 13 1  containerd",
+        "objectID": "posts/docker-cgroup-unknown",
+        "date": "2021-02-10T03:41:36.000Z",
+        "lastmod": "2021-02-10T03:41:36.000Z",
+        "draft": false,
+        "keywords": [
+            "cgroup",
+            "mount",
+            "unknown"
+        ],
+        "description": "cgroup mount destination: unknown",
+        "tags": [
+            "linux",
+            "cgroup",
+            "docker"
+        ],
+        "categories": [
+            "问题排查"
+        ],
+        "author": "Kaku Li"
+    },
+    {
         "title": "docker hang问题排查",
         "uri": "posts/docker-hang",
         "content": "1            kubelet    kubelet  Pod                  redis            kubelet                NotReady     kubelet             NotReady            container runtime down                                    docker       docker            docker ps               docker inspect                    docker hang             docker       docker    1 13 1         18 06 3     docker    18 06 3 docker hang    1 13 1             docker ps      hang              docker          docker 18 06 3             docker ps                  docker inspect                         docker                                   docker ps docker inspect     docker     kubelet       docker API                   docker hang         docker hang        kubelet          NotReady  2   kubelet       kubelet        Ready  NotReady       docker hang                        kubelet         Condition                                           ReadyCondition         kubectl           Statue    ReadCondition                   Ready             OK      Pod   NotReady        kubelet               Pod   NotReady                  Unknown       kubelet      kubelet   ReadyCondition            defaultNodeStatusFuncs factory generates default set    setNodeStatus funcs func  kl Kubelet  defaultNodeStatusFuncs     func v1 Node  error          setters   append setters  nodestatus OutOfDiskCondition kl clock Now  kl recordNodeStatusEvent   nodestatus MemoryPressureCondition kl clock Now  kl evictionManager IsUnderMemoryPressure  kl recordNodeStatusEvent   nodestatus DiskPressureCondition kl clock Now  kl evictionManager IsUnderDiskPressure  kl recordNodeStatusEvent   nodestatus PIDPressureCondition kl clock Now  kl evictionManager IsUnderPIDPressure  kl recordNodeStatusEvent   nodestatus ReadyCondition kl clock Now  kl runtimeState runtimeErrors  kl runtimeState networkErrors  validateHostFunc  kl containerManager Status  kl recordNodeStatusEvent   nodestatus VolumesInUse kl volumeManager ReconcilerStatesHasBeenSynced  kl volumeManager GetVolumesInUse      TODO mtaufen   decided not move setter now  does send event    record state back Kubelet runtime object  future  I d isolate    side effects decoupling decisions send events partial status recording    Node setters  kl recordNodeSchedulableEvent    return setters     nodestatus ReadyCondition            Ready                                              func  s  runtimeState  runtimeErrors     string   s RLock   defer s RUnlock   var ret   string  s lastBaseRuntimeSync Add s baseRuntimeSyncThreshold  After time Now         1 ret   append ret   container runtime down     s internalError    nil   ret   append ret  s internalError Error      _  hc    range s healthChecks      2 ok  err    hc fn     ok   ret   append ret  fmt Sprintf   s not healthy   v   hc name  err       return ret                                                       30s                     NotReady             kubelet     kubelet  5s                I0715 10 43 28 049240 16315 kubelet go 1835  skipping pod synchronization    container runtime down  I0715 10 43 33 049359 16315 kubelet go 1835  skipping pod synchronization    container runtime down  I0715 10 43 38 049492 16315 kubelet go 1835  skipping pod synchronization    container runtime down              1   NotReady              kubelet        lastBaseRuntimeSync kubelet        goroutine    goroutine     lastBaseRuntimeSync       func  kl  Kubelet  Run updates kl cadvisor Start    cc Manager Start    self createContainer    m createContainerLocked    container NewContainerHandler    factory CanHandleAndAccept    self client ContainerInspect            kubelet  docker inspect    hang        kubelet       Ready  NotReady                 docker inspect  hang     docker inspect hang    kubelet            Ready           oneTimeInitializer sync Once         kebelet          kubelet        Pod                           Pod                 kubelet     docker inspect                      kubelet                               docker hang      3  docker hang     docker hang                                  docker 1 13 1                                     docker          docker 18 06 3   docker hang        4                          docker hang                                    docker             docker inspect                3 1              docker                  go               pprof     pprof    docker         goroutine profile  total 722373 717594   0x7fe8bc202980 0x7fe8bc202a40 0x7fe8bc2135d8 0x7fe8bc2132ef 0x7fe8bc238c1a 0x7fe8bd56f7fe 0x7fe8bd56f6bd 0x7fe8bcea8719 0x7fe8bcea938b 0x7fe8bcb726ca 0x7fe8bcb72b01 0x7fe8bc71c26b 0x7fe8bcb85f4a 0x7fe8bc4b9896 0x7fe8bc72a438 0x7fe8bcb849e2 0x7fe8bc4bc67e 0x7fe8bc4b88a3 0x7fe8bc230711 0x7fe8bc2132ee sync runtime_SemacquireMutex 0x3e  usr local go src runtime sema go 71 0x7fe8bc238c19 sync   Mutex  Lock 0x109  usr local go src sync mutex go 134 0x7fe8bd56f7fd github com docker docker daemon   Daemon  ContainerInspectCurrent 0x8d  root rpmbuild BUILD src engine  gopath src github com docker docker daemon inspect go 40 0x7fe8bd56f6bc github com docker docker daemon   Da",
@@ -79,6 +103,30 @@
         "description": "",
         "tags": [
             "docker"
+        ],
+        "categories": [
+            "问题排查"
+        ],
+        "author": "Kaku Li"
+    },
+    {
+        "title": "Java服务突现毛刺",
+        "uri": "posts/docker-java-cpu",
+        "content": "agent                         Container                           agent                                      agent    sidecar                                              agent          cgroup         cgroup                                       Java                 java                        jdk                       cpu                                             jdk8u191                                                 jdk      202   191                      cpu                            java         cpu            java  XX  UnlockDiagnosticVMOptions  XX  PrintContainerInfo  version                                         jdk                                           strace   java                    cpu              cpu              cpu_mirror             cpu                        agent                    sys fs cgroup                  mount      cgroup      jdk                        jdk              Container Support doesn t work Join Controllers combinations                                             cpu_mirror                     prof self mountinfo        strstr      cpu memory             proc self cgroup                                  strstr       cpu memory       proc self mountinfo                      strcmp     cpu memory       proc self cgroup                                              strcmp     cpu memory            if contains str   cpu   set cpu subsystme     subStr split str       subStr equals  cpu  set cpu subsystem           jdk                    cpu_mirror     umount                                        umount                                   agent",
+        "objectID": "posts/docker-java-cpu",
+        "date": "2021-02-10T03:41:20.000Z",
+        "lastmod": "2021-02-10T03:41:20.000Z",
+        "draft": false,
+        "keywords": [
+            "java",
+            "docker",
+            "cgroup",
+            "controllers"
+        ],
+        "description": "",
+        "tags": [
+            "docker",
+            "上云"
         ],
         "categories": [
             "问题排查"
@@ -642,6 +690,72 @@
         ],
         "categories": [
             "问题排查"
+        ],
+        "author": "Kaku Li"
+    },
+    {
+        "title": "Informer DeltaFIFO源码解析",
+        "uri": "posts/kubernetes-informer-deltafifo",
+        "content": "DeltaFIFO  Reflector LocalStore                                          client go tools cache delta_fifo go type DeltaFIFO struct      lock cond protects access  items   queue              Mutex  lock sync RWMutex     pop                 cond sync Cond    depend property items set    queue vice versa  Deltas    map least one Delta       map    Deltas DeltaFIFO                                                           queue    map keys  map        slice     items map string Deltas queue   string                          populated true first batch items inserted Replace   populated    Delete Add Update called first  populated bool    initialPopulationCount number items inserted first call Replace   initialPopulationCount int    keyFunc used key used queued item    insertion retrieval  deterministic  keyFunc KeyFunc    knownObjects list keys  known      purpose figuring items deleted    when Replace   Delete   called           Indexer knownObjects KeyListerGetter    Indication queue closed     Used indicate queue closed so control loop exit when queue empty     Currently  not used gate CRED operations  closed bool closedLock sync Mutex          client go tools cache delta_fifo go type Delta struct   Type DeltaType Object interface            k8s       type DeltaType string    Delta          const   Added DeltaType    Added        Updated DeltaType    Updated        Deleted DeltaType    Deleted        Sync DeltaType    Sync          type Deltas   Delta    Delta   Delta                         Deltas                     slice  key                     DeltaFIFO        kubernetes             DeltaFIFO                        client go tools cache fifo go type Queue interface            Indexer     Store    Pop blocks until something process     returns object process result processing     PopProcessFunc may return ErrRequeue      indicate item    requeued releasing lock queue     pop                     sync Cond                    PopProcessFunc                     Pop PopProcessFunc   interface    error     AddIfNotPresent adds value previously    returned Pop back queue long    nothing else  presumably recent     added  AddIfNotPresent interface    error    HasSynced returns true first batch items popped HasSynced   bool    Close queue Close                 Queue    Store       Pop                Indexer Indexer  Store                               DeltaFIFO                    client go tools cache delta_fifo go           func  f  DeltaFIFO  Add obj interface    error   f lock Lock   defer f lock Unlock   f populated   true                    return f queueActionLocked Added  obj              func  f  DeltaFIFO  Update obj interface    error   f lock Lock   defer f lock Unlock   f populated   true                    return f queueActionLocked Updated  obj              func  f  DeltaFIFO  Delete obj interface    error   id  err    f KeyOf obj  err    nil   return KeyError obj  err    f lock Lock   defer f lock Unlock   f populated   true                                knownObjects  Indexer             f knownObjects    nil         Indexer                   _  exists    f items id    exists   return nil     else         Indexer                 _  exists  err    f knownObjects GetByKey id  _  itemsExist    f items id  err    nil     exists     itemsExist   return nil     return f queueActionLocked Deleted  obj               func  f  DeltaFIFO  ListKeys     string   f lock RLock   defer f lock RUnlock   list    make   string  0  len f items   key    range f items   list   append list  key    return list             func  f  DeltaFIFO  List     interface     f lock RLock   defer f lock RUnlock   return f listLocked                  func  f  DeltaFIFO  listLocked     interface     list    make   interface    0  len f items   _  item    range f items   item   copyDeltas item  list   append list  item Newest   Object    return list                            func  f  DeltaFIFO  Get obj interface     item interface    exists bool  err error    key  err    f KeyOf obj  err    nil   return nil  false  KeyError obj  err    return f GetByKey key                 func  f  DeltaFIFO  GetByKey key string   item interface    exists bool  err error    f lock RLock   defer f lock RUnlock   d  exists    f items key  exists   d   copyDeltas d    return d  exists  nil             func  f  DeltaFIFO  IsClosed   bool   f closedLock Lock   defer f closedLock Unlock   f closed   return true   return false                          queueActionLocked                              client go tools cache delta_fifo go func  f  DeltaFIFO  queueActionLocked actionType DeltaType  obj interface    error                    id  err    f KeyOf obj  err    nil   return KeyError obj  err                                           actionType    Sync    f willObjectBeDeletedLocked id    return nil                       Deltas    newDeltas    append f items id   Delta actionType  obj                delta newDeltas   dedupDeltas newDeltas                _  exists    f items id                 Delta                              len newDeltas    0                               ",
+        "objectID": "posts/kubernetes-informer-deltafifo",
+        "date": "2021-03-18T09:33:44.000Z",
+        "lastmod": "2021-03-18T09:33:44.000Z",
+        "draft": false,
+        "keywords": [
+            "informer",
+            "kubernetes"
+        ],
+        "description": "",
+        "tags": [
+            "informer",
+            "kubernetes"
+        ],
+        "categories": [
+            "源码分析"
+        ],
+        "author": "Kaku Li"
+    },
+    {
+        "title": "Informer LocalStore源码解析",
+        "uri": "posts/kubernetes-informer-localstore",
+        "content": "cache  Informer  Local Store          1 12                       client go tools cache store go type Store interface   Add obj interface    error Update obj interface    error Delete obj interface    error List     interface   ListKeys     string Get obj interface     item interface    exists bool  err error  GetByKey key string   item interface    exists bool  err error     Replace will delete contents store  using instead    given list  Store takes ownership list  not reference    calling function                  Replace   interface    string  error Resync   error   Store                                                            client go tools cache index go    Indexer storage interface lets list objects using multiple indexing functions type Indexer interface   Store    Retrieve list objects match named indexing function Index indexName string  obj interface       interface    error     IndexKeys returns set keys match named indexing function  IndexKeys indexName  indexKey string     string  error     ListIndexFuncValues returns list generated values Index func ListIndexFuncValues indexName string    string    ByIndex lists object match named indexing function exact key ByIndex indexNtame  indexKey string     interface    error     GetIndexer return indexers GetIndexers   Indexers    AddIndexers adds indexers store  call already data    store  results undefined  AddIndexers newIndexers Indexers  error   Indexer Store                                                      client go tools cache index go    IndexFunc knows provide indexed value object  type IndexFunc func obj interface       string  error     Index maps indexed value set keys store match value type Index map string sets String   sets String map string struct               Indexers maps name IndexFunc type Indexers map string IndexFunc    Indices maps name Index type Indices map string Index                                     client go       IndexFunc  MetaNamespaceIndexFunc    IndexName namespace         Indexers       namespace  MetaNamespaceIndexFunc             Store   Key default test app Pod          map        Indexers    namespace  MetaNamespaceIndexFunc  Index   default    default test app     Indices    namespace    default    default test app                    Indexer             client go tools cache store go type cache struct      cacheStorage bears burden thread safety cache cacheStorage ThreadSafeStore    keyFunc used key objects stored retrieved items     deterministic  keyFunc KeyFunc      KeyFunc knows key object  Implementations deterministic  type KeyFunc func obj interface     string  error         client go tools cache threadsafestore go type ThreadSafeStore interface   Add key string  obj interface    Update key string  obj interface    Delete key string  Get key string   item interface    exists bool  List     interface   ListKeys     string Replace map string interface    string  Index indexName string  obj interface       interface    error  IndexKeys indexName  indexKey string     string  error  ListIndexFuncValues name string    string ByIndex indexName  indexKey string     interface    error  GetIndexers   Indexers    AddIndexers adds indexers store  call already data    store  results undefined  AddIndexers newIndexers Indexers  error Resync   error      threadSafeMap implements ThreadSafeStore type threadSafeMap struct   lock sync RWMutex items map string interface      indexers maps name IndexFunc indexers Indexers    indices maps name Index indices Indices            cache        map string interface     Go       sync Map       sync RWMutex               indexers indices             KeyFunc             MetaNamespaceKeyFunc       cache Add          indexers indices KeyFunc            Add inserts item cache  func  c  cache  Add obj interface    error   key  err    c keyFunc obj  err    nil   return KeyError obj  err    c cacheStorage Add key  obj  return nil             KeyFunc   obj                 Add   func  c  threadSafeMap  Add key string  obj interface      c lock Lock   defer c lock Unlock   oldObject    c items key  c items key    obj c updateIndices oldObject  obj  key             key   obj   Indices                         updateIndices modifies objects location managed indexes  update  provide oldObj    updateIndices called function already lock cache func  c  threadSafeMap  updateIndices oldObj interface    newObj interface    key string       old object  need remove add again oldObj    nil   c deleteFromIndices oldObj  key    name  indexFunc    range c indexers   indexValues  err    indexFunc newObj  err    nil   panic fmt Errorf  unable calculate index entry key  q index  q   v   key  name  err     index    c indices name  index    nil   index   Index   c indices name    index   _  indexValue    range indexValues   set    index indexValue  set    nil   set   sets String   index indexValue    set   set Insert key            KeyFunc Indices Indexers                               Indices     Indexers     IndexFunc      IndexValues     Name Index                 IndexValues      set         key   set                ",
+        "objectID": "posts/kubernetes-informer-localstore",
+        "date": "2021-03-18T12:35:51.000Z",
+        "lastmod": "2021-03-18T12:35:51.000Z",
+        "draft": false,
+        "keywords": [
+            "informer",
+            "kubernetes"
+        ],
+        "description": "",
+        "tags": [
+            "informer",
+            "kubernetes"
+        ],
+        "categories": [
+            "源码分析"
+        ],
+        "author": "Kaku Li"
+    },
+    {
+        "title": "Kubernetes Informer",
+        "uri": "posts/kubernetes-informer",
+        "content": "Informer DeltaFIFO Informer LocalStore",
+        "objectID": "posts/kubernetes-informer",
+        "date": "2021-03-18T12:40:39.000Z",
+        "lastmod": "2021-03-18T12:40:39.000Z",
+        "draft": false,
+        "keywords": [
+            "informer",
+            "kubernetes"
+        ],
+        "description": "",
+        "tags": [
+            "informer",
+            "kubernetes"
+        ],
+        "categories": [
+            "源码分析"
         ],
         "author": "Kaku Li"
     },

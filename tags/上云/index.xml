@@ -1,0 +1,15 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>上云 - 标签 - kaku&#39;s blog</title>
+        <link>https://www.likakuli.com/tags/%E4%B8%8A%E4%BA%91/</link>
+        <description>上云 - 标签 - kaku&#39;s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 10 Feb 2021 11:41:20 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/%E4%B8%8A%E4%BA%91/" rel="self" type="application/rss+xml" /><item>
+    <title>Java服务突现毛刺</title>
+    <link>https://www.likakuli.com/posts/docker-java-cpu/</link>
+    <pubDate>Wed, 10 Feb 2021 11:41:20 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/docker-java-cpu/</guid>
+    <description><![CDATA[背景 容器原生设计为单进程模型，但公司线上运行的服务以多进程的方式运行，而且里面包含了很多的agent，例如日志采集、监控采集、数据配送等，耦]]></description>
+</item></channel>
+</rss>

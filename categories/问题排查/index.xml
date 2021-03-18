@@ -4,7 +4,21 @@
         <link>https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/</link>
         <description>问题排查 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 24 Dec 2020 17:26:12 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 10 Feb 2021 11:41:36 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" rel="self" type="application/rss+xml" /><item>
+    <title>cgroup mount destination: unknown</title>
+    <link>https://www.likakuli.com/posts/docker-cgroup-unknown/</link>
+    <pubDate>Wed, 10 Feb 2021 11:41:36 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/docker-cgroup-unknown/</guid>
+    <description><![CDATA[问题 线上k8s集群在进行容器创建时报如下错误 Failed create pod sandbox: rpc error: code = Unknown desc = failed to start sandbox container for pod &ldquo;xxx-sf-32c80-0&rdquo;: Error response from daemon: cgroups: cannot find cgroup mount destination: unknown 之前遇到过cgroup相关问题，但是]]></description>
+</item><item>
+    <title>Java服务突现毛刺</title>
+    <link>https://www.likakuli.com/posts/docker-java-cpu/</link>
+    <pubDate>Wed, 10 Feb 2021 11:41:20 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/docker-java-cpu/</guid>
+    <description><![CDATA[背景 容器原生设计为单进程模型，但公司线上运行的服务以多进程的方式运行，而且里面包含了很多的agent，例如日志采集、监控采集、数据配送等，耦]]></description>
+</item><item>
     <title>Dockerd资源泄露系列 - 3</title>
     <link>https://www.likakuli.com/posts/docker-leak3/</link>
     <pubDate>Thu, 24 Dec 2020 17:26:12 &#43;0800</pubDate>
@@ -60,19 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kubernetes-ep-event/</guid>
     <description><![CDATA[背景 k8s 1.12.4 包含自定义功能 线上集群在批量原地升级时出现流量异常问题，大体流程如下： 批量摘流，并等待7秒 批量删除容器 watch到Endpoint ready]]></description>
-</item><item>
-    <title>Sidecar优雅退出</title>
-    <link>https://www.likakuli.com/posts/kubernetes-graceful-shutdown/</link>
-    <pubDate>Tue, 23 Jun 2020 19:46:45 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-graceful-shutdown/</guid>
-    <description><![CDATA[背景 codis集群在接入弹性云测试时发现容器漂移失败，通过集群日志看，提示 调度超时，去界面查看，已经调度成功了（调度成功的标志就是已经有宿主]]></description>
-</item><item>
-    <title>Kube-controller-manager同步数据慢</title>
-    <link>https://www.likakuli.com/posts/kubernetes-controllerrevisionhistory-bug/</link>
-    <pubDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-controllerrevisionhistory-bug/</guid>
-    <description><![CDATA[背景 版本1.12.4 线上遇到kube-controller-manager重启慢的问题，具体表现为进程重启虽然速度快，但是重启完所有数据都同]]></description>
 </item></channel>
 </rss>

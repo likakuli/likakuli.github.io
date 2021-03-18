@@ -4,7 +4,42 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 24 Dec 2020 17:26:12 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 18 Mar 2021 20:40:39 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>Kubernetes Informer</title>
+    <link>https://www.likakuli.com/posts/kubernetes-informer/</link>
+    <pubDate>Thu, 18 Mar 2021 20:40:39 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kubernetes-informer/</guid>
+    <description><![CDATA[开局一张图，剩下全靠编 详细内容参考： Informer DeltaFIFO Informer LocalStore 未完待续]]></description>
+</item><item>
+    <title>Informer LocalStore源码解析</title>
+    <link>https://www.likakuli.com/posts/kubernetes-informer-localstore/</link>
+    <pubDate>Thu, 18 Mar 2021 20:35:51 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kubernetes-informer-localstore/</guid>
+    <description><![CDATA[按照惯例，先上图，cache对应Informer中的Local Store。 直接撸源码（基于1.12版本，有删减，不影响主要逻辑） 1 2 3 4 5 6]]></description>
+</item><item>
+    <title>Informer DeltaFIFO源码解析</title>
+    <link>https://www.likakuli.com/posts/kubernetes-informer-deltafifo/</link>
+    <pubDate>Thu, 18 Mar 2021 17:33:44 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kubernetes-informer-deltafifo/</guid>
+    <description><![CDATA[DeltaFIFO位于Reflector和LocalStore之间，看名字知道是个先进先出的队列，作用就是缓存数据变化，直接看代码 1 2 3 4 5]]></description>
+</item><item>
+    <title>cgroup mount destination: unknown</title>
+    <link>https://www.likakuli.com/posts/docker-cgroup-unknown/</link>
+    <pubDate>Wed, 10 Feb 2021 11:41:36 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/docker-cgroup-unknown/</guid>
+    <description><![CDATA[问题 线上k8s集群在进行容器创建时报如下错误 Failed create pod sandbox: rpc error: code = Unknown desc = failed to start sandbox container for pod &ldquo;xxx-sf-32c80-0&rdquo;: Error response from daemon: cgroups: cannot find cgroup mount destination: unknown 之前遇到过cgroup相关问题，但是]]></description>
+</item><item>
+    <title>Java服务突现毛刺</title>
+    <link>https://www.likakuli.com/posts/docker-java-cpu/</link>
+    <pubDate>Wed, 10 Feb 2021 11:41:20 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/docker-java-cpu/</guid>
+    <description><![CDATA[背景 容器原生设计为单进程模型，但公司线上运行的服务以多进程的方式运行，而且里面包含了很多的agent，例如日志采集、监控采集、数据配送等，耦]]></description>
+</item><item>
     <title>Dockerd资源泄露系列 - 3</title>
     <link>https://www.likakuli.com/posts/docker-leak3/</link>
     <pubDate>Thu, 24 Dec 2020 17:26:12 &#43;0800</pubDate>
@@ -39,40 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/netns-leak/</guid>
     <description><![CDATA[1. 揭开面纱 周一，接到RD反馈线上容器网络访问存在异常，具体线上描述如下： 上游服务driver-api所有容器访问下游服务duse-api某一]]></description>
-</item><item>
-    <title>Kubelet重启导致容器重启</title>
-    <link>https://www.likakuli.com/posts/kubernetes-kubelet-restart/</link>
-    <pubDate>Mon, 26 Oct 2020 21:27:30 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-kubelet-restart/</guid>
-    <description><![CDATA[问题描述 在修复cgroup泄漏问题时会现停掉kubelet，待修复完成后启动kubelet组件，重启后收到业务反馈，业务容器重启了。 问题排查]]></description>
-</item><item>
-    <title>Knative健康检查</title>
-    <link>https://www.likakuli.com/posts/knative-healthcheck/</link>
-    <pubDate>Thu, 20 Aug 2020 13:26:19 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/knative-healthcheck/</guid>
-    <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 在支持了前面的定制功能后，集群中部署ksvc服务时会报Ingre]]></description>
-</item><item>
-    <title>Knative通过header访问指定版本</title>
-    <link>https://www.likakuli.com/posts/knative-version/</link>
-    <pubDate>Wed, 19 Aug 2020 17:26:47 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/knative-version/</guid>
-    <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
-</item><item>
-    <title>Knative根据Path转发请求</title>
-    <link>https://www.likakuli.com/posts/knative-pathfilter/</link>
-    <pubDate>Wed, 19 Aug 2020 17:26:18 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/knative-pathfilter/</guid>
-    <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 最近在搭建公司级的serverless平台，需要用到域名来访问内]]></description>
-</item><item>
-    <title>Knative组件镜像制作</title>
-    <link>https://www.likakuli.com/posts/knative-build/</link>
-    <pubDate>Thu, 09 Jul 2020 21:00:16 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/knative-build/</guid>
-    <description><![CDATA[背景 knative 0.14.0 最近在搭建公司级的serverless平台，遇到某些问题，看了源码发现无法通过其扩展机制来解决，遂决定修改源码来解决 过程 源码很快修改]]></description>
 </item></channel>
 </rss>
