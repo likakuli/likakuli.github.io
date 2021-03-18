@@ -2,14 +2,14 @@
     xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
     xmlns:xhtml="http://www.w3.org/1999/xhtml"
     ><url>
-            <loc>https://www.likakuli.com/categories/</loc><lastmod>2021-03-18T20:45:58&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
-            <loc>https://www.likakuli.com/tags/informer/</loc><lastmod>2021-03-18T20:45:58&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
-            <loc>https://www.likakuli.com/</loc><lastmod>2021-03-18T20:45:58&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
-            <loc>https://www.likakuli.com/tags/kubernetes/</loc><lastmod>2021-03-18T20:45:58&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
-            <loc>https://www.likakuli.com/posts/kubernetes-informer/</loc><lastmod>2021-03-18T20:45:58&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
-            <loc>https://www.likakuli.com/posts/</loc><lastmod>2021-03-18T20:45:58&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
-            <loc>https://www.likakuli.com/tags/</loc><lastmod>2021-03-18T20:45:58&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
-            <loc>https://www.likakuli.com/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</loc><lastmod>2021-03-18T20:45:58&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://www.likakuli.com/categories/</loc><lastmod>2021-03-18T20:50:16&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://www.likakuli.com/tags/informer/</loc><lastmod>2021-03-18T20:50:16&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://www.likakuli.com/</loc><lastmod>2021-03-18T20:50:16&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://www.likakuli.com/tags/kubernetes/</loc><lastmod>2021-03-18T20:50:16&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://www.likakuli.com/posts/kubernetes-informer/</loc><lastmod>2021-03-18T20:50:16&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://www.likakuli.com/posts/</loc><lastmod>2021-03-18T20:50:16&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://www.likakuli.com/tags/</loc><lastmod>2021-03-18T20:50:16&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://www.likakuli.com/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</loc><lastmod>2021-03-18T20:50:16&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
             <loc>https://www.likakuli.com/posts/kubernetes-informer-localstore/</loc><lastmod>2021-03-18T20:45:58&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
             <loc>https://www.likakuli.com/posts/kubernetes-informer-deltafifo/</loc><lastmod>2021-03-18T20:45:58&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
             <loc>https://www.likakuli.com/tags/cgroup/</loc><lastmod>2021-03-18T20:45:58&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>

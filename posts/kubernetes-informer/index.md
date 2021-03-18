@@ -7,7 +7,7 @@
 
 详细内容参考：
 
-[Informer DeltaFIFO](./kubernetes-informer-deltafifo)
+[Informer DeltaFIFO](../kubernetes-informer-deltafifo)
 
 [Informer LocalStore](../kubernetes-informer-localstore)
 
