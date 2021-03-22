@@ -234,5 +234,5 @@ func (r *Reflector) ListAndWatch(stopCh <-chan struct{}) error {
 
 ### 总结
 
-至此，已经清楚了具体的原因，ListAndWatch的修改很简单，已经给官方提了[pull request](https://github.com/kubernetes/kubernetes/pull/81634)修复这个问题。
+至此，已经清楚了具体的原因，ListAndWatch的修改很简单，已经给官方提了[pull request](https://github.com/kubernetes/kubernetes/pull/81634) 修复这个问题。
 
