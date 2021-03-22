@@ -380,5 +380,5 @@ func UpdateContainerStat() {
 
 ### 总结
 
-出现内存和unix socket泄露的条件：agent版本是1.20.0（其他版本可能也有问题） 且 live-restore: true 且 设置了live-restore之后重启过dockerd。
+docker使用下来给人的感觉就是存在太多的问题了，后面还会有多篇有关docker资源泄露、目录umount失败、读写pipe失败等各式各样的问题，点关注，不迷路，后续将陆续更新放出。
 

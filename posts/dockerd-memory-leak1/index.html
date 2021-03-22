@@ -29,7 +29,7 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/dockerd-memory-leak1\/"
-        },"genre": "posts","keywords": "docker","wordcount":  5624 ,
+        },"genre": "posts","keywords": "docker","wordcount":  5637 ,
         "url": "https:\/\/www.likakuli.com\/posts\/dockerd-memory-leak1\/","datePublished": "2019-07-09T20:06:53+08:00","dateModified": "2021-03-22T12:07:13+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
@@ -111,7 +111,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">Dockerd内存泄露</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-07-09">2019-07-09</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5624 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-07-09">2019-07-09</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5637 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 12 分钟&nbsp;<span id="/posts/dockerd-memory-leak1/" class="leancloud_visitors" data-flag-title="Dockerd内存泄露">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
@@ -820,7 +820,7 @@ u_str  ESTAB      0      0            * -219386905            *      -219569454 
 </div>
 </div><p>终于验证了问题的所在，客户端没有超时设置，服务端也没有，10s获取一次所有容器的stats信息，假如有20个容器，就会导致一天创建172800个chan（内存泄露）和172800 * 2个socket（fd泄露，dockerd和agent各占一半）</p>
 <h3 id="总结">总结</h3>
-<p>出现内存和unix socket泄露的条件：agent版本是1.20.0（其他版本可能也有问题） 且 live-restore: true 且 设置了live-restore之后重启过dockerd。</p>
+<p>docker使用下来给人的感觉就是存在太多的问题了，后面还会有多篇有关docker资源泄露、目录umount失败、读写pipe失败等各式各样的问题，点关注，不迷路，后续将陆续更新放出。</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
