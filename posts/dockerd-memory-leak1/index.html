@@ -11,7 +11,7 @@
 <meta property="og:url" content="https://www.likakuli.com/posts/dockerd-memory-leak1/" />
 <meta property="og:image" content="https://www.likakuli.com/logo.png"/>
 <meta property="article:published_time" content="2019-07-09T20:06:53+08:00" />
-<meta property="article:modified_time" content="2020-11-04T22:17:21+08:00" />
+<meta property="article:modified_time" content="2021-03-22T12:07:13+08:00" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
@@ -29,8 +29,8 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/dockerd-memory-leak1\/"
-        },"genre": "posts","keywords": "docker","wordcount":  5613 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/dockerd-memory-leak1\/","datePublished": "2019-07-09T20:06:53+08:00","dateModified": "2020-11-04T22:17:21+08:00","publisher": {
+        },"genre": "posts","keywords": "docker","wordcount":  5624 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/dockerd-memory-leak1\/","datePublished": "2019-07-09T20:06:53+08:00","dateModified": "2021-03-22T12:07:13+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -111,7 +111,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">Dockerd内存泄露</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-07-09">2019-07-09</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5613 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-07-09">2019-07-09</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5624 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 12 分钟&nbsp;<span id="/posts/dockerd-memory-leak1/" class="leancloud_visitors" data-flag-title="Dockerd内存泄露">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
@@ -613,51 +613,51 @@
 </span><span class="lnt">38
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback">func executeInNetns(newNs, curNs netns.NsHandle) (func(), error) {
-   ...
-   if newNs.IsOpen() {
-      runtime.LockOSThread()
-      unlockThd = runtime.UnlockOSThread
-      if !curNs.IsOpen() {
-         if curNs, err = netns.Get(); err != nil {
-            restore()
-            return nil, fmt.Errorf(&#34;could not get current namespace while creating netlink socket: %v&#34;, err)
-         }
-         closeNs = curNs.Close
-      }
-      if err := netns.Set(newNs); err != nil {
-         restore()
-         return nil, fmt.Errorf(&#34;failed to set into network namespace %d while creating netlink socket: %v&#34;, newNs, err)
-      }
-      moveBack = netns.Set
-   }
-   return restore, nil
-}
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">executeInNetns</span><span class="p">(</span><span class="nx">newNs</span><span class="p">,</span> <span class="nx">curNs</span> <span class="nx">netns</span><span class="p">.</span><span class="nx">NsHandle</span><span class="p">)</span> <span class="p">(</span><span class="kd">func</span><span class="p">(),</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="o">...</span>
+   <span class="k">if</span> <span class="nx">newNs</span><span class="p">.</span><span class="nf">IsOpen</span><span class="p">()</span> <span class="p">{</span>
+      <span class="nx">runtime</span><span class="p">.</span><span class="nf">LockOSThread</span><span class="p">()</span>
+      <span class="nx">unlockThd</span> <span class="p">=</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">UnlockOSThread</span>
+      <span class="k">if</span> <span class="p">!</span><span class="nx">curNs</span><span class="p">.</span><span class="nf">IsOpen</span><span class="p">()</span> <span class="p">{</span>
+         <span class="k">if</span> <span class="nx">curNs</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">netns</span><span class="p">.</span><span class="nf">Get</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nf">restore</span><span class="p">()</span>
+            <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;could not get current namespace while creating netlink socket: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+         <span class="p">}</span>
+         <span class="nx">closeNs</span> <span class="p">=</span> <span class="nx">curNs</span><span class="p">.</span><span class="nx">Close</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">netns</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">newNs</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="nf">restore</span><span class="p">()</span>
+         <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to set into network namespace %d while creating netlink socket: %v&#34;</span><span class="p">,</span> <span class="nx">newNs</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+      <span class="p">}</span>
+      <span class="nx">moveBack</span> <span class="p">=</span> <span class="nx">netns</span><span class="p">.</span><span class="nx">Set</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="nx">restore</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
  
  
-// Set sets the current network namespace to the namespace represented
-// by NsHandle.
-func Set(ns NsHandle) (err error) {
-   return Setns(ns, CLONE_NEWNET)
-}
+<span class="c1">// Set sets the current network namespace to the namespace represented
+</span><span class="c1">// by NsHandle.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Set</span><span class="p">(</span><span class="nx">ns</span> <span class="nx">NsHandle</span><span class="p">)</span> <span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="k">return</span> <span class="nf">Setns</span><span class="p">(</span><span class="nx">ns</span><span class="p">,</span> <span class="nx">CLONE_NEWNET</span><span class="p">)</span>
+<span class="p">}</span>
  
  
-// Setns sets namespace using syscall. Note that this should be a method
-// in syscall but it has not been added.
-func Setns(ns NsHandle, nstype int) (err error) {
-   _, _, e1 := syscall.Syscall(SYS_SETNS, uintptr(ns), uintptr(nstype), 0)
-   if e1 != 0 {
-      err = e1
-   }
-   return
-}
+<span class="c1">// Setns sets namespace using syscall. Note that this should be a method
+</span><span class="c1">// in syscall but it has not been added.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Setns</span><span class="p">(</span><span class="nx">ns</span> <span class="nx">NsHandle</span><span class="p">,</span> <span class="nx">nstype</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="nx">_</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">e1</span> <span class="o">:=</span> <span class="nx">syscall</span><span class="p">.</span><span class="nf">Syscall</span><span class="p">(</span><span class="nx">SYS_SETNS</span><span class="p">,</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">ns</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">nstype</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+   <span class="k">if</span> <span class="nx">e1</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+      <span class="nx">err</span> <span class="p">=</span> <span class="nx">e1</span>
+   <span class="p">}</span>
+   <span class="k">return</span>
+<span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>可以看到最终是在调用系统调用进入netns时出错了，但是去宿主上操作，实际使可以执行ip netns exec命令的，这个错在网上搜也可以搜到，如<a href="https://github.com/moby/moby/issues/33656">https://github.com/moby/moby/issues/33656</a>，但是经过去宿主上查看并没有ds_agent进程，也可能是有其他病病毒扫描类的软件导致的，但是可能性不大。后续把netns操作的相关代码单独拿出来搞了个demo，到宿主上执行仍然会报此错误，而且不存是在有问题还是没问题的宿主上，后经孔飞兄排查即测试，发现只要把docker参数MountFlags=slave去掉，demo就能运行成功，dockerd启动就不会再报这个错，但是同时又发现了其他问题，相关问题简体见如下issue
 <a href="https://blog.frognew.com/2018/02/k8s-unable-delete-pod-docker-device-busy.html">https://blog.frognew.com/2018/02/k8s-unable-delete-pod-docker-device-busy.html</a></p>
 <p><a href="https://github.com/moby/moby/issues/35873">https://github.com/moby/moby/issues/35873</a></p>
 <p><a href="https://access.redhat.com/solutions/2991041">https://access.redhat.com/solutions/2991041</a></p>
-<p>其中又涉及到多个其他issue，涉及docker版本和linux版本的问题，从上面为issue里看这种问题暂时是无解的，无论怎么设置MountFlags，只要与live-restore一起使用就会存在问题。就目前线上配置看，除了内存泄露，还没有反馈其他问题。所以可以先找出来api调用方，规范api调用，及时关闭超时连接也是可以避免内存泄露的。而且辛亏现在用的物理网路，否则还可能出现把同一个ip分配给多个容器的bug。之前出现过的netns泄露的问题可能也与此有关</p>
+<p>其中又涉及到多个其他issue，涉及docker版本和linux版本的问题，从上面为issue里看这种问题暂时是无解的，无论怎么设置MountFlags，只要与live-restore一起使用就会存在问题，后面会单独有一篇来分析不同版本的docker，MountFlags应该如何设置。就目前线上配置看，除了内存泄露，还没有反馈其他问题，所以可以先找出来api调用方，规范api调用，及时关闭超时连接也是可以避免内存泄露的。而且辛亏现在用的物理网路，否则还可能出现把同一个ip分配给多个容器的bug。之前出现过的netns泄露的问题可能也与此有关。</p>
 <h4 id="谁是调用方">谁是调用方</h4>
 <p>经过上面的排查，已经可以明确问题的原因，对应的代码逻辑。虽然还无法从根本上解决，但是找到调用方，规范调用规则也是可以避免这个问题的，如何找到调用方呢，一般找api调用方，只需要netstat找对用端口就好了，会显示出来调用方的IP和Port，但是这里并不是通过ip:port形式访问的，而是直接通过docker.sock访问，因为线上docker并没有开启tcp访问。其实这里也可以验证一下，因为每秒调用一次api，创建一个新的链接，一定会导致fd泄露的，可以直接到进入/proc/{dockerd&rsquo;s pid}/fd，看里面文件个数，确实是在一直增加的，而且增长速度与宿主上的容器数有关，这也是一个潜在的风险点。</p>
 <p>剩下的问题就是寻找unix socket的peer，目前我们已经一端是docker，只需要找到另一端就可以了，步骤如下</p>
@@ -676,13 +676,13 @@ func Setns(ns NsHandle, nstype int) (err error) {
 </li>
 <li>
 <p>在右边的红框里随意挑一个，执行ss -a &ndash;unix      -p | awk &lsquo;$6==-219386905&rsquo; ，输出如下
-u_str  ESTAB      0      0            * -219386905            *      -219569454                 users:((&ldquo;odin-agent&rdquo;,pid=1962370,fd=55416))
-可以看到另一端是odin-agent</p>
+u_str  ESTAB      0      0            * -219386905            *      -219569454                 users:((&ldquo;agent&rdquo;,pid=1962370,fd=55416))
+可以看到另一端是agent</p>
 </li>
 </ol>
 <h4 id="结束了吗">结束了吗</h4>
 <p>调用方是谁也查清楚了，按照上面的分析，只要设置了live-restore: true且设置完执行过重启的dockerd都存在内存泄露的情况，通过一个脚本批量执行了一下，结果却发现例外，例如ddcloud-underlay-kube-node288.ys就不存在内存泄露，此时心中又是万马奔腾啊，难道之前的分析是错的？</p>
-<p>登录到没问题的机器上，查看dockerd的日志，failed to create osl candbox的日志有，但是每秒一次的collecting stats的日志却没有。上面分析过，只有当前存在未关闭的连接时，每秒一次的遍历才能发现有需要执行的stats，才会打印collecting stats的日志。可以通过执行docker stats命令验证，执行之后再去看dockerd的日志就会发现出现collecting stats的日志。也正因为没有未关闭的连接，所以不会出现内存和unix socket泄露，经过查看调用方即odin-agent的版本，发现是1.18.1</p>
+<p>登录到没问题的机器上，查看dockerd的日志，failed to create osl candbox的日志有，但是每秒一次的collecting stats的日志却没有。上面分析过，只有当前存在未关闭的连接时，每秒一次的遍历才能发现有需要执行的stats，才会打印collecting stats的日志。可以通过执行docker stats命令验证，执行之后再去看dockerd的日志就会发现出现collecting stats的日志。也正因为没有未关闭的连接，所以不会出现内存和unix socket泄露，经过查看调用方即agent的版本，发现是1.18.1</p>
 <p><img
         class="lazyload"
         src="/svg/loading.min.svg"
@@ -699,7 +699,7 @@ u_str  ESTAB      0      0            * -219386905            *      -219569454 
         data-sizes="auto"
         alt="/posts/dockerd-memory-leak1/dockerd_odinagent_version2.png"
         title="img" /></p>
-<p>至此，已找到问题，1.18.1版本的odin-agent还没有问题，1.20.0版本有问题。顺便去看了一眼odin-agent的代码，目前master分支的相关代码如下</p>
+<p>至此，已找到问题，1.18.1版本的agent还没有问题，1.20.0版本有问题。顺便去看了一眼agent的代码，当时master分支的相关代码如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt"> 1
@@ -760,67 +760,67 @@ u_str  ESTAB      0      0            * -219386905            *      -219569454 
 </span><span class="lnt">56
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback">//拿到容器stats
-func getContainerStats(containerID string) (threadNum int, err error) {
-        if dockerClient == nil {
-               dlog.Error(&#34;dockerClient is nil!!!&#34;)
-               return
-        }
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">//拿到容器stats
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">getContainerStats</span><span class="p">(</span><span class="nx">containerID</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">threadNum</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="nx">dockerClient</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+               <span class="nx">dlog</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="s">&#34;dockerClient is nil!!!&#34;</span><span class="p">)</span>
+               <span class="k">return</span>
+        <span class="p">}</span>
  
  
-    // 万恶之源，context.Background()
-        resp, err := dockerClient.ContainerStats(context.Background(), containerID, false)
-        if err != nil {
-               dlog.Error(err)
-               return
-        }
+    <span class="c1">// 万恶之源，context.Background()
+</span><span class="c1"></span>        <span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dockerClient</span><span class="p">.</span><span class="nf">ContainerStats</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="nx">containerID</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+               <span class="nx">dlog</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+               <span class="k">return</span>
+        <span class="p">}</span>
  
-        var stats DockerStats
-        err = json.NewDecoder(resp.Body).Decode(&amp;stats)
-        if err != nil {
-               return
-        }
+        <span class="kd">var</span> <span class="nx">stats</span> <span class="nx">DockerStats</span>
+        <span class="nx">err</span> <span class="p">=</span> <span class="nx">json</span><span class="p">.</span><span class="nf">NewDecoder</span><span class="p">(</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Body</span><span class="p">).</span><span class="nf">Decode</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">stats</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+               <span class="k">return</span>
+        <span class="p">}</span>
  
-        threadNum = stats.PidsStats.Current
-        return
-}
+        <span class="nx">threadNum</span> <span class="p">=</span> <span class="nx">stats</span><span class="p">.</span><span class="nx">PidsStats</span><span class="p">.</span><span class="nx">Current</span>
+        <span class="k">return</span>
+<span class="p">}</span>
  
  
-func UpdateContainerStat() {
-        fp := &#34;/home/odin/container-host&#34;
-        if !file.IsExist(fp) {
-               return
-        }
-        dlog.Info(&#34;UpdateContainerStat start...&#34;)
+<span class="kd">func</span> <span class="nf">UpdateContainerStat</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">fp</span> <span class="o">:=</span> <span class="s">&#34;/home/odin/container-host&#34;</span>
+        <span class="k">if</span> <span class="p">!</span><span class="nx">file</span><span class="p">.</span><span class="nf">IsExist</span><span class="p">(</span><span class="nx">fp</span><span class="p">)</span> <span class="p">{</span>
+               <span class="k">return</span>
+        <span class="p">}</span>
+        <span class="nx">dlog</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;UpdateContainerStat start...&#34;</span><span class="p">)</span>
  
-        go CleanContainerInspectMap()
+        <span class="k">go</span> <span class="nf">CleanContainerInspectMap</span><span class="p">()</span>
  
-        var err error
-        ContainerType, err = file.ToString(fp)
-        if err != nil {
-               dlog.Error(&#34;read file err:&#34;, err, fp)
-               return
-        }
+        <span class="kd">var</span> <span class="nx">err</span> <span class="kt">error</span>
+        <span class="nx">ContainerType</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">file</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(</span><span class="nx">fp</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+               <span class="nx">dlog</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="s">&#34;read file err:&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">,</span> <span class="nx">fp</span><span class="p">)</span>
+               <span class="k">return</span>
+        <span class="p">}</span>
  
-        GetMajorMinor()
+        <span class="nf">GetMajorMinor</span><span class="p">()</span>
  
-        dockerClient, err = dockerclient.NewEnvClient()
-        if err != nil {
-               dlog.Error(err)
-        }
+        <span class="nx">dockerClient</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">dockerclient</span><span class="p">.</span><span class="nf">NewEnvClient</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+               <span class="nx">dlog</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+        <span class="p">}</span>
  
-    // 10s
-        t1 := time.NewTicker(time.Duration(common.DEFAULT_INTERVAL[common.TYPE_DOCKER]) * time.Second)
-        for {
-               updateContainerStat()
-               &lt;-t1.C
-        }
-}
+    <span class="c1">// 10s
+</span><span class="c1"></span>        <span class="nx">t1</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">NewTicker</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">common</span><span class="p">.</span><span class="nx">DEFAULT_INTERVAL</span><span class="p">[</span><span class="nx">common</span><span class="p">.</span><span class="nx">TYPE_DOCKER</span><span class="p">])</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">{</span>
+               <span class="nf">updateContainerStat</span><span class="p">()</span>
+               <span class="o">&lt;-</span><span class="nx">t1</span><span class="p">.</span><span class="nx">C</span>
+        <span class="p">}</span>
+<span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
-</div><p>终于验证了问题的所在，客户端没有超时设置，服务端也没有，10s获取一次所有容器的stats信息，假如有20个容器，就会导致一天创建172800个chan（内存泄露）和172800 * 2个socket（fd泄露，dockerd和odin-agent各占一半）</p>
+</div><p>终于验证了问题的所在，客户端没有超时设置，服务端也没有，10s获取一次所有容器的stats信息，假如有20个容器，就会导致一天创建172800个chan（内存泄露）和172800 * 2个socket（fd泄露，dockerd和agent各占一半）</p>
 <h3 id="总结">总结</h3>
-<p>出现内存和unix socket泄露的条件：odin-agent版本是1.20.0（其他版本可能也有问题） 且 live-restore: true 且 设置了live-restore之后重启过dockerd。</p>
+<p>出现内存和unix socket泄露的条件：agent版本是1.20.0（其他版本可能也有问题） 且 live-restore: true 且 设置了live-restore之后重启过dockerd。</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -836,7 +836,7 @@ func UpdateContainerStat() {
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2020-11-04</span>
+                <span>更新于 2021-03-22</span>
             </div>
             <div class="post-info-license"></div>
         </div>

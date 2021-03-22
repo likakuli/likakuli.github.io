@@ -240,7 +240,7 @@ func (c *controller) SandboxByID(id string) (Sandbox, error) {
 
 4. 继续看restore sandbox failed的错误，代码位置如下
 
-```
+```go
 func executeInNetns(newNs, curNs netns.NsHandle) (func(), error) {
    ...
    if newNs.IsOpen() {
@@ -288,7 +288,7 @@ func Setns(ns NsHandle, nstype int) (err error) {
 
 <https://access.redhat.com/solutions/2991041>
 
-其中又涉及到多个其他issue，涉及docker版本和linux版本的问题，从上面为issue里看这种问题暂时是无解的，无论怎么设置MountFlags，只要与live-restore一起使用就会存在问题。就目前线上配置看，除了内存泄露，还没有反馈其他问题。所以可以先找出来api调用方，规范api调用，及时关闭超时连接也是可以避免内存泄露的。而且辛亏现在用的物理网路，否则还可能出现把同一个ip分配给多个容器的bug。之前出现过的netns泄露的问题可能也与此有关
+其中又涉及到多个其他issue，涉及docker版本和linux版本的问题，从上面为issue里看这种问题暂时是无解的，无论怎么设置MountFlags，只要与live-restore一起使用就会存在问题，后面会单独有一篇来分析不同版本的docker，MountFlags应该如何设置。就目前线上配置看，除了内存泄露，还没有反馈其他问题，所以可以先找出来api调用方，规范api调用，及时关闭超时连接也是可以避免内存泄露的。而且辛亏现在用的物理网路，否则还可能出现把同一个ip分配给多个容器的bug。之前出现过的netns泄露的问题可能也与此有关。
 
 #### 谁是调用方
 
@@ -302,22 +302,22 @@ func Setns(ns NsHandle, nstype int) (err error) {
          左边红框是dockerd开的一个socket，右边的框是调用者开的socket
     
 2. 在右边的红框里随意挑一个，执行ss -a --unix      -p | awk '$6==-219386905' ，输出如下
-         u_str  ESTAB      0      0            * -219386905            *      -219569454                 users:(("odin-agent",pid=1962370,fd=55416))
-         可以看到另一端是odin-agent
+         u_str  ESTAB      0      0            * -219386905            *      -219569454                 users:(("agent",pid=1962370,fd=55416))
+         可以看到另一端是agent
 
 #### 结束了吗
 
 调用方是谁也查清楚了，按照上面的分析，只要设置了live-restore: true且设置完执行过重启的dockerd都存在内存泄露的情况，通过一个脚本批量执行了一下，结果却发现例外，例如ddcloud-underlay-kube-node288.ys就不存在内存泄露，此时心中又是万马奔腾啊，难道之前的分析是错的？
 
-登录到没问题的机器上，查看dockerd的日志，failed to create osl candbox的日志有，但是每秒一次的collecting stats的日志却没有。上面分析过，只有当前存在未关闭的连接时，每秒一次的遍历才能发现有需要执行的stats，才会打印collecting stats的日志。可以通过执行docker stats命令验证，执行之后再去看dockerd的日志就会发现出现collecting stats的日志。也正因为没有未关闭的连接，所以不会出现内存和unix socket泄露，经过查看调用方即odin-agent的版本，发现是1.18.1
+登录到没问题的机器上，查看dockerd的日志，failed to create osl candbox的日志有，但是每秒一次的collecting stats的日志却没有。上面分析过，只有当前存在未关闭的连接时，每秒一次的遍历才能发现有需要执行的stats，才会打印collecting stats的日志。可以通过执行docker stats命令验证，执行之后再去看dockerd的日志就会发现出现collecting stats的日志。也正因为没有未关闭的连接，所以不会出现内存和unix socket泄露，经过查看调用方即agent的版本，发现是1.18.1
 
 ![img](dockerd_odinagent_version1.png)
 
 ![img](dockerd_odinagent_version2.png)
 
-至此，已找到问题，1.18.1版本的odin-agent还没有问题，1.20.0版本有问题。顺便去看了一眼odin-agent的代码，目前master分支的相关代码如下
+至此，已找到问题，1.18.1版本的agent还没有问题，1.20.0版本有问题。顺便去看了一眼agent的代码，当时master分支的相关代码如下
 
-```
+```go
 //拿到容器stats
 func getContainerStats(containerID string) (threadNum int, err error) {
         if dockerClient == nil {
@@ -376,9 +376,9 @@ func UpdateContainerStat() {
 }
 ```
 
-终于验证了问题的所在，客户端没有超时设置，服务端也没有，10s获取一次所有容器的stats信息，假如有20个容器，就会导致一天创建172800个chan（内存泄露）和172800 * 2个socket（fd泄露，dockerd和odin-agent各占一半）
+终于验证了问题的所在，客户端没有超时设置，服务端也没有，10s获取一次所有容器的stats信息，假如有20个容器，就会导致一天创建172800个chan（内存泄露）和172800 * 2个socket（fd泄露，dockerd和agent各占一半）
 
 ### 总结
 
-出现内存和unix socket泄露的条件：odin-agent版本是1.20.0（其他版本可能也有问题） 且 live-restore: true 且 设置了live-restore之后重启过dockerd。
+出现内存和unix socket泄露的条件：agent版本是1.20.0（其他版本可能也有问题） 且 live-restore: true 且 设置了live-restore之后重启过dockerd。
 
