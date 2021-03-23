@@ -11,7 +11,7 @@
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-statefulset-sync/" />
 <meta property="og:image" content="https://www.likakuli.com/logo.png"/>
 <meta property="article:published_time" content="2019-03-26T11:16:03+08:00" />
-<meta property="article:modified_time" content="2020-11-04T22:17:21+08:00" />
+<meta property="article:modified_time" content="2021-03-23T13:07:03+08:00" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
@@ -29,8 +29,8 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/kubernetes-statefulset-sync\/"
-        },"genre": "posts","keywords": "kubernetes","wordcount":  1950 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-statefulset-sync\/","datePublished": "2019-03-26T11:16:03+08:00","dateModified": "2020-11-04T22:17:21+08:00","publisher": {
+        },"genre": "posts","keywords": "kubernetes","wordcount":  2310 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-statefulset-sync\/","datePublished": "2019-03-26T11:16:03+08:00","dateModified": "2021-03-23T13:07:03+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -111,8 +111,8 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">Statefulset创建pod慢</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a>&nbsp;<a href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"><i class="far fa-folder fa-fw"></i>性能优化</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-03-26">2019-03-26</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1950 字&nbsp;
-                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 4 分钟&nbsp;<span id="/posts/kubernetes-statefulset-sync/" class="leancloud_visitors" data-flag-title="Statefulset创建pod慢">
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-03-26">2019-03-26</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 2310 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 5 分钟&nbsp;<span id="/posts/kubernetes-statefulset-sync/" class="leancloud_visitors" data-flag-title="Statefulset创建pod慢">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
@@ -154,7 +154,7 @@
         data-sizes="auto"
         alt="/posts/kubernetes-statefulset-sync/kube-controller-manager-slowly.png"
         title="img" /></p>
-<p>还剩下两种可能，不过细想的话，第一种可能也不大，因为watch是通用的，没道理同一个集群kube-controller-manager里的watch就慢，kube-scheuler的watch就快。那就很有可能是从watch到变化后把sts入队列到从队列中拿到sts这个阶段耗时太长了。源码中并没有这一部分的耗时统计，但是从源码中可以看到整个处理过程是同步到的，即watch的所有sts按顺序入队列，消费者在顺序的从队列中拿到，每消费完一个，再去拿另一个，串行执行，那问题就来了，虽然单个sts执行耗时在毫秒级，但是真个ys02的sts数量在2000+，按平均每个sts耗时40ms计算，粗略估算一下处理完一轮的话也需要40ms*2000=80s的时间，到这里已经离真相不远了，但还有一个问题，那就是kube-controller-manager在初始化的时候是会把所有的sts加载一遍放入队列中的，处理完一遍哪怕耗时2分钟，但是处理完一遍之后只watch变化的sts，数量就会少很多了，所以处理完初始化时加载的所有sts后，按道理再有sts变化应该是可以及时处理的，因为此时队列中基本没有sts了。带着问题再去看源码，发现了一个神奇的地方，如下</p>
+<p>还剩下两种可能，不过细想的话，第一种可能也不大，因为watch是通用的，没道理同一个集群kube-controller-manager里的watch就慢，kube-scheuler的watch就快。那就很有可能是从watch到变化后把sts入队列到从队列中拿到sts这个阶段耗时太长了。源码中并没有这一部分的耗时统计，但是从源码中可以看到整个处理过程是同步到的，即watch的所有sts按顺序入队列，消费者在顺序的从队列中拿到，每消费完一个，再去拿另一个，串行执行，那问题就来了，虽然单个sts执行耗时在毫秒级，但是整个集群的sts数量在2000+，按平均每个sts耗时40ms计算，粗略估算一下处理完一轮的话也需要40ms*2000=80s的时间，到这里已经离真相不远了，但还有一个问题，那就是kube-controller-manager在初始化的时候是会把所有的sts加载一遍放入队列中的，处理完一遍哪怕耗时2分钟，但是处理完一遍之后只watch变化的sts，数量就会少很多了，所以处理完初始化时加载的所有sts后，按道理再有sts变化应该是可以及时处理的，因为此时队列中基本没有sts了。带着问题再去看源码，发现了一个神奇的地方，如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt"> 1
@@ -191,7 +191,7 @@
 </span><span class="c1"></span><span class="p">)</span>
 </code></pre></td></tr></table>
 </div>
-</div><p>这就对了，上面这段代码意思是只要watch到sts的变化，就会把对应的sts放入队列，<strong>且每隔30s<strong><strong>会把全部sts</strong></strong>重新入一遍队列</strong>，再加上刚才的估算，80s才能处理完所有sts，在未处理完之前（处理了30s时）就又会把所有的sts重新加入到队列中（并不是简单粗暴的把所有sts入队列，中间还会做一些处理，过滤掉一些不需要重复入队列的sts），这就会导致sts的待处理队列中始终有2000+个元素，新watch到的变化会加到队尾，从而导致sts创建后过了很久Pod才创建，因为sts controller一直在消费之前未处理完的其他sts了。</p>
+</div><p>这就对了，上面这段代码意思是只要watch到sts的变化，就会把对应的sts放入队列，<strong>且每隔30s</strong>会把全部sts重新入一遍队列，再加上刚才的估算，80s才能处理完所有sts，在未处理完之前（处理了30s时）就又会把所有的sts重新加入到队列中（并不是简单粗暴的把所有sts入队列，中间还会做一些处理，过滤掉一些不需要重复入队列的sts），这就会导致sts的待处理队列中始终有2000+个元素，新watch到的变化会加到队尾，从而导致sts创建后过了很久Pod才创建，因为sts controller一直在消费之前未处理完的其他sts了。</p>
 <p>下面写了一个Demo来演示这个问题，代码很简单，如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -286,7 +286,7 @@
 </span><span class="lnt">89
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"> <span class="kn">package</span> <span class="nx">main</span>
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kn">package</span> <span class="nx">main</span>
  
 <span class="kn">import</span> <span class="p">(</span>
    <span class="s">&#34;fmt&#34;</span>
@@ -308,7 +308,7 @@
    <span class="k">defer</span> <span class="nx">queue</span><span class="p">.</span><span class="nf">ShutDown</span><span class="p">()</span>
  
    <span class="nx">clientset</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">kubernetes</span><span class="p">.</span><span class="nf">NewForConfig</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">rest</span><span class="p">.</span><span class="nx">Config</span><span class="p">{</span>
-      <span class="nx">Host</span><span class="p">:</span> <span class="s">&#34;http://10.89.107.26:8080&#34;</span><span class="p">,</span>
+      <span class="nx">Host</span><span class="p">:</span> <span class="s">&#34;http://10.80.101.22:8080&#34;</span><span class="p">,</span>
    <span class="p">})</span>
    <span class="nx">factor</span> <span class="o">:=</span> <span class="nx">rand</span><span class="p">.</span><span class="nf">Float64</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
    <span class="nx">syncPeriod</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nb">float64</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="mi">12</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span><span class="p">).</span><span class="nf">Nanoseconds</span><span class="p">())</span> <span class="o">*</span> <span class="nx">factor</span><span class="p">)</span>
@@ -399,12 +399,11 @@
 <p>想到两种优化方案</p>
 <ol>
 <li>去掉定期（30s）全量同步的机制，目前看其他controller，如ReplicationController，ServiceController，EndpointsController等都没有设置定期全量同步</li>
-<li>保留定期同步，添加已处理的sts的缓存，每次从queue中拿到一个新的sts时，比较已处理缓存中时候存在先相同的sts(resourceversion相同)，存在则忽略此sts，否则进行处理</li>
+<li>保留定期同步，添加已处理的sts的缓存，每次从queue中拿到一个新的sts时，比较已处理缓存中是否存在相同的sts(resourceversion相同)，存在则忽略此sts，否则进行处理</li>
 </ol>
 <h3 id="社区">社区</h3>
-<p>上述问题已反馈社区，见<br>
-<a href="https://github.com/kubernetes/kubernetes/issues/75495">https://github.com/kubernetes/kubernetes/issues/75495</a></p>
-<p><a href="https://github.com/kubernetes/kubernetes/pull/75622">https://github.com/kubernetes/kubernetes/pull/75622</a></p>
+<p>上述问题已反馈社区，修复方式就是方案1，直接去掉了30s的同步机制。见https://github.com/kubernetes/kubernetes/pull/75622</p>
+<p>这里需要注意一点：30s的同步机制并不是从kube-apiserver拉取全量数据，而是把Informer本地缓存的数据（位于Indexer中）全量同步一遍，目的是为了防止出现在事件处理函数中与外部组件交互时出错的情况，参考这个issue：https://github.com/kubernetes/kubernetes/issues/75495，但是sts控制器本身没有依赖任何外部（k8s以外）组件，所以就不需要30s同步了。但是我们以Operator实现的自定义Controller就需要根据实际情况激进型设置了，后面会专门有一个系列详细讲Informer的源码，敬请期待。</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -420,7 +419,7 @@
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2020-11-04</span>
+                <span>更新于 2021-03-23</span>
             </div>
             <div class="post-info-license"></div>
         </div>
