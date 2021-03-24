@@ -50,7 +50,7 @@ func (m *Mutex) Lock(ctx context.Context) error {
    // 这里的pfx就是prefix，就是传进来的前缀，后面的s.Lease()会返回一个租约，是一个int64的整数，和session有关
    m.myKey = fmt.Sprintf("%s%x", m.pfx, s.Lease())
    // 这里比较上面prefix/lease的createrevision是否为0，为0表示目前不存在该key，需要执行Put操作，下面可以看到
-   // 部位0表示已经有对应的key了，只需要执行Get就行
+   // 不为0表示已经有对应的key了，只需要执行Get就行
    // createrevision是自增的
    cmp := v3.Compare(v3.CreateRevision(m.myKey), "=", 0)
    // put self in lock waiters via myKey; oldest waiter holds lock
@@ -157,7 +157,7 @@ func WithPrefix() OpOption {
 }
 ```
 
-看到上面的是三个函数后，大致就找到了对应的源码的感觉，因为看到了WithPrefix函数，和上面的猜测正好匹配。所以getOwner的具体执行效果是会把虽有以lockkey开头的kv都拿到，且按照createrevision升序排列，取第一个值，这个意思就很明白了，就是要拿到当前以lockkey为prefix的且createrevision最小的那个key，就是目前已经拿到锁的key。
+看到上面的是三个函数后，大致就找到了对应的源码的感觉，因为看到了WithPrefix函数，和上面的猜测正好匹配。所以getOwner的具体执行效果是会把所有以lockkey开头的kv都拿到，且按照createrevision升序排列，取第一个值，这个意思就很明白了，就是要拿到当前以lockkey为prefix的且createrevision最小的那个key，就是目前已经拿到锁的key。
 
 看了上面的源码就可以明白为什么/a/b加了锁之后，/a加锁会超时了，因为在getOwner时，拿到了/a/b，且createrevision小于/a的revision，于是/a就会等待/a/b被删除后，watch chanel有数据后才能获得锁。
 
@@ -166,7 +166,7 @@ func WithPrefix() OpOption {
 结论是会加锁成功，看下源码
 
 ```go
- func NewMutex(s *Session, pfx string) *Mutex {
+func NewMutex(s *Session, pfx string) *Mutex {
    return &Mutex{s, pfx + "/", "", -1, nil}
 }
 ```
