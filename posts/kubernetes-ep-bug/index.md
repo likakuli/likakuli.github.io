@@ -213,3 +213,6 @@ func (r *Reflector) ListAndWatch(stopCh <-chan struct{}) error {
 
 这个bug影响确实严重，但是不会经常出现，像bug的发现者说的那样频繁出现的情况，可能还需要继续排查下为什么watchHander的调用会频繁的正常退出，可能这才是问题真正所在。
 
+
+
+更多精彩内容可关注微信订阅号：幼儿园小班工程师

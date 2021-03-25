@@ -266,3 +266,6 @@ func GenerateContainersReadyCondition(spec *v1.PodSpec, containerStatuses []v1.C
 
 通过mutatingwebhook实现一个通用的能力，针对endpoint的create和update事件，从配置中心（内部组件）中获取对应的配置，并通过规则引擎（开源版本可参考 https://github.com/antonmedv/expr ），对subnet中的Addresses和NotReadyAddresses做一些修改，这样可以实现无侵入式的修改，也比较灵活，可以对配置进行实时修改等，后续像sidecar这种根据用户需求来设置pod ready condition的情况，也无需修改代码，只需要添加配置即可，而且也可以通过condition看到真实的Container、Pod状态
 
+
+
+更多精彩内容可关注微信订阅号：幼儿园小班工程师

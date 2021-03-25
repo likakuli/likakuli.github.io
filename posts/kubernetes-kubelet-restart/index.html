@@ -11,7 +11,7 @@
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-kubelet-restart/" />
 <meta property="og:image" content="https://www.likakuli.com/logo.png"/>
 <meta property="article:published_time" content="2020-10-26T21:27:30+08:00" />
-<meta property="article:modified_time" content="2020-11-04T22:17:21+08:00" />
+<meta property="article:modified_time" content="2021-03-25T14:08:55+08:00" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
@@ -29,8 +29,8 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/kubernetes-kubelet-restart\/"
-        },"genre": "posts","keywords": "kubernetes","wordcount":  4735 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-kubelet-restart\/","datePublished": "2020-10-26T21:27:30+08:00","dateModified": "2020-11-04T22:17:21+08:00","publisher": {
+        },"genre": "posts","keywords": "kubernetes","wordcount":  4758 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-kubelet-restart\/","datePublished": "2020-10-26T21:27:30+08:00","dateModified": "2021-03-25T14:08:55+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -111,7 +111,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">Kubelet重启导致容器重启</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-10-26">2020-10-26</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 4735 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-10-26">2020-10-26</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 4758 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 10 分钟&nbsp;<span id="/posts/kubernetes-kubelet-restart/" class="leancloud_visitors" data-flag-title="Kubelet重启导致容器重启">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
@@ -696,6 +696,7 @@ I0312 11:12:37.907399 <span class="m">2906779</span> worker.go:104<span class="o
 </div><p>可以看到重启的容器先打印&quot;Generating status for&quot;（此处是给ready赋值之前打印的），再打印的LEOPOLD_INIT_PROBER（添加默认探测结果），也就是说在获取探测结果时其实还没有添加默认探测结果，所以走到了分支3，设置ready:false，而没问题的容器恰好相反，先添加的探测结果，再去使用，走到了分支2。</p>
 <h3 id="结论">结论</h3>
 <p>赋值和获取值的操作在两个goroutine，且严重依赖于第一次的赋值操作，所以应该在保证第一次赋值后再进行取值操作才能确保容器不重启，虽然分支3判断有没有默认探针中在设置和获取的时候都加了锁，但还是无法保证代码执行顺序，所以即使走分支3，也有可能会出现设置ready为true的情况（本该设置为false），但是因为这正是我们想要的效果，所以我们是不会觉察到这种情况的问题的，也就是说开源的代码中可能也是存在类似误判的风险的，至少1.12.4版本中是存在的。</p>
+<p>更多精彩内容可关注微信订阅号：幼儿园小班工程师</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -711,7 +712,7 @@ I0312 11:12:37.907399 <span class="m">2906779</span> worker.go:104<span class="o
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2020-11-04</span>
+                <span>更新于 2021-03-25</span>
             </div>
             <div class="post-info-license"></div>
         </div>

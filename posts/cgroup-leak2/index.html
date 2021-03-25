@@ -11,7 +11,7 @@
 <meta property="og:url" content="https://www.likakuli.com/posts/cgroup-leak2/" />
 <meta property="og:image" content="https://www.likakuli.com/logo.png"/>
 <meta property="article:published_time" content="2019-07-10T09:54:43+08:00" />
-<meta property="article:modified_time" content="2020-11-04T22:17:21+08:00" />
+<meta property="article:modified_time" content="2021-03-25T14:08:55+08:00" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
@@ -29,8 +29,8 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/cgroup-leak2\/"
-        },"genre": "posts","keywords": "linux, cgroup","wordcount":  1586 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/cgroup-leak2\/","datePublished": "2019-07-10T09:54:43+08:00","dateModified": "2020-11-04T22:17:21+08:00","publisher": {
+        },"genre": "posts","keywords": "linux, cgroup","wordcount":  1609 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/cgroup-leak2\/","datePublished": "2019-07-10T09:54:43+08:00","dateModified": "2021-03-25T14:08:55+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -111,7 +111,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">Cgroup泄露2</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-07-10">2019-07-10</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1586 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-07-10">2019-07-10</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1609 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 4 分钟&nbsp;<span id="/posts/cgroup-leak2/" class="leancloud_visitors" data-flag-title="Cgroup泄露2">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
@@ -346,6 +346,7 @@ Note: It can take several seconds <span class="k">if</span> you move charges muc
 </div><p>我们是全量task 迁移，因此也不存在上面注意事项中提到的只支持迁移主线程的问题。</p>
 <p>那我们梳理下，memcg 需要迁移内容包含哪些。 迁移后需要保证容器内存quota不变，容器的内存使用量不变，容器内的进程（对于cgroup来说，都是task）迁移后不丢。这三项分别对应的是memory.limit_in_bytes/memory.usage_in_bytes/tasks</p>
 <p>因为内存使用量是memcg来控制的，我们看到的memory.usage_in_bytes 是只读的，所以这个文件中的数据迁移是依赖于task迁移来实现。</p>
+<p>更多精彩内容可关注微信订阅号：幼儿园小班工程师</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -361,7 +362,7 @@ Note: It can take several seconds <span class="k">if</span> you move charges muc
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2020-11-04</span>
+                <span>更新于 2021-03-25</span>
             </div>
             <div class="post-info-license"></div>
         </div>

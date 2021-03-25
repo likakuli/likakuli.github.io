@@ -153,3 +153,7 @@ func onDelete(obj interface{}) {
 上述问题已反馈社区，修复方式就是方案1，直接去掉了30s的同步机制。见https://github.com/kubernetes/kubernetes/pull/75622 
 
 这里需要注意一点：30s的同步机制并不是从kube-apiserver拉取全量数据，而是把Informer本地缓存的数据（位于Indexer中）全量同步一遍，目的是为了防止出现在事件处理函数中与外部组件交互时出错的情况，参考这个issue：https://github.com/kubernetes/kubernetes/issues/75495，但是sts控制器本身没有依赖任何外部（k8s以外）组件，所以就不需要30s同步了。但是我们以Operator实现的自定义Controller就需要根据实际情况激进型设置了，后面会专门有一个系列详细讲Informer的源码，敬请期待。
+
+
+
+更多精彩内容可关注微信订阅号：幼儿园小班工程师

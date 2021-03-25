@@ -10,7 +10,7 @@
     <pubDate>Thu, 18 Mar 2021 20:40:39 &#43;0800</pubDate>
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kubernetes-informer/</guid>
-    <description><![CDATA[开局一张图，剩下全靠编 详细内容参考： Informer DeltaFIFO Informer LocalStore 未完待续]]></description>
+    <description><![CDATA[开局一张图，剩下全靠编 详细内容参考： Informer DeltaFIFO Informer LocalStore 未完待续 更多精彩内容可关注微信订阅号：幼儿园小班工程师]]></description>
 </item><item>
     <title>Informer LocalStore源码解析</title>
     <link>https://www.likakuli.com/posts/kubernetes-informer-localstore/</link>
