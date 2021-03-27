@@ -11,7 +11,7 @@
 <meta property="og:url" content="https://www.likakuli.com/posts/docker-leak3/" />
 <meta property="og:image" content="https://www.likakuli.com/logo.png"/>
 <meta property="article:published_time" content="2020-12-24T17:26:12+08:00" />
-<meta property="article:modified_time" content="2021-03-25T14:08:55+08:00" />
+<meta property="article:modified_time" content="2021-03-27T22:19:44+08:00" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
@@ -29,8 +29,8 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/docker-leak3\/"
-        },"genre": "posts","keywords": "docker","wordcount":  3278 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/docker-leak3\/","datePublished": "2020-12-24T17:26:12+08:00","dateModified": "2021-03-25T14:08:55+08:00","publisher": {
+        },"genre": "posts","keywords": "docker","wordcount":  3279 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/docker-leak3\/","datePublished": "2020-12-24T17:26:12+08:00","dateModified": "2021-03-27T22:19:44+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -111,7 +111,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">Dockerd资源泄露系列 - 3</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-24">2020-12-24</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3278 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-24">2020-12-24</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3279 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/docker-leak3/" class="leancloud_visitors" data-flag-title="Dockerd资源泄露系列 - 3">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
@@ -169,8 +169,8 @@
 <span class="nv">KillMode</span><span class="o">=</span>process
 </code></pre></td></tr></table>
 </div>
-</div><p>同时在/etc/docker/daemon.json文件中添加 &ldquo;debug&rdquo;: true的配置，修改完之后执行systemctl daemon-reload重新加载docker服务配置，然后执行systemctl reload docker，重进加载docker配置，开启debug模式</p>
-<p>dockerd默认使用uds对未提供服务，为了方便我们调试，可以使用socat对docker进行端口转发，如下 <strong>sudo socat -d -d TCP-LISTEN:8080,fork,bind=0.0.0.0 UNIX:/var/run/docker.sock</strong>，意思是外部可以通过访问宿主机的8080端口来调用docker api，至此一切就绪</p>
+</div><p>同时在/etc/docker/daemon.json文件中添加 &ldquo;debug&rdquo;: true的配置，修改完之后执行systemctl daemon-reload重新加载docker服务配置，然后执行systemctl reload docker，重新加载docker配置，开启debug模式</p>
+<p>dockerd默认使用uds对外提供服务，为了方便我们调试，可以使用socat对docker进行端口转发，如下 <strong>sudo socat -d -d TCP-LISTEN:8080,fork,bind=0.0.0.0 UNIX:/var/run/docker.sock</strong>，意思是外部可以通过访问宿主机的8080端口来调用docker api，至此一切就绪</p>
 <p>在本地执行go tool pprof http://ip:8080/debug/pprof/heap查看内存使用情况，如下图</p>
 <p><img
         class="lazyload"
@@ -498,7 +498,7 @@
         data-sizes="auto"
         alt="/posts/docker-leak3/leak3-11.png"
         title="运维部 &amp;gt; dockerd 内存泄露 - 3 &amp;gt; image2020-12-23_14-9-23.png" /></p>
-<p>确实容器内有D进程了，可以去宿主上看下，ps aux | awk &lsquo;$8=&ldquo;D&rdquo;'，特别多的D进程</p>
+<p>确实容器内有D进程了，可以去宿主上看下，ps aux | awk &lsquo;$8==&ldquo;D&rdquo;'，特别多的D进程</p>
 <h2 id="总结">总结</h2>
 <p>Kubelet为了保证最终一致性，发现宿主上还有不应该存在的容器就会一直不断的去尝试删除，每次删除都会调用docker stop的api，与dockerd建立一个uds连接，dockerd删除容器的时候会启动一个goroutine通过rpc形式调用containerd来删除容器并等待最终删除完毕才返回，等待的过程中会另起一个goroutine来获取结果，然而containerd在调用runc去真正执行删除的时候因为容器内D进程，无法删除容器，导致没有发出task exit信号，dockerd的两个相关的goroutine也就不会退出。整个过程不断重复，最终就导致fd、内存、goroutine一步步的泄露，系统逐渐走向不可用。</p>
 <p>回过头来想想，其实kubelet本身的处理都没有问题，kubelet是为了确保一致性，要去删除不应该存在的容器，直到容器被彻底删除，每次调用docker api都设置了timeout。dockerd的逻辑有待商榷，至少可以做一些改进，因为客户端请求时带了timeout，且dockerd后端在接收到task exit事件后是会去做container remove操作的，即使当前没有docker stop请求。所以可以考虑把最后传入context.Background()的Wait函数调用去掉，当前面带超时的Wait返回后直接退出就可以，这样就不会造成资源泄露了。</p>
@@ -518,7 +518,7 @@
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2021-03-25</span>
+                <span>更新于 2021-03-27</span>
             </div>
             <div class="post-info-license"></div>
         </div>

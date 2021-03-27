@@ -296,10 +296,9 @@ func Setns(ns NsHandle, nstype int) (err error) {
 
 剩下的问题就是寻找unix socket的peer，目前我们已经一端是docker，只需要找到另一端就可以了，步骤如下
 
-1. ss -a --unix -p | grep      docker，输出如下
+1. ss -a --unix -p | grep docker，输出如下
   
-    ![img](dockerd_uds.png)  
-         左边红框是dockerd开的一个socket，右边的框是调用者开的socket
+    ![img](dockerd_uds.png)左边红框是dockerd开的一个socket，右边的框是调用者开的socket
     
 2. 在右边的红框里随意挑一个，执行ss -a --unix      -p | awk '$6==-219386905' ，输出如下
          u_str  ESTAB      0      0            * -219386905            *      -219569454                 users:(("agent",pid=1962370,fd=55416))
@@ -307,7 +306,7 @@ func Setns(ns NsHandle, nstype int) (err error) {
 
 #### 结束了吗
 
-调用方是谁也查清楚了，按照上面的分析，只要设置了live-restore: true且设置完执行过重启的dockerd都存在内存泄露的情况，通过一个脚本批量执行了一下，结果却发现例外，例如ddcloud-underlay-kube-node288.ys就不存在内存泄露，此时心中又是万马奔腾啊，难道之前的分析是错的？
+调用方是谁也查清楚了，按照上面的分析，只要设置了live-restore: true且设置完执行过重启的dockerd都存在内存泄露的情况，通过一个脚本批量执行了一下，结果却发现例外，此时心中又是万马奔腾啊，难道之前的分析是错的？
 
 登录到没问题的机器上，查看dockerd的日志，failed to create osl candbox的日志有，但是每秒一次的collecting stats的日志却没有。上面分析过，只有当前存在未关闭的连接时，每秒一次的遍历才能发现有需要执行的stats，才会打印collecting stats的日志。可以通过执行docker stats命令验证，执行之后再去看dockerd的日志就会发现出现collecting stats的日志。也正因为没有未关闭的连接，所以不会出现内存和unix socket泄露，经过查看调用方即agent的版本，发现是1.18.1
 

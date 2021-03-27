@@ -11,7 +11,7 @@
 <meta property="og:url" content="https://www.likakuli.com/posts/dockerd-memory-leak1/" />
 <meta property="og:image" content="https://www.likakuli.com/logo.png"/>
 <meta property="article:published_time" content="2019-07-09T20:06:53+08:00" />
-<meta property="article:modified_time" content="2021-03-25T14:08:55+08:00" />
+<meta property="article:modified_time" content="2021-03-27T22:19:44+08:00" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
@@ -29,8 +29,8 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/dockerd-memory-leak1\/"
-        },"genre": "posts","keywords": "docker","wordcount":  5660 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/dockerd-memory-leak1\/","datePublished": "2019-07-09T20:06:53+08:00","dateModified": "2021-03-25T14:08:55+08:00","publisher": {
+        },"genre": "posts","keywords": "docker","wordcount":  5617 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/dockerd-memory-leak1\/","datePublished": "2019-07-09T20:06:53+08:00","dateModified": "2021-03-27T22:19:44+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -111,7 +111,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">Dockerd内存泄露</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-07-09">2019-07-09</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5660 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-07-09">2019-07-09</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5617 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 12 分钟&nbsp;<span id="/posts/dockerd-memory-leak1/" class="leancloud_visitors" data-flag-title="Dockerd内存泄露">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
@@ -663,7 +663,7 @@
 <p>剩下的问题就是寻找unix socket的peer，目前我们已经一端是docker，只需要找到另一端就可以了，步骤如下</p>
 <ol>
 <li>
-<p>ss -a &ndash;unix -p | grep      docker，输出如下</p>
+<p>ss -a &ndash;unix -p | grep docker，输出如下</p>
 <p><img
         class="lazyload"
         src="/svg/loading.min.svg"
@@ -671,8 +671,7 @@
         data-srcset="/posts/dockerd-memory-leak1/dockerd_uds.png, dockerd_uds.png 1.5x, /posts/dockerd-memory-leak1/dockerd_uds.png 2x"
         data-sizes="auto"
         alt="/posts/dockerd-memory-leak1/dockerd_uds.png"
-        title="img" /><br>
-左边红框是dockerd开的一个socket，右边的框是调用者开的socket</p>
+        title="img" />左边红框是dockerd开的一个socket，右边的框是调用者开的socket</p>
 </li>
 <li>
 <p>在右边的红框里随意挑一个，执行ss -a &ndash;unix      -p | awk &lsquo;$6==-219386905&rsquo; ，输出如下
@@ -681,7 +680,7 @@ u_str  ESTAB      0      0            * -219386905            *      -219569454 
 </li>
 </ol>
 <h4 id="结束了吗">结束了吗</h4>
-<p>调用方是谁也查清楚了，按照上面的分析，只要设置了live-restore: true且设置完执行过重启的dockerd都存在内存泄露的情况，通过一个脚本批量执行了一下，结果却发现例外，例如ddcloud-underlay-kube-node288.ys就不存在内存泄露，此时心中又是万马奔腾啊，难道之前的分析是错的？</p>
+<p>调用方是谁也查清楚了，按照上面的分析，只要设置了live-restore: true且设置完执行过重启的dockerd都存在内存泄露的情况，通过一个脚本批量执行了一下，结果却发现例外，此时心中又是万马奔腾啊，难道之前的分析是错的？</p>
 <p>登录到没问题的机器上，查看dockerd的日志，failed to create osl candbox的日志有，但是每秒一次的collecting stats的日志却没有。上面分析过，只有当前存在未关闭的连接时，每秒一次的遍历才能发现有需要执行的stats，才会打印collecting stats的日志。可以通过执行docker stats命令验证，执行之后再去看dockerd的日志就会发现出现collecting stats的日志。也正因为没有未关闭的连接，所以不会出现内存和unix socket泄露，经过查看调用方即agent的版本，发现是1.18.1</p>
 <p><img
         class="lazyload"
@@ -837,7 +836,7 @@ u_str  ESTAB      0      0            * -219386905            *      -219569454 
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2021-03-25</span>
+                <span>更新于 2021-03-27</span>
             </div>
             <div class="post-info-license"></div>
         </div>

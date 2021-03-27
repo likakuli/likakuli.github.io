@@ -24,9 +24,9 @@ ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=process
 ```
 
-同时在/etc/docker/daemon.json文件中添加 "debug": true的配置，修改完之后执行systemctl daemon-reload重新加载docker服务配置，然后执行systemctl reload docker，重进加载docker配置，开启debug模式
+同时在/etc/docker/daemon.json文件中添加 "debug": true的配置，修改完之后执行systemctl daemon-reload重新加载docker服务配置，然后执行systemctl reload docker，重新加载docker配置，开启debug模式
 
-dockerd默认使用uds对未提供服务，为了方便我们调试，可以使用socat对docker进行端口转发，如下 **sudo socat -d -d TCP-LISTEN:8080,fork,bind=0.0.0.0 UNIX:/var/run/docker.sock**，意思是外部可以通过访问宿主机的8080端口来调用docker api，至此一切就绪
+dockerd默认使用uds对外提供服务，为了方便我们调试，可以使用socat对docker进行端口转发，如下 **sudo socat -d -d TCP-LISTEN:8080,fork,bind=0.0.0.0 UNIX:/var/run/docker.sock**，意思是外部可以通过访问宿主机的8080端口来调用docker api，至此一切就绪
 
 在本地执行go tool pprof http://ip:8080/debug/pprof/heap查看内存使用情况，如下图
 
@@ -196,7 +196,7 @@ func (s *State) Wait(ctx context.Context, condition WaitCondition) <-chan StateS
 
 ![运维部 > dockerd 内存泄露 - 3 > image2020-12-23_14-9-23.png](leak3-11.png)
 
-确实容器内有D进程了，可以去宿主上看下，ps aux | awk '$8="D"'，特别多的D进程
+确实容器内有D进程了，可以去宿主上看下，ps aux | awk '$8=="D"'，特别多的D进程
 
 ## 总结
 
