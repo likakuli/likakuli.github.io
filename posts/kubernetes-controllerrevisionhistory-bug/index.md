@@ -58,6 +58,3 @@ func (ssc *StatefulSetController) syncStatefulSet(set *apps.StatefulSet, pods []
 
 测试的时候发现了一个bug，孤儿controllerrevision无法被领养，且会导致statefulset同步失败，这是statefulset controller的代码bug，pr已合入master，随着v1.18版本发布。具体可参考[这里](https://github.com/kubernetes/kubernetes/pull/86801)
 
-
-
-更多精彩内容可关注微信订阅号：幼儿园小班工程师

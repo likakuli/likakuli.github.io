@@ -134,6 +134,3 @@ Note: It can take several seconds if you move charges much.
 
 因为内存使用量是memcg来控制的，我们看到的memory.usage_in_bytes 是只读的，所以这个文件中的数据迁移是依赖于task迁移来实现。
 
-
-
-更多精彩内容可关注微信订阅号：幼儿园小班工程师

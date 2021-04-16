@@ -33,6 +33,3 @@ java -XX:+UnlockDiagnosticVMOptions -XX:+PrintContainerInfo -version
 
 让业务升级jdk版本无法快速解决此问题，最终决定把挂载的cpu_mirror等问题目录umount掉，容器内看不到的话也就不会出问题了，经过测试发现可行，最终又在宿主上批量执行了umount的操作（为后面一个线上问题埋下了伏笔，详见[这篇](../docker-cgroup-unknown)），长期方案是负责隔离的agent把问题目录改名，避免字符串匹配时匹配到。
 
-
-
-更多精彩内容可关注微信订阅号：幼儿园小班工程师

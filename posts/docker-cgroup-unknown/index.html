@@ -8,10 +8,10 @@
         <title>cgroup mount destination: unknown - kaku&#39;s blog</title><meta name="Description" content="cgroup mount destination: unknown"><meta property="og:title" content="cgroup mount destination: unknown" />
 <meta property="og:description" content="cgroup mount destination: unknown" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://www.likakuli.com/posts/docker-cgroup-unknown/" />
-<meta property="og:image" content="https://www.likakuli.com/logo.png"/>
-<meta property="article:published_time" content="2021-02-10T11:41:36+08:00" />
-<meta property="article:modified_time" content="2021-03-25T14:08:55+08:00" />
+<meta property="og:url" content="https://www.likakuli.com/posts/docker-cgroup-unknown/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-02-10T11:41:36&#43;08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
@@ -29,8 +29,8 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/docker-cgroup-unknown\/"
-        },"genre": "posts","keywords": "linux, cgroup, docker","wordcount":  1565 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/docker-cgroup-unknown\/","datePublished": "2021-02-10T11:41:36+08:00","dateModified": "2021-03-25T14:08:55+08:00","publisher": {
+        },"genre": "posts","keywords": "linux, cgroup, docker","wordcount":  1542 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/docker-cgroup-unknown\/","datePublished": "2021-02-10T11:41:36+08:00","dateModified": "2021-04-15T20:54:53+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -51,7 +51,7 @@
             <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
         </div>
         <div class="menu">
-            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
                         <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
                         <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
                             <i class="fas fa-search fa-fw"></i>
@@ -94,7 +94,7 @@
                     <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
                         取消
                     </a>
-                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
                 <i class="fas fa-adjust fa-fw"></i>
             </a></div>
     </div>
@@ -111,7 +111,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">cgroup mount destination: unknown</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-02-10">2021-02-10</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1565 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-02-10">2021-02-10</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1542 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 4 分钟&nbsp;<span id="/posts/docker-cgroup-unknown/" class="leancloud_visitors" data-flag-title="cgroup mount destination: unknown">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
@@ -375,7 +375,6 @@
 <p>到此可以明白是agent隔离程序先mount了自定义目录cpu_mirror到cgroup目录下，然后影响到了java程序去获取正确的核数，为了修复特意执行了umount的操作，但是umount之后/proc/id/cgroup还是存在cpu_mirror相关信息而/proc/id/mountinfo中已经不存在了，在容器重新创建的时候进行检查进而报错。</p>
 <p>对比线上其他docker版本，比如1.13.1中就没有此问题，因为1.13.1用的containerd中并没有上面提到的检验逻辑</p>
 <p>通过这个问题也暴露出来我们在测试、灰度过程中的问题，由于线上环境复杂，系统版本众多、组件版本也不统一，在上线一个功能或者执行线上操作的时候，测试用例需要充分覆盖所有场景，灰度时也需要所有类型的机器至少都覆盖到了之后才可以放量继续靠扩大灰度范围，否则很容易出现类似的问题。</p>
-<p>更多精彩内容可关注微信订阅号：幼儿园小班工程师</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -391,7 +390,7 @@
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2021-03-25</span>
+                <span>更新于 2021-04-15</span>
             </div>
             <div class="post-info-license"></div>
         </div>
@@ -417,7 +416,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.76.4">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

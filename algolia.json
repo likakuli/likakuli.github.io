@@ -1,5 +1,21 @@
 [
     {
+        "title": "关于作者",
+        "uri": "about",
+        "content": "Hi    Kaku                            2016        PAAS           0 1               2018                  2019                                                                                            ebpf                              IT",
+        "objectID": "about",
+        "date": "2021-04-15T12:17:10.000Z",
+        "lastmod": "2021-04-15T12:17:10.000Z",
+        "draft": false,
+        "keywords": [
+            ""
+        ],
+        "description": "",
+        "tags": [],
+        "categories": [],
+        "author": "Kaku Li"
+    },
+    {
         "title": "背包问题golang",
         "uri": "posts/backpack",
         "content": "01                                    golang                                                    N         V     i       c i     w i                                                                        f i   i           v                           f i max f i 1 f i 1  w i                                                       i        v                i                           i 1            i              i 1        v         f i 1     i              i 1           v ci                   f  i 1         i        w i             func main     v      int 7  5  8         w      int 2  3  4         goods    int    int 7  2     int 5  3     int 8  4     fmt Println zeroonepack1 v  w  5   fmt Println zeroonepack goods  5   fmt Println zeroonepack2 v  w  5              3             0    1           j       dpi   max dpi 1  goodsi   dpi 1 0    func zeroonepack goods int  capacity int  int   num    len goods  dp    make int  num     0    goodsi   dpi   max dpi 1  dpi 10   goods i    else   dpi   dpi 1       return dpnum 1   func zeroonepack1 weight   int  value   int  capacity int  int   num    len weight  dp    make int  num     0    weight i    dpi   max dpi 1  dpi 1  value i     else   dpi   dpi 1       return dpnum 1                     O VN                                                                  golang                                                O VN                                O                           i 1  N          fi                f0  V        i      f v              f  i  f i  f i 1 f i 1                 f i      i      fv       f  i 1 f i 1                      v V  0    fv         f v  f v c i        f  i 1          func zeroonepack2 weight   int  value   int  capacity int  int   num    len weight  dp    make   int  capacity 1     weight 0     0  j     j    weight i    dp j    max dp j   dp j weight i   value i         return dp capacity       fv  max f v  f v c i                 f i max fi 1 fi 1        fv c i         f  i 1     v                       f i f i                                            01",

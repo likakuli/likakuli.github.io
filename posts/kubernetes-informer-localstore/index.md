@@ -198,10 +198,6 @@ func (c *threadSafeMap) updateIndices(oldObj interface{}, newObj interface{}, ke
 
 上面基本可以实现功能了，还有一个可以考虑的问题：计算对象唯一键的方法、索引相关的三个数据结构放在哪里，k8s的实现里，KeyFunc是调用者和cache都知道具体的算法，索引相关的数据结构都放在了threadSafeMap里。
 
- 
-
-更多精彩内容可关注微信订阅号：幼儿园小班工程师
-
 
 
 

@@ -706,6 +706,3 @@ func (r *Runc) Exec(context context.Context, id string, spec specs.Process, opts
 
 docker hang死的原因远非这一种，本次排查的结果也并非适用于所有场景。希望各位看官能够根据自己的现场排查问题。另外查看[linux文档](https://man7.org/linux/man-pages/man7/pipe.7.html)，pipe capacity是可以设置的，高版本中since 4.5也可以通过设置/proc/sys/fs/pipe-user-pages-soft来解决，但是如文档所说，在4.9之前/proc/sys/fs/pipe-user-pages-soft还是存在一些bug的，至于采用什么办法解决，还得根据自己情况来做选择。
 
-
-
-更多精彩内容可关注微信订阅号：幼儿园小班工程师

@@ -204,6 +204,3 @@ Kubelet为了保证最终一致性，发现宿主上还有不应该存在的容�
 
 回过头来想想，其实kubelet本身的处理都没有问题，kubelet是为了确保一致性，要去删除不应该存在的容器，直到容器被彻底删除，每次调用docker api都设置了timeout。dockerd的逻辑有待商榷，至少可以做一些改进，因为客户端请求时带了timeout，且dockerd后端在接收到task exit事件后是会去做container remove操作的，即使当前没有docker stop请求。所以可以考虑把最后传入context.Background()的Wait函数调用去掉，当前面带超时的Wait返回后直接退出就可以，这样就不会造成资源泄露了。
 
-
-
-更多精彩内容可关注微信订阅号：幼儿园小班工程师
