@@ -886,5 +886,25 @@
             "使用说明"
         ],
         "author": "Kaku Li"
+    },
+    {
+        "title": "关于阅读源码的一些思考",
+        "uri": "posts/sourcecodereading",
+        "content": "Container      Pod    Request                                                                                          kubelet                                                                                                       kubernetes        Pod        Request  Limit       apiserver                      Request               kubelet    container      hash       container         docker api                    Label      kubelet        hash         hash                          container Image                     Request    Request           hash                               container    Request                      container                       Qos   Guaranteed    Pod    kube apiserver Request      kubelet          Request                                               Request         Request                         2                      Request                          1        Pod Cgroup         Request   Pod   Container               Pod              Pod   cgroup    sys fs cgroup cpu kubepods guaranteed pod uid       Pod   cgroup    sys fs cgroup cpu kubepods burstable pod uid        Pod     cgroup                   1            2                                         cgroup         cgroup               Cgorup       CgroupPerQos         cpu                sys fs cgroup cpu kubepods guaranteed pod uid   containerid   containerid  pod uid   containerid   containerid  burstable bestaffort            kubelet    docker      container  docker   container   pod  qos  root kubepods    kubelet     docker         cgroup parent         kubelet   docker api   docker          cgroup parent         docker inspect  containerid    grep  i cgroup     container cgroup parent            qos         Pod           Pod Qos      syncPod         Pod qos    cgroup       qos       Pod    container           cgroup                         Request  Pod       2   pause                       pod qos      Pod           qos           kubelet     container cgroup                    kubelet      cgroup               Request    cgroup    oomscore       docker     api                 api   cgroup   oomscore         cgroup                                  kubele                  Cgroup       Cgroup                          Pod cgroup                            Pod Cgroup               cgroup                       Pod   Cgroup       Pod                   Pod                 Pod       deletionTimestamp                    Pod                    Cgroup              Request        Pod  deletionTimestamp        Pod                              Pod                                  kubelet     syncPod                                                                                 blog                                                                                                                                             blog",
+        "objectID": "posts/sourcecodereading",
+        "date": "2021-04-18T12:34:42.000Z",
+        "lastmod": "2021-04-18T12:34:42.000Z",
+        "draft": false,
+        "keywords": [
+            "源码阅读"
+        ],
+        "description": "",
+        "tags": [
+            "思考"
+        ],
+        "categories": [
+            "思考感悟"
+        ],
+        "author": "Kaku Li"
     }
 ]

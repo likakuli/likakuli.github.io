@@ -5,32 +5,32 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noodp" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
-        <title>Kubernetes Informer - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Kubernetes Informer" />
-<meta property="og:description" content="开局一张图，剩下全靠编 详细内容参考： Informer DeltaFIFO Informer LocalStore 未完待续" />
+        <title>关于阅读源码的一些思考 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="关于阅读源码的一些思考" />
+<meta property="og:description" content="近期有个小需求，在不重建Container的前提下修改Pod结构中的Request值，限制仅可以调小。本以为很简单的一个需求，但实际花费了一" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-informer/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2021-03-18T20:40:39&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="og:url" content="https://www.likakuli.com/posts/sourcecodereading/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-04-18T20:34:42&#43;08:00" />
+<meta property="article:modified_time" content="2021-04-22T21:04:58&#43;08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
-<meta name="twitter:title" content="Kubernetes Informer"/>
-<meta name="twitter:description" content="开局一张图，剩下全靠编 详细内容参考： Informer DeltaFIFO Informer LocalStore 未完待续"/>
+<meta name="twitter:title" content="关于阅读源码的一些思考"/>
+<meta name="twitter:description" content="近期有个小需求，在不重建Container的前提下修改Pod结构中的Request值，限制仅可以调小。本以为很简单的一个需求，但实际花费了一"/>
 <meta name="application-name" content="LoveIt">
 <meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/kubernetes-informer/" /><link rel="prev" href="https://www.likakuli.com/posts/kubernetes-informer-localstore/" /><link rel="next" href="https://www.likakuli.com/posts/sourcecodereading/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/sourcecodereading/" /><link rel="prev" href="https://www.likakuli.com/posts/kubernetes-informer/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
     {
         "@context": "http://schema.org",
         "@type": "BlogPosting",
-        "headline": "Kubernetes Informer",
+        "headline": "关于阅读源码的一些思考",
         "inLanguage": "zh-CN",
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": "https:\/\/www.likakuli.com\/posts\/kubernetes-informer\/"
-        },"genre": "posts","keywords": "informer, kubernetes","wordcount":  26 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-informer\/","datePublished": "2021-03-18T20:40:39+08:00","dateModified": "2021-04-15T20:54:53+08:00","publisher": {
+            "@id": "https:\/\/www.likakuli.com\/posts\/sourcecodereading\/"
+        },"genre": "posts","keywords": "思考","wordcount":  3094 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/sourcecodereading\/","datePublished": "2021-04-18T20:34:42+08:00","dateModified": "2021-04-22T21:04:58+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -109,10 +109,10 @@
                 <div class="container"><div class="toc" id="toc-auto">
             <h2 class="toc-title">目录</h2>
             <div class="toc-content always-active" id="toc-content-auto"></div>
-        </div><article class="page single"><h1 class="single-title animated flipInX">Kubernetes Informer</h1><div class="post-meta">
-            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-03-18">2021-03-18</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 26 字&nbsp;
-                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 1 分钟&nbsp;<span id="/posts/kubernetes-informer/" class="leancloud_visitors" data-flag-title="Kubernetes Informer">
+        </div><article class="page single"><h1 class="single-title animated flipInX">关于阅读源码的一些思考</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%80%9D%E8%80%83%E6%84%9F%E6%82%9F/"><i class="far fa-folder fa-fw"></i>思考感悟</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-04-18">2021-04-18</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3094 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/sourcecodereading/" class="leancloud_visitors" data-flag-title="关于阅读源码的一些思考">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
@@ -120,20 +120,100 @@
                     <span>目录</span>
                     <span><i class="details-icon fas fa-angle-right"></i></span>
                 </div>
-                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents"></nav></div>
-            </div><div class="content" id="content"><p>开局一张图，剩下全靠编</p>
-<p><img
-        class="lazyload"
-        src="/svg/loading.min.svg"
-        data-src="informer.jpeg"
-        data-srcset="/posts/kubernetes-informer/informer.jpeg, informer.jpeg 1.5x, /posts/kubernetes-informer/informer.jpeg 2x"
-        data-sizes="auto"
-        alt="/posts/kubernetes-informer/informer.jpeg"
-        title="img" /></p>
-<p>详细内容参考：</p>
-<p><a href="../kubernetes-informer-deltafifo" rel="">Informer DeltaFIFO</a></p>
-<p><a href="../kubernetes-informer-localstore" rel="">Informer LocalStore</a></p>
-<p>未完待续</p>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#过程">过程</a></li>
+        <li><a href="#问题分析">问题分析</a>
+          <ul>
+            <li><a href="#cgorup创建">Cgorup创建</a></li>
+            <li><a href="#cgroup删除">Cgroup删除</a></li>
+          </ul>
+        </li>
+        <li><a href="#反思">反思</a>
+          <ul>
+            <li><a href="#源码阅读的目的性">源码阅读的目的性</a></li>
+            <li><a href="#思考的必要性">思考的必要性</a></li>
+            <li><a href="#后续计划">后续计划</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>近期有个小需求，在不重建Container的前提下修改Pod结构中的Request值，限制仅可以调小。本以为很简单的一个需求，但实际花费了一天的时间才搞完，代码改动只有几行，但是在改完测试的过程中发现很多超出预期或者认知的现象，为了搞懂为什么会这样，又重新捋了捋kubelet源码。  在这件事结束之后也进行了反思，主要是有关源码阅读的，于是把这个过程和自己的感触以及后续的一些改进方法和计划记录下来。</p>
+<h2 id="过程">过程</h2>
+<p>先看下这件事的过程，我们先忽略这个需求的合理性，直接分析技术实现。</p>
+<p>首先，kubernetes本身并不支持修改Pod的资源属性，无论Request还是Limit，可以通过修改apiserver中的校验逻辑来放开此限制；</p>
+<p>其次，如何保证在Request改变之后容器不重启？我们知道，kubelet会为每个container都计算出一个hash值，其中用到了container的所有属性，在调用docker api进行容器创建的时候会把这个值设置到容器的Label中，后续如果kubelet检测到新计算出的hash值与在运行的容器的hash值不同，则会进行容器的原地重启操作，这也是为什么修改container的Image会出发容器原地重启的原因。很明显，如果放开Request的修改，Request值变了之后也会导致新的hash值变化从而导致容器重建，与我们的期望不符。也有办法来解决：记录container创建时的Request值，计算的时候还是使用创建时的值，此值只有在container创建时会记录，后续不再更新。</p>
+<p>测试场景是创建了Qos类型为<em>Guaranteed</em> 类型的Pod，放开了kube-apiserver对Request修改的限制，kubelet保持原生不动，调小其Request值，大家可以先尝试自己思考一下会发生什么？</p>
+<p>那么在测试的时候遇到了什么问题呢？</p>
+<p>首先，发现放开Request修改之后，如果改了Request的值，容器重启了（这一步符合预期），但是重启次数加2（这里其实是之前的一个盲点）</p>
+<p>接着，继续修改Request值，容器依然重启（符合预期），但是此次重启次数只加了1</p>
+<p>最后，通过查看Pod Cgroup目录，确认修改后的Request已经在Pod级别和Container级别分别生效，但是同时存在两个Pod的目录，类似如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 修改之前的Pod对应的cgroup目录</span>
+/sys/fs/cgroup/cpu/kubepods/guaranteed/pod<span class="o">{</span>uid<span class="o">}</span>
+<span class="c1"># 修改之后的Pod对应的cgroup目录</span>
+/sys/fs/cgroup/cpu/kubepods/burstable/pod<span class="o">{</span>uid<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>为什么同一个Pod会存在两个cgroup目录呢？</p>
+<p>容器重启了，重启次数应该只加1，那为什么在第一步中加了2？</p>
+<p>你可以在继续阅读之前先自己思考一下可能的原因。</p>
+<h2 id="问题分析">问题分析</h2>
+<p>首先看为什么会有两个cgroup目录，需要先搞清楚cgroup目录是如何创建、如何删除的。</p>
+<h3 id="cgorup创建">Cgorup创建</h3>
+<p>我们采用CgroupPerQos的方式进行管理，以cpu子系统为例，层级类似如下所示</p>
+<ul>
+<li>/sys/fs/cgroup/cpu
+<ul>
+<li>kubepods
+<ul>
+<li>guaranteed
+<ul>
+<li>pod{uid}
+<ul>
+<li>{containerid}</li>
+<li>{containerid}</li>
+</ul>
+</li>
+<li>pod{uid}
+<ul>
+<li>{containerid}</li>
+<li>{containerid}</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>burstable</li>
+<li>bestaffort</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>从创建者的角度分两种：kubelet创建的、docker创建的。其中container层由docker创建，container以上的pod层、qos层和root（kubepods）都是由kubelet创建的。那docker又是怎么知道容器的cgroup parent目录是谁呢？其实是kubelet在调用docker api时传给docker的一个参数，告诉了其cgroup parent路径，可以通过执行<code>docker inspect {containerid} | grep -i cgroup</code>来查看每个container的cgroup parent路径。</p>
+<p>那为什么会在两个qos目录下分别存在一个Pod目录呢？因为我们修改了Pod的Qos类型，触发了syncPod逻辑，里面会去根据Pod的qos类型进行cgroup目录判断，如果qos改变，则会把原Pod下的所有container全部杀掉，然后创建新的cgroup目录，再启动容器。这也就可以解释为什么在第一次修改Request之后Pod重启次数增加了2，因为pause容器也发生了重建。为什么要重建容器呢，因为整个pod的qos发生了变化，Pod内的所有容器需要在新的qos目录下重建其目录，但是kubelet没有去更新container的cgroup设置，而是采用重建的方式来实现。</p>
+<p>为什么kubelet不直接去更新cgroup目录，而是重建容器呢？首先修改Request不仅影响cgroup，容器的oomscore也将受到影响，docker虽然提供了api来修改资源大小，但并没有提供相关的api去进行cgroup目录及oomscore等属性的修改，其次cgroup迁移是一个比较复杂的工作，迁移过程会出现部分历史数据丢失等问题，所以kubele直接采用重建的方式来解决这个问题。</p>
+<h3 id="cgroup删除">Cgroup删除</h3>
+<p>经过分析Cgroup创建过程，重启两次的问题已经找到了答案。但为什么新的Pod cgroup目录创建出来之后，原有的目录没有被删除呢？这就需要搞清楚Pod Cgroup目录什么时候删除的，容器级别的cgroup目录是在容器被删除的时候删除的，这个很好理解，Pod级别的Cgroup目录是否也是在Pod删除时删除的呢？经过看代码发现并不是，Pod资源清理是一个异步的过程，定时监测Pod是否已经设置了<code>deletionTimestamp</code>属性和容器的运行状态，只有设置了此属性的Pod才有可能被清理，清理的过程中包含挂在卷、Cgroup等资源，会一并清理。因为修改Request的请求是不会去给Pod设置<code>deletionTimestamp</code>属性的，这就导致Pod级别的旧目录不会被删除，又因为新目录的创建，导致同时存在两个Pod级别的目录。</p>
+<h2 id="反思">反思</h2>
+<p>综合看下来，这两个点都没有那么难，而且之前也做过kubelet定制开发，syncPod部分代码更是看过数次。那为什么花费了这么久的时间呢？</p>
+<h3 id="源码阅读的目的性">源码阅读的目的性</h3>
+<p>此前阅读源码的目的有几种，查问题、验证某些想法、探寻系统运行原理，还有一些人通过看源码来写blog、或者写源码分析之类的书。此前大部分场景是为了查问题、验证想法以及某些小功能的定制开发，可以聚焦到某些点或流程上，做完之后会对相关点印象比较深刻，但是相关性不大的地方就会很容易遗忘，或者说根本不会去刻意关注相关性不大的地方。偶尔会有想法去主动阅读源码，探求系统运行原理，实现方式，写blog等，但最终发现效果很差，因为在此过程中我们的目的性并不是真正的去理解系统，缺乏针对性。而且对于在还不了解系统运行原理的情况下想通过看源码去了解其原理就是本末倒置的事情。比如接手一个新项目或者其他人的项目的时候，如果没有相关背景，而且也没有项目文档，没有代码注释的情况，直接想通过代码去了解业务和系统运行原理是一件非常痛苦的事情。</p>
+<h3 id="思考的必要性">思考的必要性</h3>
+<p>无论处于什么目的去看代码，需要有自己的思考，可以假设系统由自己设计，那会设计成什么样子，代码由自己实现，会写成什么样子。在设计过程中可能会遇到一些问题，带着问题再去看代码，去验证别人是如何设计并实现的，尤其是遇到和自己预期设计不一致的地方，可以进行对比，分析那种方案好，或者他这么设计是处于什么考虑，为什么这么实现。以这样的方式看代码要比没有目的性的走马观花式的浏览代码收获更多，印象更深刻。这里推荐一本书《思考，快与慢》，解释了人的大脑是如何工作的，可以通过本书了解到思考是一个怎样的过程。</p>
+<h3 id="后续计划">后续计划</h3>
+<p>源码还是要去读的，后面会进行一些尝试，根据上面提到的阅读方式开始进行，即 思考系统运行方式 ==》自己设计系统实现 ==》带着问题读源码（验证想法） ==》思考与总结，试运行一段时间看看效果。</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -149,27 +229,26 @@
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2021-04-15</span>
+                <span>更新于 2021-04-22</span>
             </div>
             <div class="post-info-license"></div>
         </div>
         <div class="post-info-line">
             <div class="post-info-md"></div>
             <div class="post-info-share">
-                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer" data-hashtags="informer,kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-hashtag="informer"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer"><i class="fab fa-evernote fa-fw"></i></a></span>
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/sourcecodereading/" data-title="关于阅读源码的一些思考" data-hashtags="思考"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/sourcecodereading/" data-hashtag="思考"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/sourcecodereading/" data-title="关于阅读源码的一些思考" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/sourcecodereading/" data-title="关于阅读源码的一些思考"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/sourcecodereading/" data-title="关于阅读源码的一些思考"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/sourcecodereading/" data-title="关于阅读源码的一些思考" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/sourcecodereading/" data-title="关于阅读源码的一些思考" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/sourcecodereading/" data-title="关于阅读源码的一些思考"><i class="fab fa-evernote fa-fw"></i></a></span>
             </div>
         </div>
     </div>
 
     <div class="post-info-more">
-        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/informer/">informer</a>,&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/%E6%80%9D%E8%80%83/">思考</a></section>
         <section>
             <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
         </section>
     </div>
 
-    <div class="post-nav"><a href="/posts/kubernetes-informer-localstore/" class="prev" rel="prev" title="Informer LocalStore源码解析"><i class="fas fa-angle-left fa-fw"></i>Informer LocalStore源码解析</a>
-            <a href="/posts/sourcecodereading/" class="next" rel="next" title="关于阅读源码的一些思考">关于阅读源码的一些思考<i class="fas fa-angle-right fa-fw"></i></a></div>
+    <div class="post-nav"><a href="/posts/kubernetes-informer/" class="prev" rel="prev" title="Kubernetes Informer"><i class="fas fa-angle-left fa-fw"></i>Kubernetes Informer</a></div>
 </div>
 <div id="comments"><div id="valine" class="comment"></div><noscript>
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
