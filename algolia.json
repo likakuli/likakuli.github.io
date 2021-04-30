@@ -81,6 +81,29 @@
         "author": "Kaku Li"
     },
     {
+        "title": "CRUD工程师的福音",
+        "uri": "posts/crud",
+        "content": "CRUD                 CRUD                 apiserver    dao           apiserver          dao                         go struct                         table     go struct         table sql    table           go struct                            BUG     https   github com smallnest gen                                                                      go struct dao  api            restful api         swagger                                                                                     golang        golang           golang        go  u github com smallnest gen          example        sample db                                              sample db         gen   sqltype sqlite3     connstr    sample db      database main     json     gorm     guregu     rest     out   example     module example com rest example     mod     server     makefile     json fmt snake     generate dao     generate proj     overwrite       make       packr2          cd   example   example        bin example   cp       sample db       example           http   127 0 0 1 8080 swagger index html                 curl http   localhost 8080 artists                                        GOPATH             go mod   get                 GOPATH               so easy                                                                             gen                                             templateDir                                 exec                         custom     sample gen           exec sample gen               master                2020 8 4                  sample gen                                golang template     template                  GIN   GORM   crud                       packr                                                                    CRUD",
+        "objectID": "posts/crud",
+        "date": "2021-04-29T14:08:12.000Z",
+        "lastmod": "2021-04-29T14:08:12.000Z",
+        "draft": false,
+        "keywords": [
+            "CRUD",
+            "auto generate",
+            "table",
+            "apiserver"
+        ],
+        "description": "",
+        "tags": [
+            "gen"
+        ],
+        "categories": [
+            "开源项目介绍"
+        ],
+        "author": "Kaku Li"
+    },
+    {
         "title": "cgroup mount destination: unknown",
         "uri": "posts/docker-cgroup-unknown",
         "content": "k8s                Failed create pod sandbox  rpc error  code   Unknown desc   failed start sandbox container pod  xxx sf 32c80 0   Error response daemon  cgroups  cannot find cgroup mount destination  unknown      cgroup                                   issue  cgroups  cannot found cgroup mount destination  unknown                                                         cgroup             kubelet  docker docker    docker 18 06                                                  docker               containerd               PidPath will return correct cgroup paths existing process running inside cgroup    commonly used Load function restore existing container func PidPath pid int  Path   p    fmt Sprintf   proc  d cgroup   pid  paths  err    parseCgroupFile p  err    nil   return errorPath errors Wrapf err   parse cgroup file  s   p     return existingPath paths        func existingPath paths map string string  suffix string  Path      localize paths based root mount dest nested cgroups n  p    range paths   dest  err    getCgroupDestination string n   err    nil   return errorPath err    rel  err    filepath Rel dest  p  err    nil   return errorPath err    rel          rel   dest   paths n    filepath Join      rel    return func name Name   string  error    root  ok    paths string name    ok   root  ok   paths fmt Sprintf  name  s   name     ok   return     fmt Errorf  unable find  q controller set   name      suffix         return filepath Join root  suffix   nil   return root  nil     func getCgroupDestination subsystem string   string  error    f  err    os Open   proc self mountinfo   err    nil   return     err   defer f Close   s    bufio NewScanner f  s Scan     fields    strings Split s Text         len fields    10      broken mountinfo  continue   fields len fields  3      cgroup    continue   _  opt    range strings Split fields len fields  1          opt    subsystem   return fields 3   nil       err    s Err    err    nil   return     err   return     ErrNoCgroupMountDestination   func parseCgroupFile path string   map string string  error    f  err    os Open path  err    nil   return nil  err   defer f Close   return parseCgroupFromReader f    func parseCgroupFromReader r io Reader   map string string  error    var   cgroups   make map string string  s   bufio NewScanner r    s Scan     err    s Err    err    nil   return nil  err   var   text   s Text   parts   strings SplitN text       3    len parts    3   return nil  fmt Errorf  invalid cgroup entry   q   text    _  subs    range strings Split parts 1          subs         cgroups subs    parts 2        return cgroups  nil             proc id cgroup        subsystem     parseCgroupFromReader    proc id cgroup                     2                                existingPath                  getCgroupDestination                    getCgroupDestination       proc id mountinfo                            cgroup                                                                                                     agent     mount      cpumirror cgroup          java                    umount      umount   proc id cgroup    cpumirror      proc id mountinfo                                  docker     1 13 1          1 13 1  containerd",

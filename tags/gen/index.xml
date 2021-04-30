@@ -1,0 +1,15 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>gen - 标签 - kaku&#39;s blog</title>
+        <link>https://www.likakuli.com/tags/gen/</link>
+        <description>gen - 标签 - kaku&#39;s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 29 Apr 2021 22:08:12 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/gen/" rel="self" type="application/rss+xml" /><item>
+    <title>CRUD工程师的福音</title>
+    <link>https://www.likakuli.com/posts/crud/</link>
+    <pubDate>Thu, 29 Apr 2021 22:08:12 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/crud/</guid>
+    <description><![CDATA[CRUD还能这么玩？ 作为一名有多年经验的CRUD工程师，在做某项目时，需要在搭建完apiserver框架以及dao部分，三下五除二的就把ap]]></description>
+</item></channel>
+</rss>

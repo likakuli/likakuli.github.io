@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 18 Apr 2021 20:34:42 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 29 Apr 2021 22:08:12 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>CRUD工程师的福音</title>
+    <link>https://www.likakuli.com/posts/crud/</link>
+    <pubDate>Thu, 29 Apr 2021 22:08:12 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/crud/</guid>
+    <description><![CDATA[CRUD还能这么玩？ 作为一名有多年经验的CRUD工程师，在做某项目时，需要在搭建完apiserver框架以及dao部分，三下五除二的就把ap]]></description>
+</item><item>
     <title>关于阅读源码的一些思考</title>
     <link>https://www.likakuli.com/posts/sourcecodereading/</link>
     <pubDate>Sun, 18 Apr 2021 20:34:42 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/docker-pod-terminating/</guid>
     <description><![CDATA[转载自组内同事stupig 1. 背景 近期，弹性云线上集群发生了几起特殊的容器漂移失败事件，其特殊之处在于容器处于Pod Terminating状态]]></description>
-</item><item>
-    <title>docker hang问题排查</title>
-    <link>https://www.likakuli.com/posts/docker-hang/</link>
-    <pubDate>Mon, 26 Oct 2020 21:52:54 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/docker-hang/</guid>
-    <description><![CDATA[转载自组内同事 1. 背景 最近升级了一版kubelet，修复因kubelet删除Pod慢导致平台删除集群超时的问题。在灰度redis隔离集群的时候]]></description>
 </item></channel>
 </rss>
