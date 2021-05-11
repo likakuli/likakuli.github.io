@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 29 Apr 2021 22:08:12 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 11 May 2021 15:47:58 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>通用Restful API项目模板</title>
+    <link>https://www.likakuli.com/posts/generic-project-template/</link>
+    <pubDate>Tue, 11 May 2021 15:47:58 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/generic-project-template/</guid>
+    <description><![CDATA[通用Restful API项目模板 欢迎使用，这是一个用Go编写的简单通用的Restful API项目，遵循SOLID原则。 部分灵感来自于 service-pattern-go 依赖 Gin]]></description>
+</item><item>
     <title>CRUD工程师的福音</title>
     <link>https://www.likakuli.com/posts/crud/</link>
     <pubDate>Thu, 29 Apr 2021 22:08:12 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/docker-pod-terminating2/</guid>
     <description><![CDATA[1. 背景 承接上文，近期我们排查弹性云线上几起故障时，故障由多个因素共同引起，列举如下： 弹性云在逐步灰度升级docker版本至 18.06.3-ce 由于历史原因，弹]]></description>
-</item><item>
-    <title>Pod terminating</title>
-    <link>https://www.likakuli.com/posts/docker-pod-terminating/</link>
-    <pubDate>Sat, 31 Oct 2020 10:37:37 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/docker-pod-terminating/</guid>
-    <description><![CDATA[转载自组内同事stupig 1. 背景 近期，弹性云线上集群发生了几起特殊的容器漂移失败事件，其特殊之处在于容器处于Pod Terminating状态]]></description>
 </item></channel>
 </rss>

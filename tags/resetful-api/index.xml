@@ -1,0 +1,15 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>Resetful API - 标签 - kaku&#39;s blog</title>
+        <link>https://www.likakuli.com/tags/resetful-api/</link>
+        <description>Resetful API - 标签 - kaku&#39;s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 11 May 2021 15:47:58 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/resetful-api/" rel="self" type="application/rss+xml" /><item>
+    <title>通用Restful API项目模板</title>
+    <link>https://www.likakuli.com/posts/generic-project-template/</link>
+    <pubDate>Tue, 11 May 2021 15:47:58 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/generic-project-template/</guid>
+    <description><![CDATA[通用Restful API项目模板 欢迎使用，这是一个用Go编写的简单通用的Restful API项目，遵循SOLID原则。 部分灵感来自于 service-pattern-go 依赖 Gin]]></description>
+</item></channel>
+</rss>
