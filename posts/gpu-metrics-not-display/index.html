@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" />
+<meta property="og:description" content="问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/gpu-metrics-not-display/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-05-30T14:23:23&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-30T14:23:23&#43;08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"/>
+<meta name="twitter:description" content="问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/gpu-metrics-not-display/" /><link rel="prev" href="https://www.likakuli.com/posts/generic-project-template/" /><link rel="next" href="https://www.likakuli.com/posts/gpu-metrics-not-display2/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "容器开启特权模式后无法通过cadvisor获取GPU metrics指标",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/gpu-metrics-not-display\/"
+        },"genre": "posts","keywords": "docker, gpu, cadvisor","wordcount":  3282 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/gpu-metrics-not-display\/","datePublished": "2021-05-30T14:23:23+08:00","dateModified": "2021-05-30T14:23:23+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">容器开启特权模式后无法通过cadvisor获取GPU metrics指标</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-05-30">2021-05-30</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3282 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/gpu-metrics-not-display/" class="leancloud_visitors" data-flag-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#问题描述">问题描述</a></li>
+        <li><a href="#寻踪觅源">寻踪觅源</a>
+          <ul>
+            <li><a href="#cadvisor">cAdvisor</a>
+              <ul>
+                <li><a href="#采集机制">采集机制</a></li>
+                <li><a href="#源码分析">源码分析</a></li>
+                <li><a href="#对比验证">对比验证</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="问题描述">问题描述</h2>
+<p>开启特权模式（<code>--privileged</code>）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信息。Google大法可以搜到相关的<a href="https://github.com/google/cadvisor/issues/2046" target="_blank" rel="noopener noreffer">Issue</a>，于2018年提出，至今仍处于Open状态（给cAdvisor贡献代码的机会），由于涉及到的内容较多，分为三篇来讲。</p>
+<h2 id="寻踪觅源">寻踪觅源</h2>
+<p>问题的最终表现是通过cAdvisor无法获取开启特权模式容器的gpu相关数据，即 <code>curl localhost:4194/api/v1.3/docker/{containerID}</code> 返回的结果中不包含任何gpu信息，而没有开特权模式的容器是可以正常返回gpu相关信息的。</p>
+<p>未开启特权模式的容器返回结果类似如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">root@node1: 
+<span class="c1"># curl localhost:4194/api/v1.3/docker/a0f3c54d8c6beba5d9947723494e4c9b625f03ce4eb0c096e4cf46cae9e389e0 | jq [.[]][0].stats[0].accelerators</span>
+
+<span class="o">[</span>
+  <span class="o">{</span>
+    <span class="s2">&#34;make&#34;</span>: <span class="s2">&#34;nvidia&#34;</span>,
+    <span class="s2">&#34;model&#34;</span>: <span class="s2">&#34;Tesla T4&#34;</span>,
+    <span class="s2">&#34;id&#34;</span>: <span class="s2">&#34;GPU-a2d26dd1-5a8f-35e5-c325-2cd0756d5ed2&#34;</span>,
+    <span class="s2">&#34;memory_total&#34;</span>: 15843721216,
+    <span class="s2">&#34;memory_used&#34;</span>: 15127085056,
+    <span class="s2">&#34;duty_cycle&#34;</span>: <span class="m">6</span>
+  <span class="o">}</span>,
+  <span class="o">{</span>
+    <span class="s2">&#34;make&#34;</span>: <span class="s2">&#34;nvidia&#34;</span>,
+    <span class="s2">&#34;model&#34;</span>: <span class="s2">&#34;Tesla T4&#34;</span>,
+    <span class="s2">&#34;id&#34;</span>: <span class="s2">&#34;GPU-febe3f91-914e-cb7f-bf0a-d96ffeda2777&#34;</span>,
+    <span class="s2">&#34;memory_total&#34;</span>: 15843721216,
+    <span class="s2">&#34;memory_used&#34;</span>: 11367940096,
+    <span class="s2">&#34;duty_cycle&#34;</span>: <span class="m">44</span>
+  <span class="o">}</span>
+<span class="o">]</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到容器用到了两块GPU卡。</p>
+<p>开启特权模式的容器执行上述命令后返回空信息。</p>
+<h3 id="cadvisor">cAdvisor</h3>
+<p>首先需要了解的就是cAdvisor获取gpu指标信息的原理，可以查看<a href="https://github.com/google/cadvisor/blob/master/docs/running.md#hardware-accelerator-monitoring" target="_blank" rel="noopener noreffer">官方文档</a>，简单翻译一下如下：</p>
+<ul>
+<li>cAdvisor可以对外暴露容器级别的硬件加速器的指标，且当前只支持英伟达GPU，不支持整机级别</li>
+<li>cAdvisor只对在容器启动时显示设置了<code>--device /dev/nvidia0:/dev/nvidia0</code>信息的容器暴露指标，未显示指定的不暴露（对应容器启动时设置了<code>--privileged</code>参数）</li>
+</ul>
+<p>通过介绍可以得出如下结论：<strong>无法获取开启特权模式容器的GPU指标是Feature而不是Bug</strong></p>
+<p>同时文档中最后提到如果cAdvisor容器化部署时如何设置参数，其中提到的三种方法，如下：</p>
+<ul>
+<li>cAdvisor容器以<code>--privileged</code>模式启动</li>
+<li>Docker  v17.04.0-ce 及以上版本的话，启动时设置<code>--device-cgroup-rule 'c 195:* mrw'</code>参数</li>
+<li>启动时设置<code>--device /dev/nvidiactl:/dev/nvidiactl /dev/nvidia0:/dev/nvidia0 /dev/nvidia1:/dev/nvidia1 &lt;and-so-on-for-all-nvidia-devices&gt;</code>参数</li>
+</ul>
+<p>现实是无论容器是否开启特权模式，我们都需要去获取容器级别的GPU使用率指标，那怎么办呢？大致有两种方法：修改cAdvisor使其支持（In-Tree）、添加其他组件来提供GPU使用率指标（Out-Of-Tree），无论哪种方式，我们都有必要先搞清楚如何采集GPU使用率指标，可以从cAdvisor下手，看他是如何采集的。</p>
+<h4 id="采集机制">采集机制</h4>
+<p>在看具体实现之前，首先介绍一下cAdvisor运行原理，如下图</p>
+<p><img src="./cadvisor.png" alt="cadvisor" style="zoom:200%;" /></p>
+<p>cAdvisor在采集过程中主要分两种数据：</p>
+<ul>
+<li>容器数据</li>
+<li>指标数据</li>
+</ul>
+<p><strong>容器数据来源</strong></p>
+<p>通过watch cgroup下文件目录的变化进行对应容器的处理，此处只获取到容器ID，在获取到新增容器时，通过containerHandler根据容器ID获取容器详情，例如判断出来watch到的容器是通过docker创建的，则会调用docker API获取指定ID的容器详情，其中就包含了容器启动时需要的Env信息，后面的解决方案中会用到这个属性。</p>
+<p><strong>指标数据来源</strong></p>
+<p>每个容器都有与之对应的collector来进行指标采集，其中nvidia指标由对应的nvidiaCollector负责采集。</p>
+<h4 id="源码分析">源码分析</h4>
+<p>明白了原理之后，就可以有针对性的去源码中看其具体实现逻辑了。代码位置很好找，在项目根目录下有个accelerators文件夹，源码位于nvidia.go文件内。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// GetCollector returns a collector that can fetch NVIDIA gpu metrics for NVIDIA devices
+</span><span class="c1">// present in the devices.list file in the given devicesCgroupPath.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">nm</span> <span class="o">*</span><span class="nx">nvidiaManager</span><span class="p">)</span> <span class="nf">GetCollector</span><span class="p">(</span><span class="nx">devicesCgroupPath</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">stats</span><span class="p">.</span><span class="nx">Collector</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">nc</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">nvidiaCollector</span><span class="p">{}</span>
+
+	<span class="k">if</span> <span class="p">!</span><span class="nx">nm</span><span class="p">.</span><span class="nx">devicesPresent</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="o">&amp;</span><span class="nx">stats</span><span class="p">.</span><span class="nx">NoopCollector</span><span class="p">{},</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+	<span class="c1">// Makes sure that we don&#39;t call initializeNVML() concurrently and
+</span><span class="c1"></span>	<span class="c1">// that we only call initializeNVML() when it&#39;s not initialized.
+</span><span class="c1"></span>	<span class="nx">nm</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">nm</span><span class="p">.</span><span class="nx">nvmlInitialized</span> <span class="p">{</span>
+		<span class="nx">err</span> <span class="o">:=</span> <span class="nf">initializeNVML</span><span class="p">(</span><span class="nx">nm</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">nm</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+			<span class="k">return</span> <span class="o">&amp;</span><span class="nx">stats</span><span class="p">.</span><span class="nx">NoopCollector</span><span class="p">{},</span> <span class="nx">err</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="nx">nm</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">nm</span><span class="p">.</span><span class="nx">nvidiaDevices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="o">&amp;</span><span class="nx">stats</span><span class="p">.</span><span class="nx">NoopCollector</span><span class="p">{},</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+  <span class="c1">// 从cgroup中获取需要容器使用的nvidia设备信息，返回的是gpu序号数组
+</span><span class="c1"></span>	<span class="nx">nvidiaMinorNumbers</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">parseDevicesCgroup</span><span class="p">(</span><span class="nx">devicesCgroupPath</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="o">&amp;</span><span class="nx">stats</span><span class="p">.</span><span class="nx">NoopCollector</span><span class="p">{},</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">minor</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">nvidiaMinorNumbers</span> <span class="p">{</span>
+		<span class="nx">device</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">nm</span><span class="p">.</span><span class="nx">nvidiaDevices</span><span class="p">[</span><span class="nx">minor</span><span class="p">]</span>
+		<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="o">&amp;</span><span class="nx">stats</span><span class="p">.</span><span class="nx">NoopCollector</span><span class="p">{},</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;NVIDIA device minor number %d not found in cached devices&#34;</span><span class="p">,</span> <span class="nx">minor</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="nx">nc</span><span class="p">.</span><span class="nx">devices</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">nc</span><span class="p">.</span><span class="nx">devices</span><span class="p">,</span> <span class="nx">device</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">nc</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>逻辑比较简单，先初始化<code>NVML</code>（基于C实现的API，用来监控和管理<code>nvidia</code>设备的状态信息，通过<code>nvidia-smi</code>对外暴露其各种能力。），接着调用<code>parseDevicesCgroup</code>函数获取<strong>容器自身所使用的GPU的序号</strong>，最后通过返回的设备序号找到使用的设备信息返回。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// parseDevicesCgroup解析device cgroup下的devices.list文件来获取允许被容器访问的GPU设备的minor号
+</span><span class="c1">// 如果容器可以访问所有设备或者所有nvidia设备的话，但这些设备并未在devices.list中，则返回一个空数组
+</span><span class="c1"></span><span class="kd">var</span> <span class="nx">parseDevicesCgroup</span> <span class="p">=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">devicesCgroupPath</span> <span class="kt">string</span><span class="p">)</span> <span class="p">([]</span><span class="kt">int</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// Always return a non-nil slice
+</span><span class="c1"></span>	<span class="nx">nvidiaMinorNumbers</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">int</span><span class="p">{}</span>
+
+	<span class="nx">devicesList</span> <span class="o">:=</span> <span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">devicesCgroupPath</span><span class="p">,</span> <span class="s">&#34;devices.list&#34;</span><span class="p">)</span>
+	<span class="nx">f</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">Open</span><span class="p">(</span><span class="nx">devicesList</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">nvidiaMinorNumbers</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;error while opening devices cgroup file %q: %v&#34;</span><span class="p">,</span> <span class="nx">devicesList</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">defer</span> <span class="nx">f</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+
+	<span class="nx">s</span> <span class="o">:=</span> <span class="nx">bufio</span><span class="p">.</span><span class="nf">NewScanner</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span>
+
+	<span class="c1">// See https://www.kernel.org/doc/Documentation/cgroup-v1/devices.txt for the file format
+</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">s</span><span class="p">.</span><span class="nf">Scan</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">text</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">Text</span><span class="p">()</span>
+
+		<span class="nx">fields</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">Fields</span><span class="p">(</span><span class="nx">text</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">fields</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">nvidiaMinorNumbers</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;invalid devices cgroup entry %q: must contain three whitespace-separated fields&#34;</span><span class="p">,</span> <span class="nx">text</span><span class="p">)</span>
+		<span class="p">}</span>
+
+		<span class="c1">// Split the second field to find out major:minor numbers
+</span><span class="c1"></span>		<span class="nx">majorMinor</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">Split</span><span class="p">(</span><span class="nx">fields</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">&#34;:&#34;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">majorMinor</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">nvidiaMinorNumbers</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;invalid devices cgroup entry %q: second field should have one colon&#34;</span><span class="p">,</span> <span class="nx">text</span><span class="p">)</span>
+		<span class="p">}</span>
+
+		<span class="c1">// NVIDIA graphics devices are character devices with major number 195.
+</span><span class="c1"></span>		<span class="c1">// https://github.com/torvalds/linux/blob/v4.13/Documentation/admin-guide/devices.txt#L2583
+</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">fields</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#34;c&#34;</span> <span class="o">&amp;&amp;</span> <span class="nx">majorMinor</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#34;195&#34;</span> <span class="p">{</span>
+			<span class="nx">minorNumber</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">Atoi</span><span class="p">(</span><span class="nx">majorMinor</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="k">return</span> <span class="nx">nvidiaMinorNumbers</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;invalid devices cgroup entry %q: minor number is not integer&#34;</span><span class="p">,</span> <span class="nx">text</span><span class="p">)</span>
+			<span class="p">}</span>
+			<span class="c1">// We don&#39;t want devices like nvidiactl (195:255) and nvidia-modeset (195:254)
+</span><span class="c1"></span>			<span class="k">if</span> <span class="nx">minorNumber</span> <span class="p">&lt;</span> <span class="mi">128</span> <span class="p">{</span>
+				<span class="nx">nvidiaMinorNumbers</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">nvidiaMinorNumbers</span><span class="p">,</span> <span class="nx">minorNumber</span><span class="p">)</span>
+			<span class="p">}</span>
+			<span class="c1">// We are ignoring the &#34;195:*&#34; case
+</span><span class="c1"></span>			<span class="c1">// where the container has access to all NVIDIA devices on the machine.
+</span><span class="c1"></span>		<span class="p">}</span>
+		<span class="c1">// We are ignoring the &#34;*:*&#34; case
+</span><span class="c1"></span>		<span class="c1">// where the container has access to all devices on the machine.
+</span><span class="c1"></span>	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">nvidiaMinorNumbers</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>代码中有两个链接，分别来介绍相关的linux知识，如下：</p>
+<ul>
+<li><a href="https://www.kernel.org/doc/Documentation/cgroup-v1/devices.txt">https://www.kernel.org/doc/Documentation/cgroup-v1/devices.txt</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/v4.13/Documentation/admin-guide/devices.txt#L2583">https://github.com/torvalds/linux/blob/v4.13/Documentation/admin-guide/devices.txt#L2583</a></li>
+</ul>
+<p>第一个链接对cgroup v1的device子系统做了介绍，第二个链接枚举了所有device中可能出现的信息及具体介绍。建议不了解的同学阅读一下链接的内容。简单总结一下如下：</p>
+<ul>
+<li>一条device cgroup就是一条device访问白名单，包含四个字段并以如下形式展示：<code>类型 主:次 权限组合</code>，类型包括<code>c（char）、b（block）、a（all）</code>，权限包括rwm，分别对应read、write、mknod</li>
+<li>根device cgroup白名单为<code>a *:* rwm</code>，子device cgroup继承自父，且可以进行删减，但是无法访问父device cgroup中不允许的访问的设备。</li>
+<li>涉及到3个文件，分别为<code>devices.allow</code>、<code>devices.deny</code>、<code>devices.list</code>，前两个文件是只写权限，最后文件是只读权限。根据文件名字很容易理解文件的作用。</li>
+<li>nvidia device对应的类型为<code>c</code>，主序号为195，次序号代表GPU卡号和控制设备，具体根据次序号大小决定</li>
+</ul>
+<p>了解完背景知识之后再看上面的代码就很容易理解了，<code>parseDevicesCgroup</code>做的事情就是到传入的容器对应的device cgroup路径下需读<code>devices.list</code>文件，然后逐行解析，筛选类型为<code>c</code>且主序号为<code>195</code>且次序号小于<code>128</code>（nvidiactl 255，nvidia-modeset 254）的记录，返回所有符合条件的次序号数组。代码中特意注释会忽略<code>195:*</code> 及 <code>*:*</code>的情况，分别对应有权访问所有nvidia设备和有权访问所有设备的情况，这也就和官方文档中提到的Feature对应起来了。</p>
+<p>到这里可以猜一下开启特权模式的容器无法返回GPU指标的原因：开启特权模式影响了devices.list文件内容，变成了<code>*:*</code>。</p>
+<h4 id="对比验证">对比验证</h4>
+<p>未开启特权模式的容器的devices.list文件内容如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">root@node1:/sys/fs/cgroup/devices/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod2e88abd5_96a2_46eb_b2a5_93ea83444052.slice/docker-a0f3c54d8c6beba5d9947723494e4c9b625f03ce4eb0c096e4cf46cae9e389e0.scope
+<span class="c1"># cat devices.list</span>
+c 1:5 rwm
+c 1:3 rwm
+c 1:9 rwm
+c 1:8 rwm
+c 5:0 rwm
+c 5:1 rwm
+c *:* m
+b *:* m
+c 1:7 rwm
+c 136:* rwm
+c 5:2 rwm
+c 10:200 rwm
+c 195:255 rw
+c 243:0 rw
+c 243:1 rw
+c 195:0 rw
+c 195:1 rw
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到里面包含了<code>195:0</code>、<code>195:1</code>、<code>195:255</code>对应使用了0、1两块GPU卡，执行<code>nvidia-smi -L</code>命令返回如下信息</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># nvidia-smi -L</span>
+GPU 0: Tesla T4 <span class="o">(</span>UUID: GPU-a2d26dd1-5a8f-35e5-c325-2cd0756d5ed2<span class="o">)</span>
+GPU 1: Tesla T4 <span class="o">(</span>UUID: GPU-febe3f91-914e-cb7f-bf0a-d96ffeda2777<span class="o">)</span>
+GPU 2: Tesla T4 <span class="o">(</span>UUID: GPU-67ed6316-eec3-f837-b4ac-e36a6d88d0ef<span class="o">)</span>
+GPU 3: Tesla T4 <span class="o">(</span>UUID: GPU-2230f4d8-fc3e-8627-e868-28b9e065b4bf<span class="o">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>0、1正好对应了开篇通过cAdvisor获取到的GPU指标中显示的GPU id。</p>
+<p>开启特权模式的容器的<code>devices.list</code>文件内容如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">root@node1:/sys/fs/cgroup/devices/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-podb832b138_decb_4fdc_9a62_b588a961d77c.slice/docker-4bc7d5c323f7071478f3bb6eec7f7e91d0738571f56ef8b0c22724a0b051a40f.scope
+<span class="c1"># cat devices.list</span>
+a *:* rwm
+</code></pre></td></tr></table>
+</div>
+</div><p>至此，我们已经清楚cAdvisor是如何获取容器所使用的GPU卡信息的，也清楚了为什么在容器开启特权模式时cAdvisor无法获取其所使用的的GPU卡信息。但距离给出有效且优雅的解决方案还有很多待探索的，例如<code>devices.list</code>内容是如何来的？如何知道应该为容器绑定哪些GPU卡等，欲知后事如何，且看下回分解。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2021-05-30</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-hashtags="docker,gpu,cadvisor"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display/" data-hashtag="docker"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a>,&nbsp;<a href="/tags/gpu/">gpu</a>,&nbsp;<a href="/tags/cadvisor/">cadvisor</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/generic-project-template/" class="prev" rel="prev" title="通用Restful API项目模板"><i class="fas fa-angle-left fa-fw"></i>通用Restful API项目模板</a>
+            <a href="/posts/gpu-metrics-not-display2/" class="next" rel="next" title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标">容器开启特权模式后无法通过cadvisor获取GPU metrics指标<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

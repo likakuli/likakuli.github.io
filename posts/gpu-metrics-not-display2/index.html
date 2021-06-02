@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" />
+<meta property="og:description" content="问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/gpu-metrics-not-display2/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-05-30T14:23:24&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-30T14:23:23&#43;08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"/>
+<meta name="twitter:description" content="问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/gpu-metrics-not-display2/" /><link rel="prev" href="https://www.likakuli.com/posts/gpu-metrics-not-display/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "容器开启特权模式后无法通过cadvisor获取GPU metrics指标",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/gpu-metrics-not-display2\/"
+        },"genre": "posts","keywords": "docker, gpu, cadvisor","wordcount":  4406 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/gpu-metrics-not-display2\/","datePublished": "2021-05-30T14:23:24+08:00","dateModified": "2021-05-30T14:23:23+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">容器开启特权模式后无法通过cadvisor获取GPU metrics指标</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-05-30">2021-05-30</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 4406 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 9 分钟&nbsp;<span id="/posts/gpu-metrics-not-display2/" class="leancloud_visitors" data-flag-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#问题描述">问题描述</a></li>
+        <li><a href="#抽丝剥茧">抽丝剥茧</a>
+          <ul>
+            <li><a href="#devicslists内容从何而来"><code>devics.lists</code>内容从何而来</a></li>
+            <li><a href="#devicesallow和devicesdeny内容谁负责写入"><code>devices.allow</code>和<code>devices.deny</code>内容谁负责写入</a>
+              <ul>
+                <li><a href="#进程模型回顾">进程模型回顾</a></li>
+                <li><a href="#runc实现原理">runC实现原理</a></li>
+                <li><a href="#nvidia_visible_devices来自何处">NVIDIA_VISIBLE_DEVICES来自何处</a></li>
+                <li><a href="#为什么开启特权模式的容器deviceslist是">为什么开启特权模式的容器devices.list是<code>*:*</code></a></li>
+              </ul>
+            </li>
+            <li><a href="#完整流程">完整流程</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="问题描述">问题描述</h2>
+<p>开启特权模式（<code>--privileged</code>）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信息。Google大法可以搜到相关的<a href="https://github.com/google/cadvisor/issues/2046" target="_blank" rel="noopener noreffer">Issue</a>，于2018年提出，至今仍处于Open状态（给cAdvisor贡献代码的机会），由于涉及到的内容较多，分为三篇来讲。</p>
+<p>接<a href="../gpu-metrics-not-display" rel="">上一篇</a>，在上一篇中我们已经清楚cAdvisor是如何获取容器所使用的GPU卡信息的，也清楚了为什么在容器开启特权模式时cAdvisor无法获取其所使用的的GPU卡信息。但距离给出有效且优雅的解决方案还有很多待探索的，例如<code>devices.list</code>内容是如何来的？如何知道应该为容器绑定哪些GPU卡等，这些问题都将会在接下来的内容中得到答案，让我们一步一步进行分析。</p>
+<h2 id="抽丝剥茧">抽丝剥茧</h2>
+<h3 id="devicslists内容从何而来"><code>devics.lists</code>内容从何而来</h3>
+<p>上面提到过三个device cgroup的重要文件，其中<code>devices.allow</code>和<code>devices.deny</code>为只写文件，<code>devices.list</code>为只读文件。device子系统是通过device whitelist实现的，此处涉及到内核的知识，想深入了解其实现的可以翻一下内核的代码。简单理解就是通过前面两个只写的文件对whitelist做设置，往<code>devices.allow</code>中添加条目相当于添加白名单，往<code>devices.deny</code>中添加条目相当于删除白名单，最后通过<code>devices.list</code>获取白名单内容。那接下来的问题就是<code>devices.allow</code>和<code>devices.deny</code>内容是谁根据什么规则写入的？</p>
+<h3 id="devicesallow和devicesdeny内容谁负责写入"><code>devices.allow</code>和<code>devices.deny</code>内容谁负责写入</h3>
+<blockquote>
+<p>nvidia-container-runtime-webhook对应的github项目为 nvidia-container-toolkit。</p>
+</blockquote>
+<p>这里内容比较多，涉及到<code>kubelet</code>、<code>device-plugin</code>、<code> containerd</code>、 <code>runC</code>、<code>nvidia-container-runtime</code>、<code>nvidia-container-runtime-hook</code>等。在继续之前先回顾一下<code>docker</code>的进程模型，了解了进程模型及各组件的作用之后定位问题会更有针对性，更容易理解下面的内容。</p>
+<h4 id="进程模型回顾">进程模型回顾</h4>
+<p><img src="./docker-containerd-runc.png" alt="docker-containerd-runc" style="zoom:150%;" /></p>
+<p>相信上图大家已经非常熟悉了，其中<code>Docker Engine</code>通过rpc与<code>containerd</code>通信，<code>containerd</code>通过rpc与<code>containerd-shim</code> 通信，最终<code>containerd-shim</code>通过<code>runC</code>来控制容器的生命周期。提到<code>runC</code>就不得不提<code>OCI（Open Container Initiative）</code>。<code>OCI </code>的来源这里不多说，感兴趣的可以自行搜索。其主要包含了两种规范，即<code>runtime-spec</code>和<code>image-spce</code>，而 <code>runC</code>就是对<code>runtime-spec</code>的一种实现。既然是规范，那就会存在多种实现，<code>nvidia-container-runtime</code>就是为了支持容器使用GPU而做的另一种<code>runtime-spec</code>的实现，原理如下</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="./nvidia-container-runtime.png"
+        data-srcset="./nvidia-container-runtime.png, ./nvidia-container-runtime.png 1.5x, ./nvidia-container-runtime.png 2x"
+        data-sizes="auto"
+        alt="./nvidia-container-runtime.png"
+        title="nvidia-container-runtime" /></p>
+<p>右侧从<code>runC</code>开始的一整块就是<code>nvidia-container-runtime</code>。</p>
+<h4 id="runc实现原理">runC实现原理</h4>
+<p><strong><code>runC</code>容器创建原理</strong></p>
+<p>一个容器启动主要分为三大部分：</p>
+<ul>
+<li><code>create</code>:  主要是为了解析、组装容器启动的配置和与子进程的消息通道等；</li>
+<li><code>init</code>  :  主要根据容器配置启动容器整个运行环境，包括熟知ns，cgroups, seccomp, apparmor, caps等;</li>
+<li><code>start</code> :  主要是为了通知init 进程启动容器；</li>
+</ul>
+<p>大致流程如下图</p>
+<p><img src="./runc.jpg" alt="runc" style="zoom:150%;" /></p>
+<p><strong><code>nvidia-container-runtime</code>原理</strong></p>
+<p><code>nvidia-container-runtime</code>原理是利用<code>runtime-spec</code><u>规范中提到的<code>PreStart Hook</code>机制在执行完<code>runc start</code>之后，在真正的用户进程启动之前</u>，执行<code>nviadia-container-runtime-hook</code>进行一些操作，其针对<strong>GPU设备的挂载</strong>和<strong>device cgroup的设置</strong>是通过一个由C和C++实现的叫做<code>nvidia-container-cli（libnvidia-container）</code>的程序实现的。</p>
+<p><em><strong>注意：prestart hook的生效时机有待确认，虽然<code>OCI</code> spec中提到是在<code>start</code>之后，但是经过看<code>runc</code>源码发现是在执行<code>init</code>的过程中，且尚未执行<code>start</code></strong></em></p>
+<p><code>nvidia-container-runtime-hook</code>通过解析<code>runtime-spec</code>中为用户程序设置的**<code>NVIDIA_VISIBLE_DEVICES</code>**环境变量获取容器需要使用的GPU卡的ID，并调用<code>nvidia-container-cli configure --device=ID(s)</code> 来完成上述提到的操作。</p>
+<p>至此可以对容器内的GPU设备挂载和device cgroup的设置过程和原理有个大概的了解，这里利用了<code>OCI</code> hook和spec，通过环境变量形式把需要的GPU设备ID设置到名为<code>NVIDIA_VISIBLE_DEVICES</code>的环境变量上，进行了比较巧妙的实现，那又是谁为此环境变量设置赋值的呢？继续往下看</p>
+<h4 id="nvidia_visible_devices来自何处">NVIDIA_VISIBLE_DEVICES来自何处</h4>
+<p><code>Kubernetes</code> 提供了一个 <a href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/resource-management/device-plugin.md" target="_blank" rel="noopener noreffer">device plugin框架</a>（beta from 1.10），可以用它来将系统硬件资源发布到<code>Kubelet</code>，再由<code>Kubelet</code>上报给<code>Kube-apiserver</code>，不必定制 Kubernetes 本身的代码。目标设备包括 GPU、高性能 NIC、FPGA、 InfiniBand 适配器以及其他类似的、可能需要特定于供应商的初始化和设置的计算资源。</p>
+<p><img src="./device-plugin.jpg" alt="device-plugin" style="zoom:150%;" /></p>
+<p>工作流程如上图所示，<code>device plugin</code>先注册到<code>Kubelet</code>，<code>Kubelet</code>开始watch<code>device plugin</code>变化，在容器真正创建之前<code>Kubelet</code>调用<code>device plugin</code>提供的<code>Allocate</code>服务去为Pod申请所需资源。<code>Kubelet</code>在内部维护了一份<code>Pod</code>与扩展资源的映射数据，且通过<code>checkpoint</code>形式写到本地文件中，在后续<code>Kubelet</code>重启时会用到。同时在开启<code>KubeletPodResource</code>特性开关后，Kubulet还可以通过rpc的形式对外提供<code>pod-resources</code>信息，详情可以参考https://kubernetes.io/zh/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/。</p>
+<p>这里大致可以猜到赋值的地方了，因为这是一个专门用于GPU的环境变量，所以不可能直接在<code>Kubelet</code>中定义，那就只剩下nidia对应的k8s-device-plugin了，我们可以在其源码中找到对应的实现逻辑，如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Constants to represent the various device list strategies
+</span><span class="c1"></span><span class="kd">const</span> <span class="p">(</span>
+	<span class="nx">DeviceListStrategyEnvvar</span>       <span class="p">=</span> <span class="s">&#34;envvar&#34;</span>
+	<span class="nx">DeviceListStrategyVolumeMounts</span> <span class="p">=</span> <span class="s">&#34;volume-mounts&#34;</span>
+<span class="p">)</span>
+
+<span class="c1">// migStrategyNone
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">migStrategyNone</span><span class="p">)</span> <span class="nf">GetPlugins</span><span class="p">()</span> <span class="p">[]</span><span class="o">*</span><span class="nx">NvidiaDevicePlugin</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="p">[]</span><span class="o">*</span><span class="nx">NvidiaDevicePlugin</span><span class="p">{</span>
+		<span class="nf">NewNvidiaDevicePlugin</span><span class="p">(</span>
+			<span class="s">&#34;nvidia.com/gpu&#34;</span><span class="p">,</span>
+			<span class="nf">NewGpuDeviceManager</span><span class="p">(</span><span class="kc">false</span><span class="p">),</span> <span class="c1">// Enumerate device even if MIG enabled
+</span><span class="c1"></span>			<span class="s">&#34;NVIDIA_VISIBLE_DEVICES&#34;</span><span class="p">,</span>
+			<span class="nx">gpuallocator</span><span class="p">.</span><span class="nf">NewBestEffortPolicy</span><span class="p">(),</span>
+			<span class="nx">pluginapi</span><span class="p">.</span><span class="nx">DevicePluginPath</span><span class="o">+</span><span class="s">&#34;nvidia-gpu.sock&#34;</span><span class="p">),</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Allocate which return list of devices.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">NvidiaDevicePlugin</span><span class="p">)</span> <span class="nf">Allocate</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">reqs</span> <span class="o">*</span><span class="nx">pluginapi</span><span class="p">.</span><span class="nx">AllocateRequest</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">pluginapi</span><span class="p">.</span><span class="nx">AllocateResponse</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">responses</span> <span class="o">:=</span> <span class="nx">pluginapi</span><span class="p">.</span><span class="nx">AllocateResponse</span><span class="p">{}</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">req</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">reqs</span><span class="p">.</span><span class="nx">ContainerRequests</span> <span class="p">{</span>
+		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">id</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">req</span><span class="p">.</span><span class="nx">DevicesIDs</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="p">!</span><span class="nx">m</span><span class="p">.</span><span class="nf">deviceExists</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+				<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;invalid allocation request for &#39;%s&#39;: unknown device: %s&#34;</span><span class="p">,</span> <span class="nx">m</span><span class="p">.</span><span class="nx">resourceName</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+
+		<span class="nx">response</span> <span class="o">:=</span> <span class="nx">pluginapi</span><span class="p">.</span><span class="nx">ContainerAllocateResponse</span><span class="p">{}</span>
+
+		<span class="nx">uuids</span> <span class="o">:=</span> <span class="nx">req</span><span class="p">.</span><span class="nx">DevicesIDs</span>
+		<span class="nx">deviceIDs</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">deviceIDsFromUUIDs</span><span class="p">(</span><span class="nx">uuids</span><span class="p">)</span>
+
+    <span class="c1">// 默认为DeviceListStrategyEnvvar，m.deviceListEnvvar的值就是NVIDIA_VISIBLE_DEVICES
+</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">deviceListStrategyFlag</span> <span class="o">==</span> <span class="nx">DeviceListStrategyEnvvar</span> <span class="p">{</span>
+			<span class="nx">response</span><span class="p">.</span><span class="nx">Envs</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">apiEnvs</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">deviceListEnvvar</span><span class="p">,</span> <span class="nx">deviceIDs</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">deviceListStrategyFlag</span> <span class="o">==</span> <span class="nx">DeviceListStrategyVolumeMounts</span> <span class="p">{</span>
+			<span class="nx">response</span><span class="p">.</span><span class="nx">Envs</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">apiEnvs</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">deviceListEnvvar</span><span class="p">,</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="nx">deviceListAsVolumeMountsContainerPathRoot</span><span class="p">})</span>
+			<span class="nx">response</span><span class="p">.</span><span class="nx">Mounts</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">apiMounts</span><span class="p">(</span><span class="nx">deviceIDs</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">passDeviceSpecsFlag</span> <span class="p">{</span>
+			<span class="nx">response</span><span class="p">.</span><span class="nx">Devices</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">apiDeviceSpecs</span><span class="p">(</span><span class="nx">nvidiaDriverRootFlag</span><span class="p">,</span> <span class="nx">uuids</span><span class="p">)</span>
+		<span class="p">}</span>
+
+		<span class="nx">responses</span><span class="p">.</span><span class="nx">ContainerResponses</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">responses</span><span class="p">.</span><span class="nx">ContainerResponses</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">response</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">responses</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到在具体是在<code>Kubelet</code>调用Allocate服务时，k8s-device-plugin对response.Env进行了设置，添加了对应的环境变量，值就是容器所对应的GPU设备，多个设备用逗号分隔。</p>
+<h4 id="为什么开启特权模式的容器deviceslist是">为什么开启特权模式的容器devices.list是<code>*:*</code></h4>
+<p>同样是设置了<code>NVIDIA_VISIBLE_DEVICES</code>，同样最终都是nvidia-container-cli进行device cgroup的设置，为什么特权模式的容器对应的device cgroup就是<code>*:*</code>呢？</p>
+<p>这里就又得提到<code>runc</code>了，上面虽然提到<code>nvidia-container-runtime-hook</code>会获取环境变量，进行一系列操作，设置device cgroup，但是在执行<code>runc int</code>的过程中同样会去进行设备挂载和cgroup的设置。</p>
+<p>接下来重点看下其设置cgroup的相关代码，cgroup参数组装的过程在<code>create</code>命令中，真正将参数设置到linux系统上是在<code>init</code>命令中进行的，且没有对参数做任何修改，所以我们看<code>create</code>部分cgroup参数是如何组装的，忽略掉不相关的代码：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">CreateCgroupConfig</span><span class="p">(</span><span class="nx">opts</span> <span class="o">*</span><span class="nx">CreateOpts</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">configs</span><span class="p">.</span><span class="nx">Cgroup</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="o">...</span>
+
+	<span class="c1">// In rootless containers, any attempt to make cgroup changes is likely to fail.
+</span><span class="c1"></span>	<span class="c1">// libcontainer will validate this but ignores the error.
+</span><span class="c1"></span>	<span class="nx">c</span><span class="p">.</span><span class="nx">Resources</span><span class="p">.</span><span class="nx">AllowedDevices</span> <span class="p">=</span> <span class="nx">AllowedDevices</span>
+	<span class="k">if</span> <span class="nx">spec</span><span class="p">.</span><span class="nx">Linux</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">r</span> <span class="o">:=</span> <span class="nx">spec</span><span class="p">.</span><span class="nx">Linux</span><span class="p">.</span><span class="nx">Resources</span>
+		<span class="k">if</span> <span class="nx">r</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">c</span><span class="p">,</span> <span class="kc">nil</span>
+		<span class="p">}</span>
+		<span class="k">for</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">d</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">spec</span><span class="p">.</span><span class="nx">Linux</span><span class="p">.</span><span class="nx">Resources</span><span class="p">.</span><span class="nx">Devices</span> <span class="p">{</span>
+			<span class="kd">var</span> <span class="p">(</span>
+				<span class="nx">t</span>     <span class="p">=</span> <span class="s">&#34;a&#34;</span>
+				<span class="nx">major</span> <span class="p">=</span> <span class="nb">int64</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+				<span class="nx">minor</span> <span class="p">=</span> <span class="nb">int64</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+			<span class="p">)</span>
+			<span class="k">if</span> <span class="nx">d</span><span class="p">.</span><span class="nx">Type</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+				<span class="nx">t</span> <span class="p">=</span> <span class="nx">d</span><span class="p">.</span><span class="nx">Type</span>
+			<span class="p">}</span>
+			<span class="k">if</span> <span class="nx">d</span><span class="p">.</span><span class="nx">Major</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">major</span> <span class="p">=</span> <span class="o">*</span><span class="nx">d</span><span class="p">.</span><span class="nx">Major</span>
+			<span class="p">}</span>
+			<span class="k">if</span> <span class="nx">d</span><span class="p">.</span><span class="nx">Minor</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">minor</span> <span class="p">=</span> <span class="o">*</span><span class="nx">d</span><span class="p">.</span><span class="nx">Minor</span>
+			<span class="p">}</span>
+			<span class="k">if</span> <span class="nx">d</span><span class="p">.</span><span class="nx">Access</span> <span class="o">==</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+				<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;device access at %d field cannot be empty&#34;</span><span class="p">,</span> <span class="nx">i</span><span class="p">)</span>
+			<span class="p">}</span>
+			<span class="nx">dt</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">stringToCgroupDeviceRune</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+			<span class="p">}</span>
+			<span class="nx">dd</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">configs</span><span class="p">.</span><span class="nx">Device</span><span class="p">{</span>
+				<span class="nx">Type</span><span class="p">:</span>        <span class="nx">dt</span><span class="p">,</span>
+				<span class="nx">Major</span><span class="p">:</span>       <span class="nx">major</span><span class="p">,</span>
+				<span class="nx">Minor</span><span class="p">:</span>       <span class="nx">minor</span><span class="p">,</span>
+				<span class="nx">Permissions</span><span class="p">:</span> <span class="nx">d</span><span class="p">.</span><span class="nx">Access</span><span class="p">,</span>
+				<span class="nx">Allow</span><span class="p">:</span>       <span class="nx">d</span><span class="p">.</span><span class="nx">Allow</span><span class="p">,</span>
+			<span class="p">}</span>
+			<span class="nx">c</span><span class="p">.</span><span class="nx">Resources</span><span class="p">.</span><span class="nx">Devices</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">Resources</span><span class="p">.</span><span class="nx">Devices</span><span class="p">,</span> <span class="nx">dd</span><span class="p">)</span>
+		<span class="p">}</span>
+		
+    <span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到是根据<code>spec.Linux.Resources.Devices</code>来设置device cgroup的，接下来就去对比一下普通容器和特权模式容器上述字段值得区别，如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 普通容器</span>
+root@node1:/var/run/containerd/io.containerd.runtime.v2.task/moby/a0f3c54d8c6beba5d9947723494e4c9b625f03ce4eb0c096e4cf46cae9e389e0
+<span class="c1"># cat config.json | jq .linux.resources.devices</span>
+<span class="o">[</span>
+  <span class="o">{</span>
+    <span class="s2">&#34;allow&#34;</span>: false,
+    <span class="s2">&#34;access&#34;</span>: <span class="s2">&#34;rwm&#34;</span>
+  <span class="o">}</span>,
+  <span class="o">{</span>
+    <span class="s2">&#34;allow&#34;</span>: true,
+    <span class="s2">&#34;type&#34;</span>: <span class="s2">&#34;c&#34;</span>,
+    <span class="s2">&#34;major&#34;</span>: 1,
+    <span class="s2">&#34;minor&#34;</span>: 5,
+    <span class="s2">&#34;access&#34;</span>: <span class="s2">&#34;rwm&#34;</span>
+  <span class="o">}</span>,
+  <span class="o">{</span>
+    <span class="s2">&#34;allow&#34;</span>: true,
+    <span class="s2">&#34;type&#34;</span>: <span class="s2">&#34;c&#34;</span>,
+    <span class="s2">&#34;major&#34;</span>: 1,
+    <span class="s2">&#34;minor&#34;</span>: 3,
+    <span class="s2">&#34;access&#34;</span>: <span class="s2">&#34;rwm&#34;</span>
+  <span class="o">}</span>,
+  <span class="o">{</span>
+    <span class="s2">&#34;allow&#34;</span>: true,
+    <span class="s2">&#34;type&#34;</span>: <span class="s2">&#34;c&#34;</span>,
+    <span class="s2">&#34;major&#34;</span>: 1,
+    <span class="s2">&#34;minor&#34;</span>: 9,
+    <span class="s2">&#34;access&#34;</span>: <span class="s2">&#34;rwm&#34;</span>
+  <span class="o">}</span>,
+  <span class="o">{</span>
+    <span class="s2">&#34;allow&#34;</span>: true,
+    <span class="s2">&#34;type&#34;</span>: <span class="s2">&#34;c&#34;</span>,
+    <span class="s2">&#34;major&#34;</span>: 1,
+    <span class="s2">&#34;minor&#34;</span>: 8,
+    <span class="s2">&#34;access&#34;</span>: <span class="s2">&#34;rwm&#34;</span>
+  <span class="o">}</span>,
+  <span class="o">{</span>
+    <span class="s2">&#34;allow&#34;</span>: true,
+    <span class="s2">&#34;type&#34;</span>: <span class="s2">&#34;c&#34;</span>,
+    <span class="s2">&#34;major&#34;</span>: 5,
+    <span class="s2">&#34;minor&#34;</span>: 0,
+    <span class="s2">&#34;access&#34;</span>: <span class="s2">&#34;rwm&#34;</span>
+  <span class="o">}</span>,
+  <span class="o">{</span>
+    <span class="s2">&#34;allow&#34;</span>: true,
+    <span class="s2">&#34;type&#34;</span>: <span class="s2">&#34;c&#34;</span>,
+    <span class="s2">&#34;major&#34;</span>: 5,
+    <span class="s2">&#34;minor&#34;</span>: 1,
+    <span class="s2">&#34;access&#34;</span>: <span class="s2">&#34;rwm&#34;</span>
+  <span class="o">}</span>,
+  <span class="o">{</span>
+    <span class="s2">&#34;allow&#34;</span>: false,
+    <span class="s2">&#34;type&#34;</span>: <span class="s2">&#34;c&#34;</span>,
+    <span class="s2">&#34;major&#34;</span>: 10,
+    <span class="s2">&#34;minor&#34;</span>: 229,
+    <span class="s2">&#34;access&#34;</span>: <span class="s2">&#34;rwm&#34;</span>
+  <span class="o">}</span>
+<span class="o">]</span>
+
+<span class="c1"># 特权容器</span>
+root@node1:/var/run/containerd/io.containerd.runtime.v2.task/moby/4bc7d5c323f7071478f3bb6eec7f7e91d0738571f56ef8b0c22724a0b051a40f
+<span class="c1"># cat config.json | jq .linux.resources.devices</span>
+<span class="o">[</span>
+  <span class="o">{</span>
+    <span class="s2">&#34;allow&#34;</span>: true,
+    <span class="s2">&#34;access&#34;</span>: <span class="s2">&#34;rwm&#34;</span>
+  <span class="o">}</span>
+<span class="o">]</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>区别很明显，结合上面的代码可以很容器判断出来特权模式将会设置<code>a *:* rwm</code>，而非特权模式容器则按需设置，最终导致虽然<code>nvidia-container-runtime-hook</code>会根据环境变量的值进行device cgroup的设置，但由于开启特权模式的容器设置了更大的范围，最终读<code>devices.list</code>时就会直接返回<code>a *:* rwm</code>。</p>
+<p><code>OCI</code> spce文件中<code>spec.Linux.Resources.Devices</code>值则是由<code>containerd</code>设置的，<code>containerd</code>会判断容器是否开启特权模式进行响应的设置，相关代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">populateDefaultUnixSpec</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">s</span> <span class="o">*</span><span class="nx">Spec</span><span class="p">,</span> <span class="nx">id</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="o">...</span>
+
+	<span class="o">*</span><span class="nx">s</span> <span class="p">=</span> <span class="nx">Spec</span><span class="p">{</span>
+		<span class="o">...</span>
+		<span class="nx">Linux</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">specs</span><span class="p">.</span><span class="nx">Linux</span><span class="p">{</span>
+			<span class="o">...</span>
+			<span class="nx">CgroupsPath</span><span class="p">:</span> <span class="nx">filepath</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="s">&#34;/&#34;</span><span class="p">,</span> <span class="nx">ns</span><span class="p">,</span> <span class="nx">id</span><span class="p">),</span>
+			<span class="nx">Resources</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">specs</span><span class="p">.</span><span class="nx">LinuxResources</span><span class="p">{</span>
+				<span class="nx">Devices</span><span class="p">:</span> <span class="p">[]</span><span class="nx">specs</span><span class="p">.</span><span class="nx">LinuxDeviceCgroup</span><span class="p">{</span>
+					<span class="p">{</span>
+						<span class="nx">Allow</span><span class="p">:</span>  <span class="kc">false</span><span class="p">,</span>
+						<span class="nx">Access</span><span class="p">:</span> <span class="nx">rwm</span><span class="p">,</span>
+					<span class="p">},</span>
+				<span class="p">},</span>
+			<span class="p">},</span>
+			<span class="o">...</span>
+		<span class="p">},</span>
+	<span class="p">}</span>
+	<span class="o">...</span>
+<span class="p">}</span>
+
+
+<span class="c1">// NewContainer creates a new container
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewContainer</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">gocontext</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">client</span> <span class="o">*</span><span class="nx">containerd</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">context</span> <span class="o">*</span><span class="nx">cli</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">(</span><span class="nx">containerd</span><span class="p">.</span><span class="nx">Container</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="o">...</span>
+  
+		<span class="k">if</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Bool</span><span class="p">(</span><span class="s">&#34;privileged&#34;</span><span class="p">)</span> <span class="p">{</span>
+			<span class="nx">opts</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">oci</span><span class="p">.</span><span class="nx">WithPrivileged</span><span class="p">,</span> <span class="nx">oci</span><span class="p">.</span><span class="nx">WithAllDevicesAllowed</span><span class="p">,</span> <span class="nx">oci</span><span class="p">.</span><span class="nx">WithHostDevices</span><span class="p">)</span>
+		<span class="p">}</span>
+		
+    <span class="o">...</span>
+<span class="p">}</span>
+
+<span class="c1">// WithAllDevicesAllowed permits READ WRITE MKNOD on all devices nodes for the container
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">WithAllDevicesAllowed</span><span class="p">(</span><span class="nx">_</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">_</span> <span class="nx">Client</span><span class="p">,</span> <span class="nx">_</span> <span class="o">*</span><span class="nx">containers</span><span class="p">.</span><span class="nx">Container</span><span class="p">,</span> <span class="nx">s</span> <span class="o">*</span><span class="nx">Spec</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nf">setLinux</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">s</span><span class="p">.</span><span class="nx">Linux</span><span class="p">.</span><span class="nx">Resources</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">s</span><span class="p">.</span><span class="nx">Linux</span><span class="p">.</span><span class="nx">Resources</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">specs</span><span class="p">.</span><span class="nx">LinuxResources</span><span class="p">{}</span>
+	<span class="p">}</span>
+	<span class="nx">s</span><span class="p">.</span><span class="nx">Linux</span><span class="p">.</span><span class="nx">Resources</span><span class="p">.</span><span class="nx">Devices</span> <span class="p">=</span> <span class="p">[]</span><span class="nx">specs</span><span class="p">.</span><span class="nx">LinuxDeviceCgroup</span><span class="p">{</span>
+		<span class="p">{</span>
+			<span class="nx">Allow</span><span class="p">:</span>  <span class="kc">true</span><span class="p">,</span>
+			<span class="nx">Access</span><span class="p">:</span> <span class="nx">rwm</span><span class="p">,</span>
+		<span class="p">},</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="完整流程">完整流程</h3>
+<p>至此我们清楚了容器在使用GPU时的整个流程，从容器创建到真正挂载GPU设备以及开启特权模式后无法获取GPU指标的原因。</p>
+<p><img src="./complete.png" alt="complete" style="zoom:150%;" /></p>
+<p>好了，有关cAdvisor无法提供特权模式容器的GPU指标的原理及原因至此已经都搞清楚了，下一篇我们讲介绍解决方案，敬请期待~</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2021-05-30</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display2/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-hashtags="docker,gpu,cadvisor"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display2/" data-hashtag="docker"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display2/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display2/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display2/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display2/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display2/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display2/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a>,&nbsp;<a href="/tags/gpu/">gpu</a>,&nbsp;<a href="/tags/cadvisor/">cadvisor</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/gpu-metrics-not-display/" class="prev" rel="prev" title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fas fa-angle-left fa-fw"></i>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

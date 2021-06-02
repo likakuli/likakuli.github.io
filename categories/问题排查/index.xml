@@ -4,7 +4,21 @@
         <link>https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/</link>
         <description>问题排查 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 10 Feb 2021 11:41:36 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 30 May 2021 14:23:24 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" rel="self" type="application/rss+xml" /><item>
+    <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
+    <link>https://www.likakuli.com/posts/gpu-metrics-not-display2/</link>
+    <pubDate>Sun, 30 May 2021 14:23:24 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/gpu-metrics-not-display2/</guid>
+    <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
+</item><item>
+    <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
+    <link>https://www.likakuli.com/posts/gpu-metrics-not-display/</link>
+    <pubDate>Sun, 30 May 2021 14:23:23 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/gpu-metrics-not-display/</guid>
+    <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
+</item><item>
     <title>cgroup mount destination: unknown</title>
     <link>https://www.likakuli.com/posts/docker-cgroup-unknown/</link>
     <pubDate>Wed, 10 Feb 2021 11:41:36 &#43;0800</pubDate>
@@ -60,19 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kubernetes-kubelet-restart/</guid>
     <description><![CDATA[问题描述 在修复cgroup泄漏问题时会现停掉kubelet，待修复完成后启动kubelet组件，重启后收到业务反馈，业务容器重启了。 问题排查]]></description>
-</item><item>
-    <title>Knative健康检查</title>
-    <link>https://www.likakuli.com/posts/knative-healthcheck/</link>
-    <pubDate>Thu, 20 Aug 2020 13:26:19 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/knative-healthcheck/</guid>
-    <description><![CDATA[背景 knative 0.14.0 实际修改可能与贴出来的代码不符，贴出来的代码只是为了方便快速实现功能 在支持了前面的定制功能后，集群中部署ksvc服务时会报Ingre]]></description>
-</item><item>
-    <title>Endpoint异常变化</title>
-    <link>https://www.likakuli.com/posts/kubernetes-ep-event/</link>
-    <pubDate>Tue, 23 Jun 2020 19:53:31 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-ep-event/</guid>
-    <description><![CDATA[背景 k8s 1.12.4 包含自定义功能 线上集群在批量原地升级时出现流量异常问题，大体流程如下： 批量摘流，并等待7秒 批量删除容器 watch到Endpoint ready]]></description>
 </item></channel>
 </rss>

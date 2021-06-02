@@ -4,9 +4,23 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 11 May 2021 15:47:58 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 30 May 2021 14:23:24 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
+    <link>https://www.likakuli.com/posts/gpu-metrics-not-display2/</link>
+    <pubDate>Sun, 30 May 2021 14:23:24 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/gpu-metrics-not-display2/</guid>
+    <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
+</item><item>
+    <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
+    <link>https://www.likakuli.com/posts/gpu-metrics-not-display/</link>
+    <pubDate>Sun, 30 May 2021 14:23:23 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/gpu-metrics-not-display/</guid>
+    <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
+</item><item>
     <title>通用Restful API项目模板</title>
     <link>https://www.likakuli.com/posts/generic-project-template/</link>
     <pubDate>Tue, 11 May 2021 15:47:58 &#43;0800</pubDate>
@@ -62,19 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/docker-java-cpu/</guid>
     <description><![CDATA[背景 容器原生设计为单进程模型，但公司线上运行的服务以多进程的方式运行，而且里面包含了很多的agent，例如日志采集、监控采集、数据配送等，耦]]></description>
-</item><item>
-    <title>Dockerd资源泄露系列 - 3</title>
-    <link>https://www.likakuli.com/posts/docker-leak3/</link>
-    <pubDate>Thu, 24 Dec 2020 17:26:12 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/docker-leak3/</guid>
-    <description><![CDATA[现象 线上k8s集群报警，宿主fd利用率超过80%，登陆查看dockerd内存使用26G 排查思路 由于之前已经遇到过多次dockerd资源泄露的]]></description>
-</item><item>
-    <title>Pod terminating2</title>
-    <link>https://www.likakuli.com/posts/docker-pod-terminating2/</link>
-    <pubDate>Sat, 31 Oct 2020 10:51:39 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/docker-pod-terminating2/</guid>
-    <description><![CDATA[1. 背景 承接上文，近期我们排查弹性云线上几起故障时，故障由多个因素共同引起，列举如下： 弹性云在逐步灰度升级docker版本至 18.06.3-ce 由于历史原因，弹]]></description>
 </item></channel>
 </rss>
