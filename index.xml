@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 30 May 2021 14:23:24 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 30 May 2021 14:23:25 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
+    <link>https://www.likakuli.com/posts/gpu-metrics-not-display3/</link>
+    <pubDate>Sun, 30 May 2021 14:23:25 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/gpu-metrics-not-display3/</guid>
+    <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
+</item><item>
     <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
     <link>https://www.likakuli.com/posts/gpu-metrics-not-display2/</link>
     <pubDate>Sun, 30 May 2021 14:23:24 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/docker-cgroup-unknown/</guid>
     <description><![CDATA[问题 线上k8s集群在进行容器创建时报如下错误 Failed create pod sandbox: rpc error: code = Unknown desc = failed to start sandbox container for pod &ldquo;xxx-sf-32c80-0&rdquo;: Error response from daemon: cgroups: cannot find cgroup mount destination: unknown 之前遇到过cgroup相关问题，但是]]></description>
-</item><item>
-    <title>Java服务突现毛刺</title>
-    <link>https://www.likakuli.com/posts/docker-java-cpu/</link>
-    <pubDate>Wed, 10 Feb 2021 11:41:20 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/docker-java-cpu/</guid>
-    <description><![CDATA[背景 容器原生设计为单进程模型，但公司线上运行的服务以多进程的方式运行，而且里面包含了很多的agent，例如日志采集、监控采集、数据配送等，耦]]></description>
 </item></channel>
 </rss>

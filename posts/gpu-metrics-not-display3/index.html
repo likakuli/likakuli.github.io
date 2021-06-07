@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" />
+<meta property="og:description" content="问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/gpu-metrics-not-display3/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-05-30T14:23:25&#43;08:00" />
+<meta property="article:modified_time" content="2021-06-07T11:56:57&#43;08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"/>
+<meta name="twitter:description" content="问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/gpu-metrics-not-display3/" /><link rel="prev" href="https://www.likakuli.com/posts/gpu-metrics-not-display2/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "容器开启特权模式后无法通过cadvisor获取GPU metrics指标",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/gpu-metrics-not-display3\/"
+        },"genre": "posts","keywords": "docker, gpu, cadvisor","wordcount":  1498 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/gpu-metrics-not-display3\/","datePublished": "2021-05-30T14:23:25+08:00","dateModified": "2021-06-07T11:56:57+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">容器开启特权模式后无法通过cadvisor获取GPU metrics指标</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-05-30">2021-05-30</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1498 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 3 分钟&nbsp;<span id="/posts/gpu-metrics-not-display3/" class="leancloud_visitors" data-flag-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#问题描述">问题描述</a></li>
+        <li><a href="#回顾">回顾</a>
+          <ul>
+            <li><a href="#kubelet--device-pluginhttpsdocsgooglecomdocumentd1wpljl8dsvphnbvbtaad35ilb-jqomlkgflnqpwwnducedit-device-plugin"><a href="https://docs.google.com/document/d/1wPlJL8DsVpHnbVbTaad35ILB-jqoMLkGFLnQpWWNduc/edit" title="device plugin">Kubelet &amp; Device Plugin</a></a></li>
+            <li><a href="#nvidia-container-runtimehttpsdocsgooglecomdocumentd10egjf1negud5060dj-zcji2w7ob4clcvcn1lzkw6i4oedit-nvidia-container-runtime"><a href="https://docs.google.com/document/d/10EGjF1nEGUD5060dJ-ZcJI2w7Ob4CLCvcn1lzKW6I4o/edit#" title="nvidia-container-runtime">Nvidia-container-runtime</a></a></li>
+          </ul>
+        </li>
+        <li><a href="#解决方案">解决方案</a>
+          <ul>
+            <li><a href="#必要性">必要性</a></li>
+            <li><a href="#gpu设备表示方式">GPU设备表示方式</a></li>
+            <li><a href="#gpu设备信息来源">GPU设备信息来源</a>
+              <ul>
+                <li><a href="#pod-resource">Pod-Resource</a></li>
+                <li><a href="#oci-spec">OCI spec</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="问题描述">问题描述</h2>
+<p>开启特权模式（<code>--privileged</code>）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信息。Google大法可以搜到相关的<a href="https://github.com/google/cadvisor/issues/2046" target="_blank" rel="noopener noreffer">Issue</a>，于2018年提出，至今仍处于Open状态（给cAdvisor贡献代码的机会），由于涉及到的内容较多，分为三篇来讲。</p>
+<p>本篇为最后一篇，在看本篇之前建议先查看前两篇：</p>
+<p><a href="../gpu-metrics-not-display" rel="">容器开启特权模式后无法通过cadvisor获取GPU metrics指标</a></p>
+<p><a href="gpu-metrics-not-display2" rel="">容器开启特权模式后无法通过cadvisor获取GPU metrics指标</a></p>
+<h2 id="回顾">回顾</h2>
+<p>首先通过两种图回顾一下容器使用NVIDIA GPU的原理，如下</p>
+<h3 id="kubelet--device-pluginhttpsdocsgooglecomdocumentd1wpljl8dsvphnbvbtaad35ilb-jqomlkgflnqpwwnducedit-device-plugin"><a href="https://docs.google.com/document/d/1wPlJL8DsVpHnbVbTaad35ILB-jqoMLkGFLnQpWWNduc/edit" title="device plugin" target="_blank" rel="noopener noreffer">Kubelet &amp; Device Plugin</a></h3>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="./device-plugin.png"
+        data-srcset="./device-plugin.png, ./device-plugin.png 1.5x, ./device-plugin.png 2x"
+        data-sizes="auto"
+        alt="./device-plugin.png"
+        title="img" /></p>
+<h3 id="nvidia-container-runtimehttpsdocsgooglecomdocumentd10egjf1negud5060dj-zcji2w7ob4clcvcn1lzkw6i4oedit-nvidia-container-runtime"><a href="https://docs.google.com/document/d/10EGjF1nEGUD5060dJ-ZcJI2w7Ob4CLCvcn1lzKW6I4o/edit#" title="nvidia-container-runtime" target="_blank" rel="noopener noreffer">Nvidia-container-runtime</a></h3>
+<p><img src="./nvidia-container-runtime.png" alt="img"  /></p>
+<h2 id="解决方案">解决方案</h2>
+<p>总结一下cAdvisor无法提供特权模式容器GPU指标的根本原因：</p>
+<ul>
+<li>cAdvisor作为一个偏底层的通用指标能力的提供者，为了与其他组件解耦，其从最底层device cgroup来获取容器绑定的GPU信息；</li>
+<li>containerd在创建容器时判断是否开启特权模式，是的话会为容器设置可以访问所有设备，即<code>a *:* rwm</code>。</li>
+</ul>
+<h3 id="必要性">必要性</h3>
+<p>使用GPU时容器开启特权模式是一种趋势，简单说就是通过Env的方式传递GPU卡信息时，用户如果知道这个能力，则很容易就可以越过<code>device-plugin</code>在<code>Pod spec</code>中设置Env来实现使用GPU卡的目的，为了安全性，nvidia <code>k8s-deivice-plugin</code>提供了另一种实现方式，参考<a href="https://docs.google.com/document/d/1uXVF-NWZQXgP1MLb87_kMkQvidpnkNWicdpO2l9g-fw/edit#" title="device-plugin" target="_blank" rel="noopener noreffer">这里</a>，新的方式是通过挂载卷的方式识别所需的GPU设备信息，必须开启特权模式。</p>
+<p>虽然两种方式都可以实现容器内使用GPU设备的目的，但实现方式都不够优雅，根本原因还是缺少一个将第三方设备资源通知给<code>container runtime</code>的规范，社区也意识到了这个问题，提出了<a href="https://github.com/container-orchestrated-devices/container-device-interface" title="container-device-interface" target="_blank" rel="noopener noreffer">CDI</a>规范，有关进展详见<a href="https://docs.google.com/document/d/1gUgAMEThkRt4RJ7pA7ZbPPmIOX2Vb7fwH025MjfcTYU/edit#" title="CDI进展" target="_blank" rel="noopener noreffer">这里</a>。在此规范的标准实现上线之前，随着越来越多的容器在使用GPU时开启特权模式，哪怕不那么优雅的方案也是有必要先实现的。</p>
+<h3 id="gpu设备表示方式">GPU设备表示方式</h3>
+<p>k8s-device-plugin支持两种GPU设备表示方式，通过<code>deviceIDStrategyFlag</code>参数设置：</p>
+<ul>
+<li>index</li>
+<li>uuid （默认）</li>
+</ul>
+<p>如果以index方式设置，则可以直接在<code>cAdvisor</code>中获取index值，无需从device cgroup中获取，实现起来比较简单。下面的内容是针对以uuid方式设置时<code>cAdvisor</code>的处理逻辑。</p>
+<h3 id="gpu设备信息来源">GPU设备信息来源</h3>
+<h4 id="pod-resource">Pod-Resource</h4>
+<p><code>Kubelet</code>提供了<code>pod-resource</code>机制，对外提供rpc服务，供外部获取容器所需的资源信息。对<code>Kubelet</code>版本有一定的要求，且这种方式会把<code>cAdvisor</code>和<code>Kubelet</code>偶合在一起，不适合<code>In-Tree</code>方式，可以采取<code>Out-Of-Tree</code>的方式实现。</p>
+<h4 id="oci-spec">OCI spec</h4>
+<p><code>cAdvisor</code>中本身已经缓存了容器<code>OCI</code> spec信息，可以从中获取绑定的GPU信息，优点是上层无感知，缺点是加重了<code>cAdvisor</code>的依赖，<code>cAdvisor</code>需要知道当前容器使用的GPU信息和当前节点上所有GPU信息。</p>
+<p>k8s-device-plugin提供了两种方式设置当前容器使用的GPU设备信息：</p>
+<ul>
+<li>Env</li>
+<li>Volume Mount</li>
+</ul>
+<p>在获取当前节点所有GPU信息之前有个基础知识点需要了解，即<a href="https://docs.nvidia.com/datacenter/cloud-native/kubernetes/mig-k8s.html" title="mig strategy" target="_blank" rel="noopener noreffer">Mig Strategy</a>。策略不同，最终获取到的节点的GPU设备信息不同。当前支持三种策略：</p>
+<ul>
+<li>None：不使用MIG能力</li>
+<li>Single：使用MIG能力，且各GPU实例被分为相同的规格的计算实例</li>
+<li>Mixed：使用MIG能力，GPU实例可以划分为任意规格的计算实例，或者直接使用整个GPU实例</li>
+</ul>
+<p>剩下的工作就是实现不同机制下获取GPU设备信息的功能，可以参考<code>k8s-device-plugin</code>的实现，因为其本身在Allocate时必然涉及到相关能力。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2021-06-07</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-hashtags="docker,gpu,cadvisor"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-hashtag="docker"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a>,&nbsp;<a href="/tags/gpu/">gpu</a>,&nbsp;<a href="/tags/cadvisor/">cadvisor</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/gpu-metrics-not-display2/" class="prev" rel="prev" title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fas fa-angle-left fa-fw"></i>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

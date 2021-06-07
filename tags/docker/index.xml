@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/tags/docker/</link>
         <description>docker - 标签 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 30 May 2021 14:23:24 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/docker/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 30 May 2021 14:23:25 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/docker/" rel="self" type="application/rss+xml" /><item>
+    <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
+    <link>https://www.likakuli.com/posts/gpu-metrics-not-display3/</link>
+    <pubDate>Sun, 30 May 2021 14:23:25 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/gpu-metrics-not-display3/</guid>
+    <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
+</item><item>
     <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
     <link>https://www.likakuli.com/posts/gpu-metrics-not-display2/</link>
     <pubDate>Sun, 30 May 2021 14:23:24 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/dockerd-memory-leak1/</guid>
     <description><![CDATA[背景 线上部分宿主机dockerd占用内存过大，有的甚至超过100G，而整个宿主上的容器使用的内存还不如dockerd一个进程使用的多，现在的]]></description>
-</item><item>
-    <title>Dragonfly &#43; Harbor实现的p2p镜像分发</title>
-    <link>https://www.likakuli.com/posts/dragonfly/</link>
-    <pubDate>Thu, 13 Sep 2018 20:17:52 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/dragonfly/</guid>
-    <description><![CDATA[测试环境 10.0.13.19 部署harbor，单点，docker-compose的方式部署 4核8G 10.0.13.22 dragonfly的supernode节点 16核64G do]]></description>
 </item></channel>
 </rss>
