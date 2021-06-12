@@ -5,32 +5,32 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noodp" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
-        <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" />
-<meta property="og:description" content="问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信" />
+        <title>Kube-scheduler InterPodAffinity性能优化史 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Kube-scheduler InterPodAffinity性能优化史" />
+<meta property="og:description" content="从事Kubernetes相关工作的同学对Kube-scheduler一定不会感到陌生，有的甚至还可能遇到过里面的一些问题，本篇主要介绍其中的" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://www.likakuli.com/posts/gpu-metrics-not-display3/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2021-05-30T14:23:25&#43;08:00" />
-<meta property="article:modified_time" content="2021-06-07T11:56:57&#43;08:00" />
+<meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-06-08T20:24:22&#43;08:00" />
+<meta property="article:modified_time" content="2021-06-12T12:36:38&#43;08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
-<meta name="twitter:title" content="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"/>
-<meta name="twitter:description" content="问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信"/>
+<meta name="twitter:title" content="Kube-scheduler InterPodAffinity性能优化史"/>
+<meta name="twitter:description" content="从事Kubernetes相关工作的同学对Kube-scheduler一定不会感到陌生，有的甚至还可能遇到过里面的一些问题，本篇主要介绍其中的"/>
 <meta name="application-name" content="LoveIt">
 <meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/gpu-metrics-not-display3/" /><link rel="prev" href="https://www.likakuli.com/posts/gpu-metrics-not-display2/" /><link rel="next" href="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" /><link rel="prev" href="https://www.likakuli.com/posts/gpu-metrics-not-display3/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
     {
         "@context": "http://schema.org",
         "@type": "BlogPosting",
-        "headline": "容器开启特权模式后无法通过cadvisor获取GPU metrics指标",
+        "headline": "Kube-scheduler InterPodAffinity性能优化史",
         "inLanguage": "zh-CN",
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": "https:\/\/www.likakuli.com\/posts\/gpu-metrics-not-display3\/"
-        },"genre": "posts","keywords": "docker, gpu, cadvisor","wordcount":  1498 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/gpu-metrics-not-display3\/","datePublished": "2021-05-30T14:23:25+08:00","dateModified": "2021-06-07T11:56:57+08:00","publisher": {
+            "@id": "https:\/\/www.likakuli.com\/posts\/kubernetes-interpodaffinity\/"
+        },"genre": "posts","keywords": "性能优化, kubernetes","wordcount":  2062 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-interpodaffinity\/","datePublished": "2021-06-08T20:24:22+08:00","dateModified": "2021-06-12T12:36:38+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -109,10 +109,10 @@
                 <div class="container"><div class="toc" id="toc-auto">
             <h2 class="toc-title">目录</h2>
             <div class="toc-content always-active" id="toc-content-auto"></div>
-        </div><article class="page single"><h1 class="single-title animated flipInX">容器开启特权模式后无法通过cadvisor获取GPU metrics指标</h1><div class="post-meta">
-            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-05-30">2021-05-30</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1498 字&nbsp;
-                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 3 分钟&nbsp;<span id="/posts/gpu-metrics-not-display3/" class="leancloud_visitors" data-flag-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标">
+        </div><article class="page single"><h1 class="single-title animated flipInX">Kube-scheduler InterPodAffinity性能优化史</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"><i class="far fa-folder fa-fw"></i>性能优化</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-06-08">2021-06-08</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 2062 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 5 分钟&nbsp;<span id="/posts/kubernetes-interpodaffinity/" class="leancloud_visitors" data-flag-title="Kube-scheduler InterPodAffinity性能优化史">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
@@ -124,80 +124,142 @@
   <ul>
     <li>
       <ul>
-        <li><a href="#问题描述">问题描述</a></li>
-        <li><a href="#回顾">回顾</a>
-          <ul>
-            <li><a href="#kubelet--device-pluginhttpsdocsgooglecomdocumentd1wpljl8dsvphnbvbtaad35ilb-jqomlkgflnqpwwnducedit-device-plugin"><a href="https://docs.google.com/document/d/1wPlJL8DsVpHnbVbTaad35ILB-jqoMLkGFLnQpWWNduc/edit" title="device plugin">Kubelet &amp; Device Plugin</a></a></li>
-            <li><a href="#nvidia-container-runtimehttpsdocsgooglecomdocumentd10egjf1negud5060dj-zcji2w7ob4clcvcn1lzkw6i4oedit-nvidia-container-runtime"><a href="https://docs.google.com/document/d/10EGjF1nEGUD5060dJ-ZcJI2w7Ob4CLCvcn1lzKW6I4o/edit#" title="nvidia-container-runtime">Nvidia-container-runtime</a></a></li>
-          </ul>
-        </li>
-        <li><a href="#解决方案">解决方案</a>
-          <ul>
-            <li><a href="#必要性">必要性</a></li>
-            <li><a href="#gpu设备表示方式">GPU设备表示方式</a></li>
-            <li><a href="#gpu设备信息来源">GPU设备信息来源</a>
-              <ul>
-                <li><a href="#pod-resource">Pod-Resource</a></li>
-                <li><a href="#oci-spec">OCI spec</a></li>
-              </ul>
-            </li>
-          </ul>
-        </li>
+        <li><a href="#策略介绍">策略介绍</a></li>
+        <li><a href="#举个">举个🌰</a></li>
+        <li><a href="#初代">初代</a></li>
+        <li><a href="#二代">二代</a></li>
+        <li><a href="#三代">三代</a></li>
+        <li><a href="#四代">四代</a></li>
+        <li><a href="#总结">总结</a></li>
       </ul>
     </li>
   </ul>
 </nav></div>
-            </div><div class="content" id="content"><h2 id="问题描述">问题描述</h2>
-<p>开启特权模式（<code>--privileged</code>）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信息。Google大法可以搜到相关的<a href="https://github.com/google/cadvisor/issues/2046" target="_blank" rel="noopener noreffer">Issue</a>，于2018年提出，至今仍处于Open状态（给cAdvisor贡献代码的机会），由于涉及到的内容较多，分为三篇来讲。</p>
-<p>本篇为最后一篇，在看本篇之前建议先查看前两篇：</p>
-<p><a href="../gpu-metrics-not-display" rel="">容器开启特权模式后无法通过cadvisor获取GPU metrics指标</a></p>
-<p><a href="gpu-metrics-not-display2" rel="">容器开启特权模式后无法通过cadvisor获取GPU metrics指标</a></p>
-<h2 id="回顾">回顾</h2>
-<p>首先通过两种图回顾一下容器使用NVIDIA GPU的原理，如下</p>
-<h3 id="kubelet--device-pluginhttpsdocsgooglecomdocumentd1wpljl8dsvphnbvbtaad35ilb-jqomlkgflnqpwwnducedit-device-plugin"><a href="https://docs.google.com/document/d/1wPlJL8DsVpHnbVbTaad35ILB-jqoMLkGFLnQpWWNduc/edit" title="device plugin" target="_blank" rel="noopener noreffer">Kubelet &amp; Device Plugin</a></h3>
-<p><img
-        class="lazyload"
-        src="/svg/loading.min.svg"
-        data-src="./device-plugin.png"
-        data-srcset="./device-plugin.png, ./device-plugin.png 1.5x, ./device-plugin.png 2x"
-        data-sizes="auto"
-        alt="./device-plugin.png"
-        title="img" /></p>
-<h3 id="nvidia-container-runtimehttpsdocsgooglecomdocumentd10egjf1negud5060dj-zcji2w7ob4clcvcn1lzkw6i4oedit-nvidia-container-runtime"><a href="https://docs.google.com/document/d/10EGjF1nEGUD5060dJ-ZcJI2w7Ob4CLCvcn1lzKW6I4o/edit#" title="nvidia-container-runtime" target="_blank" rel="noopener noreffer">Nvidia-container-runtime</a></h3>
-<p><img src="./nvidia-container-runtime.png" alt="img"  /></p>
-<h2 id="解决方案">解决方案</h2>
-<p>总结一下cAdvisor无法提供特权模式容器GPU指标的根本原因：</p>
-<ul>
-<li>cAdvisor作为一个偏底层的通用指标能力的提供者，为了与其他组件解耦，其从最底层device cgroup来获取容器绑定的GPU信息；</li>
-<li>containerd在创建容器时判断是否开启特权模式，是的话会为容器设置可以访问所有设备，即<code>a *:* rwm</code>。</li>
-</ul>
-<h3 id="必要性">必要性</h3>
-<p>使用GPU时容器开启特权模式是一种趋势，简单说就是通过Env的方式传递GPU卡信息时，用户如果知道这个能力，则很容易就可以越过<code>device-plugin</code>在<code>Pod spec</code>中设置Env来实现使用GPU卡的目的，为了安全性，nvidia <code>k8s-deivice-plugin</code>提供了另一种实现方式，参考<a href="https://docs.google.com/document/d/1uXVF-NWZQXgP1MLb87_kMkQvidpnkNWicdpO2l9g-fw/edit#" title="device-plugin" target="_blank" rel="noopener noreffer">这里</a>，新的方式是通过挂载卷的方式识别所需的GPU设备信息，必须开启特权模式。</p>
-<p>虽然两种方式都可以实现容器内使用GPU设备的目的，但实现方式都不够优雅，根本原因还是缺少一个将第三方设备资源通知给<code>container runtime</code>的规范，社区也意识到了这个问题，提出了<a href="https://github.com/container-orchestrated-devices/container-device-interface" title="container-device-interface" target="_blank" rel="noopener noreffer">CDI</a>规范，有关进展详见<a href="https://docs.google.com/document/d/1gUgAMEThkRt4RJ7pA7ZbPPmIOX2Vb7fwH025MjfcTYU/edit#" title="CDI进展" target="_blank" rel="noopener noreffer">这里</a>。在此规范的标准实现上线之前，随着越来越多的容器在使用GPU时开启特权模式，哪怕不那么优雅的方案也是有必要先实现的。</p>
-<h3 id="gpu设备表示方式">GPU设备表示方式</h3>
-<p>k8s-device-plugin支持两种GPU设备表示方式，通过<code>deviceIDStrategyFlag</code>参数设置：</p>
-<ul>
-<li>index</li>
-<li>uuid （默认）</li>
-</ul>
-<p>如果以index方式设置，则可以直接在<code>cAdvisor</code>中获取index值，无需从device cgroup中获取，实现起来比较简单。下面的内容是针对以uuid方式设置时<code>cAdvisor</code>的处理逻辑。</p>
-<h3 id="gpu设备信息来源">GPU设备信息来源</h3>
-<h4 id="pod-resource">Pod-Resource</h4>
-<p><code>Kubelet</code>提供了<code>pod-resource</code>机制，对外提供rpc服务，供外部获取容器所需的资源信息。对<code>Kubelet</code>版本有一定的要求，且这种方式会把<code>cAdvisor</code>和<code>Kubelet</code>偶合在一起，不适合<code>In-Tree</code>方式，可以采取<code>Out-Of-Tree</code>的方式实现。</p>
-<h4 id="oci-spec">OCI spec</h4>
-<p><code>cAdvisor</code>中本身已经缓存了容器<code>OCI</code> spec信息，可以从中获取绑定的GPU信息，优点是上层无感知，缺点是加重了<code>cAdvisor</code>的依赖，<code>cAdvisor</code>需要知道当前容器使用的GPU信息和当前节点上所有GPU信息。</p>
-<p>k8s-device-plugin提供了两种方式设置当前容器使用的GPU设备信息：</p>
-<ul>
-<li>Env</li>
-<li>Volume Mount</li>
-</ul>
-<p>在获取当前节点所有GPU信息之前有个基础知识点需要了解，即<a href="https://docs.nvidia.com/datacenter/cloud-native/kubernetes/mig-k8s.html" title="mig strategy" target="_blank" rel="noopener noreffer">Mig Strategy</a>。策略不同，最终获取到的节点的GPU设备信息不同。当前支持三种策略：</p>
-<ul>
-<li>None：不使用MIG能力</li>
-<li>Single：使用MIG能力，且各GPU实例被分为相同的规格的计算实例</li>
-<li>Mixed：使用MIG能力，GPU实例可以划分为任意规格的计算实例，或者直接使用整个GPU实例</li>
-</ul>
-<p>剩下的工作就是实现不同机制下获取GPU设备信息的功能，可以参考<code>k8s-device-plugin</code>的实现，因为其本身在Allocate时必然涉及到相关能力。</p>
+            </div><div class="content" id="content"><p>从事Kubernetes相关工作的同学对Kube-scheduler一定不会感到陌生，有的甚至还可能遇到过里面的一些问题，本篇主要介绍其中的一个优选策略：<code>InterPodAffinity</code>的性能优化过程，希望可以帮助到一些还在深受其困扰的朋友们，没有使用过此策略或者没有使用过Kubernetes也不要紧，其本质还是在以某种算法去解决某种问题，下面我会尽量以通俗易懂的话来解释需要解决的问题及算法优化过程。</p>
+<h2 id="策略介绍">策略介绍</h2>
+<p><code>InterPodAffinity</code>作为优选策略就是在预选通过后的一堆宿主中找到一个最合适的宿主，寻找规则为按拓扑把宿主分类，针对拓扑级别，如果出现符合Pod要求的其他Pod，则为此拓扑下的所有Node计算一个得分，Pod的要求可以有多条，每一条都有一个权重（用来计算得分），同时得分也分正负，例如Pod期望拓扑下没有同类型的Pod，如果有则得分为负。下面通过一下生活中的例子来做个类比帮助理解要解决的问题，再引出对应的算法。</p>
+<h2 id="举个">举个🌰</h2>
+<p>张三（Pod）大学刚毕业参加工作，需要租房（Node），于是找了中介公司（Kube-scheduler），张三提出了一些条件，比如房租不能高于2000一个月，上班耗时不超过1小时等，中介公司根据张三的需要筛选出来一批房子，张三看后觉得都不错，但只能租一个，于是又列出了一些其他非必须的加分减分项，比如房子所在小区如果有人是明星的话，加8分，如果房子所在街道有新冠肺炎患者，则减10分等条件，中介公司需要根据这些条件筛选出来最适合张三的一套房子。</p>
+<p>上面提到的无论是小区还是街道都是一种拓扑，都可以看做是房子的一个属性并且有对应的值，例如小区：永泰东里，街道：西三旗街道。这些附加的加减分项是基于拓扑的，具有相同拓扑的房子内只要出现一个满足条件的人，则整个拓扑内的房子都会受到影响。例如小区内有一个明星，则整个小区符合条件的房子都会加8分。若街道有一个新冠患者，则整个街道所有符合条件的房子都会减10分。</p>
+<p>化简一下为有M个符合条件的房源，每个房源里面住N个人（N可以不同），有X个加分减分项，求得分最高的一个房源。</p>
+<h2 id="初代">初代</h2>
+<p>~1.15.4</p>
+<p><code>InterPodAffinity</code>采用的算法比较简单暴力，伪代码大致如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="k">for</span> i房源 in 所有房源
+	<span class="k">for</span> j租客 in i房源
+		<span class="k">for</span> k项 in 加减分项
+			<span class="k">if</span> j租客 满足 k项
+				<span class="k">for</span> l房源 in 所有房源
+					<span class="k">if</span> 拓扑相等<span class="o">(</span>l房源, i房源<span class="o">)</span>
+						lock<span class="o">()</span>
+						map<span class="o">[</span>l<span class="o">]</span> +<span class="o">=</span> k项分数
+						unlock<span class="o">()</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>整体上是一个四层的循环，时间复杂度为<code>M * N * X * M</code>，工程中实现的时候采用多个goroutine进行计算，全局维护一个map，key为名字，值为得分，因此在每次更新map的时候都先加锁，更新完之后再释放锁。</p>
+<h2 id="二代">二代</h2>
+<p>1.15.5 ~ 1.16.*</p>
+<p>时间复杂度上没有变化，本次做的改进围绕锁来进行。使用切片取代字典，切片长度等于房源数量，利用下标一一对应。改进后如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="k">for</span> i房源 in 所有房源
+	<span class="k">for</span> j租客 in i房源
+		<span class="k">for</span> k项 in 加减分项
+			<span class="k">if</span> j租客 满足 k项
+				<span class="k">for</span> i房源 in 所有房源
+					<span class="k">if</span> 拓扑相等<span class="o">(</span>l房源, i房源<span class="o">)</span>
+						slice<span class="o">[</span>i<span class="o">]</span> <span class="o">=</span> atomic add<span class="o">(</span>slice<span class="o">[</span>i<span class="o">]</span>, k项分数<span class="o">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="三代">三代</h2>
+<p>1.17.0 ~ 1.18.*</p>
+<p>时间复杂度发生变化，从<code>M * N * X * M</code> 变为 <code>M * N * X</code>。通过一个<code>map[拓扑key]map[拓扑value]得分</code>的结构取代了最里层的循环，在整个大循环结束后，最后再额外进行一次循环就可以了。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="k">for</span> i房源 in 所有房源
+	<span class="k">for</span> j租客 in i房源
+		<span class="k">for</span> k项 in 加减分项
+			<span class="k">if</span> j租客 满足 k项
+				lock
+				map<span class="o">[</span>拓扑key<span class="o">]</span>map<span class="o">[</span>i房源拓扑value<span class="o">]</span> +<span class="o">=</span> k项分数
+				unlock
+				
+<span class="k">for</span> i房源 in 所有房源
+	score<span class="o">[</span>i房源<span class="o">]</span> +<span class="o">=</span> map<span class="o">[</span>拓扑key<span class="o">][</span>拓扑value<span class="o">]</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>本次虽然时间复杂度降低了一个数量级，但是又引入了锁，类似一代的实现，在全局有个map用来存放所有拓扑对应的分数，为防止多个goroutine并行访问map出现问题，所以加了锁。</p>
+<h2 id="四代">四代</h2>
+<p>1.19.0~</p>
+<p>本次的改进主要是去掉了锁，在时间复杂上没有变化。同样采用了全局map，但是在进行拓扑分数计算时并没有传入全局的map，而是每个房源对应一个map，暂且称为sub_map。代码中维护了一个sub_maps的切片，由于sub_map各用各的不存在并发问题，且把sub_map添加到sub_maps中时可以通过原子操作实现，在并发计算完所有房源的拓扑的分后，再统一把所有的子map进行处理，分数统一设置到全局的map中，剩下的处理逻辑就和三代最后的处理逻辑一样了。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">index :<span class="o">=</span> -1
+
+<span class="k">for</span> i房源 in 所有房源
+	<span class="k">for</span> j租客 in i房源
+		<span class="k">for</span> k项 in 加减分项
+			<span class="k">if</span> j租客 满足 k项
+				sub_maps<span class="o">[</span>atomic add<span class="o">(</span>index, 1<span class="o">)][</span>拓扑key<span class="o">]</span>map<span class="o">[</span>i房源拓扑value<span class="o">]</span> +<span class="o">=</span> k项分数
+				
+<span class="k">for</span> sub_map in sub_maps
+	map<span class="o">[</span>拓扑key<span class="o">][</span>拓扑value<span class="o">]</span> + sub_map<span class="o">[</span>拓扑key<span class="o">][</span>拓扑value<span class="o">]</span>
+
+<span class="k">for</span> i房源 in 所有房源
+	score<span class="o">[</span>i房源<span class="o">]</span> +<span class="o">=</span> map<span class="o">[</span>拓扑key<span class="o">][</span>拓扑value<span class="o">]</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="总结">总结</h2>
+<p>工程不同于纯算法实现，不仅需要在算法维度降低时间复杂度，也要考虑具体工程上的实现，比如这个例子中在涉及到并行计算时如何用原子操作替换掉锁。想要知道哪里是性能瓶颈，可以使用perf具体分析，也可以使用具体语言对应的性能分析工具，算法优化和工程优化同样重要，算法终归还是为工程服务的。</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -213,27 +275,26 @@
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2021-06-07</span>
+                <span>更新于 2021-06-12</span>
             </div>
             <div class="post-info-license"></div>
         </div>
         <div class="post-info-line">
             <div class="post-info-md"></div>
             <div class="post-info-share">
-                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-hashtags="docker,gpu,cadvisor"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-hashtag="docker"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/gpu-metrics-not-display3/" data-title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fab fa-evernote fa-fw"></i></a></span>
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" data-title="Kube-scheduler InterPodAffinity性能优化史" data-hashtags="性能优化,kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" data-hashtag="性能优化"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" data-title="Kube-scheduler InterPodAffinity性能优化史" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" data-title="Kube-scheduler InterPodAffinity性能优化史"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" data-title="Kube-scheduler InterPodAffinity性能优化史"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" data-title="Kube-scheduler InterPodAffinity性能优化史" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" data-title="Kube-scheduler InterPodAffinity性能优化史" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" data-title="Kube-scheduler InterPodAffinity性能优化史"><i class="fab fa-evernote fa-fw"></i></a></span>
             </div>
         </div>
     </div>
 
     <div class="post-info-more">
-        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a>,&nbsp;<a href="/tags/gpu/">gpu</a>,&nbsp;<a href="/tags/cadvisor/">cadvisor</a></section>
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a>,&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
         <section>
             <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
         </section>
     </div>
 
-    <div class="post-nav"><a href="/posts/gpu-metrics-not-display2/" class="prev" rel="prev" title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fas fa-angle-left fa-fw"></i>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</a>
-            <a href="/posts/kubernetes-interpodaffinity/" class="next" rel="next" title="Kube-scheduler InterPodAffinity性能优化史">Kube-scheduler InterPodAffinity性能优化史<i class="fas fa-angle-right fa-fw"></i></a></div>
+    <div class="post-nav"><a href="/posts/gpu-metrics-not-display3/" class="prev" rel="prev" title="容器开启特权模式后无法通过cadvisor获取GPU metrics指标"><i class="fas fa-angle-left fa-fw"></i>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</a></div>
 </div>
 <div id="comments"><div id="valine" class="comment"></div><noscript>
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.

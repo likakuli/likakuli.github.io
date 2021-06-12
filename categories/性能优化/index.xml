@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</link>
         <description>性能优化 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 08 Jun 2021 20:24:22 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="self" type="application/rss+xml" /><item>
+    <title>Kube-scheduler InterPodAffinity性能优化史</title>
+    <link>https://www.likakuli.com/posts/kubernetes-interpodaffinity/</link>
+    <pubDate>Tue, 08 Jun 2021 20:24:22 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kubernetes-interpodaffinity/</guid>
+    <description><![CDATA[从事Kubernetes相关工作的同学对Kube-scheduler一定不会感到陌生，有的甚至还可能遇到过里面的一些问题，本篇主要介绍其中的]]></description>
+</item><item>
     <title>Kube-controller-manager同步数据慢</title>
     <link>https://www.likakuli.com/posts/kubernetes-controllerrevisionhistory-bug/</link>
     <pubDate>Wed, 01 Apr 2020 10:52:12 &#43;0800</pubDate>
