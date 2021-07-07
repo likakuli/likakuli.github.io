@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Kubenetes NUMA拓扑感知功能介绍 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Kubenetes NUMA拓扑感知功能介绍" />
+<meta property="og:description" content="由来 最近的工作内容中涉及到了 NUMA 感知相关的功能，之前没有特意去看过 kubelet 相关部分的实现，也是趁此机会把落下的补补。在看代码的过程中，NUMA 感知部" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-topology-manager/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-06-18T18:59:04&#43;08:00" />
+<meta property="article:modified_time" content="2021-07-07T22:45:53&#43;08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="Kubenetes NUMA拓扑感知功能介绍"/>
+<meta name="twitter:description" content="由来 最近的工作内容中涉及到了 NUMA 感知相关的功能，之前没有特意去看过 kubelet 相关部分的实现，也是趁此机会把落下的补补。在看代码的过程中，NUMA 感知部"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/kubernetes-topology-manager/" /><link rel="prev" href="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Kubenetes NUMA拓扑感知功能介绍",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/kubernetes-topology-manager\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  6015 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-topology-manager\/","datePublished": "2021-06-18T18:59:04+08:00","dateModified": "2021-07-07T22:45:53+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Kubenetes NUMA拓扑感知功能介绍</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/"><i class="far fa-folder fa-fw"></i>原理介绍</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-06-18">2021-06-18</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 6015 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 13 分钟&nbsp;<span id="/posts/kubernetes-topology-manager/" class="leancloud_visitors" data-flag-title="Kubenetes NUMA拓扑感知功能介绍">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#由来">由来</a></li>
+        <li><a href="#topologymanager">TopologyManager</a></li>
+        <li><a href="#什么是numa--为什么需要关心">什么是NUMA &amp; 为什么需要关心？</a></li>
+        <li><a href="#numa-对齐">NUMA 对齐</a></li>
+        <li><a href="#实现机制">实现机制</a>
+          <ul>
+            <li><a href="#topologyhints">TopologyHints</a></li>
+            <li><a href="#hintproviders">HintProviders</a></li>
+            <li><a href="#policymerge">Policy.Merge</a></li>
+          </ul>
+        </li>
+        <li><a href="#upcoming-enhancements">Upcoming enhancements</a>
+          <ul>
+            <li><a href="#supporting-device-specific-constraints">Supporting device-specific constraints</a></li>
+            <li><a href="#numa-alignment-for-hugepages">NUMA alignment for hugepages</a></li>
+            <li><a href="#scheduler-awareness">Scheduler awareness</a></li>
+            <li><a href="#per-pod-alignment-policy">Per-pod alignment policy</a></li>
+          </ul>
+        </li>
+        <li><a href="#conclusion">Conclusion</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="由来">由来</h2>
+<p>最近的工作内容中涉及到了 NUMA 感知相关的功能，之前没有特意去看过 kubelet 相关部分的实现，也是趁此机会把落下的补补。在看代码的过程中，NUMA 感知部分的逻辑尤其涉及到一些位操作的部分，看的让人头疼，于是从网上搜了搜有关原理的介绍，恰好在官网找到一篇 blog，看完之后再去看代码就会豁然开朗。此篇是对原文的翻译，想阅读原文的可以直接到<a href="https://kubernetes.io/blog/2020/04/01/kubernetes-1-18-feature-topoloy-manager-beta/" target="_blank" rel="noopener noreffer">这里</a>。</p>
+<h2 id="topologymanager">TopologyManager</h2>
+<p><code>TopologyManager</code> 在1.18版本中处于 <code>beta</code> 状态，该功能支持 CPU 和外围设备（例如 SR-IOV VF 和 GPU）的 NUMA 对齐，使工作负载能够在针对低延迟优化的环境中运行。</p>
+<p>在引入 TopologyManager 之前，CPU 和设备管理器会做出相互独立的资源分配决策。这可能会导致 <code>Multi-Socket</code> 系统上出现不希望的分配，降低延迟敏感应用的性能。随着 <code>TopologyManager</code> 的引入，我们现在有办法避免这种情况。这篇blog包括如下内容：</p>
+<ol>
+<li><code>NUMA</code> 及其重要性简介</li>
+<li>用户可使用的用于保证 CPU 和外围设备 NUMA 对齐的策略</li>
+<li><code>TopologyManager</code> 内部工作原理</li>
+<li><code>TopologyManager</code> 当前限制</li>
+<li><code>TopologyManager</code> 未来发展规划</li>
+</ol>
+<h2 id="什么是numa--为什么需要关心">什么是NUMA &amp; 为什么需要关心？</h2>
+<p><code>NUMA</code> 是 <code>Non-Uniform Memory Access</code> 的简称。它是一种在多 CPU 系统上可用的技术，允许不同的 CPU 以不同的速度访问内存的不同部分。 任何直接连接到 CPU 的内存都被认为是该 CPU 的本地内存，并且可以非常快速地访问。 任何未直接连接到 CPU 的内存都被认为是非本地的。在现代系统上，本地与非本地内存的概念也可以扩展到外围设备，例如 NIC 或 GPU。 为了获得高性能，应该分配 CPU 和设备，以便它们可以访问相同的本地内存。</p>
+<p>NUMA 系统上的所有内存都分为一组NUMA 节点，每个节点代表一组 CPU 或设备的本地内存。 如果单个 CPU 的本地内存与该 NUMA 节点相关联，则我们将其称为 NUMA 节点的一部分。</p>
+<p>基于访问外围设备时所必须通过的最短互连数量，我们将外围设备视为 NUMA 节点的一部分。</p>
+<p>例如，在图 1 中，CPU 0-3 被称为 NUMA node 0 的一部分，而 CPU 4-7 是 NUMA node 1 的一部分。同样，GPU 0 和 NIC 0 被称为 NUMA node 0 的一部分，因为它们 连接到 Socket 0，其 CPU 都是 NUMA node 0 的一部分。 NUMA node 1 上的 GPU 1 和 NIC 1 也是如此。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="example-numa-system.png"
+        data-srcset="/posts/kubernetes-topology-manager/example-numa-system.png, example-numa-system.png 1.5x, /posts/kubernetes-topology-manager/example-numa-system.png 2x"
+        data-sizes="auto"
+        alt="/posts/kubernetes-topology-manager/example-numa-system.png"
+        title="example-numa-system" /></p>
+<p>尽管上面的示例显示了 NUMA 节点到 Socket 的 1-1 映射，但在一般情况下不一定如此。 单个 NUMA 节点上可能有多个 Socket，或者单个 Socket 的单个 CPU 可能连接到不同的 NUMA 节点。 此外，Sub-NUMA Clustering（在最近的英特尔 CPU 上可用）等新兴技术允许单个 CPU 与多个 NUMA 节点相关联，只要它们对两个节点的内存访问时间相同（或差异可以忽略不计）。</p>
+<h2 id="numa-对齐">NUMA 对齐</h2>
+<p>TopologyManager 提供了如下几种对齐策略：</p>
+<ul>
+<li><strong>none</strong>：此政策不会尝试进行任何资源调整。 它的行为就像 TopologyManager 根本不存在一样。 这是默认策略。</li>
+<li><strong>best-effort</strong>：使用此策略，TopologyManager 将尝试尽可能地对齐 NUMA 节点上的分配，但即使某些分配的资源未在同一 NUMA 节点上对齐，也会始终允许 pod 启动。</li>
+<li><strong>restricted</strong>：此策略与尽力而为策略相同，但如果分配的资源无法正确对齐，它将导致 pod 准入失败。 与 <code>single-numa-node</code> 策略不同，如果不可能在单个 NUMA 节点上满足分配请求，则某些分配可能来自多个 NUMA 节点。</li>
+<li><strong>single-numa-node</strong>：这个策略是最严格的，只有当所有请求的 CPU 和设备都可以从一个 NUMA 节点分配时，pod 准入才会通过。</li>
+</ul>
+<p>需要注意的是，所选策略单独应用于 pod 规范中的每个容器，而不是将所有容器中的资源对齐在一起。</p>
+<p>此外，单个策略通过全局 kubelet 标志应用于节点上的所有 pod，而不是允许用户逐个 pod（或逐个容器）选择不同的策略。 我们希望在未来放宽这一限制。</p>
+<p><code>kubelet</code>可供设置的策略如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">--topology-manager-policy<span class="o">=</span>
+    <span class="o">[</span>none <span class="p">|</span> best-effort <span class="p">|</span> restricted <span class="p">|</span> single-numa-node<span class="o">]</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>通过feature gate来控制功能的开启，于1.16引入，自1.18开始默认开启，形式如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">--feature-gates<span class="o">=</span><span class="s2">&#34;...,TopologyManager=&lt;true|false&gt;&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>为了根据所选策略触发对齐，用户必须根据特定要求在其 <code>pod.spec</code> 中设置 CPU 和 device 的request值。</p>
+<p>对于外围设备，这意味着从设备插件（例如 <code>intel.com/sriov</code>、<code>nvidia.com/gpu</code> 等）提供的可用资源中请求设备。 这仅在设备插件与 <code>TopologyManager</code> 正确集成时才有效。 目前，已知具有此扩展的唯一插件是 <a href="https://github.com/NVIDIA/k8s-device-plugin/blob/5cb45d52afdf5798a40f8d0de049bce77f689865/nvidia.go#L74" target="_blank" rel="noopener noreffer">Nvidia GPU</a> 设备插件和英特尔 <a href="https://github.com/intel/sriov-network-device-plugin/blob/30e33f1ce2fc7b45721b6de8c8207e65dbf2d508/pkg/resources/pciNetDevice.go#L80" target="_blank" rel="noopener noreffer">SRIOV</a> 网络设备插件。 可以在<a href="https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/#device-plugin-integration-with-the-topology-manager" target="_blank" rel="noopener noreffer">此处</a>找到有关如何扩展设备插件以与 <code>TopologyManager</code> 集成的详细信息。</p>
+<p>对于 CPU，这要求 <code>CPUManager</code> 已配置为启用了其 &ndash;static 策略，并且 pod 在保证 QoS 类中运行（即所有 CPU 和内存限制都等于它们各自的 CPU 和内存请求）。 还必须以整数值（例如 1、2、1000m 等）请求 CPU。 可以在<a href="https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/#cpu-management-policies" target="_blank" rel="noopener noreffer">此处</a>找到有关如何设置 <code>CPUManager</code> 策略的详细信息。</p>
+<p>例如，假设 <code>CPUManager</code> 在其 &ndash;static 策略启用的情况下运行，并且 <code>gpu-vendor.com</code> 和 <code>nic-vendor.com</code> 的设备插件已扩展为与 <code>TopologyManager</code> 正确集成，则下面的 pod 规范足以触发 <code>TopologyManager</code> 运行其选定的策略：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">spec:
+   containers:
+   - name: numa-aligned-container
+     image: alpine
+     resources:
+         limits:
+             cpu: <span class="m">2</span>
+             memory: 200Mi
+             gpu-vendor.com/gpu: <span class="m">1</span>
+             nic-vendor.com/nic: <span class="m">1</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>遵循上一节中的图 1，这将导致以下对齐分配之一：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>cpu: <span class="o">{</span>0, 1<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
+<span class="o">{</span>cpu: <span class="o">{</span>0, 2<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
+<span class="o">{</span>cpu: <span class="o">{</span>0, 3<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
+<span class="o">{</span>cpu: <span class="o">{</span>1, 2<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
+<span class="o">{</span>cpu: <span class="o">{</span>1, 3<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
+<span class="o">{</span>cpu: <span class="o">{</span>2, 3<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
+
+<span class="o">{</span>cpu: <span class="o">{</span>4, 5<span class="o">}</span>, gpu: 1, nic: 1<span class="o">}</span>
+<span class="o">{</span>cpu: <span class="o">{</span>4, 6<span class="o">}</span>, gpu: 1, nic: 1<span class="o">}</span>
+<span class="o">{</span>cpu: <span class="o">{</span>4, 7<span class="o">}</span>, gpu: 1, nic: 1<span class="o">}</span>
+<span class="o">{</span>cpu: <span class="o">{</span>5, 6<span class="o">}</span>, gpu: 1, nic: 1<span class="o">}</span>
+<span class="o">{</span>cpu: <span class="o">{</span>5, 7<span class="o">}</span>, gpu: 1, nic: 1<span class="o">}</span>
+<span class="o">{</span>cpu: <span class="o">{</span>6, 7<span class="o">}</span>, gpu: 1, nic: 1<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>只需遵循此模式，即可让 <code>TopologyManager</code> 确保请求拓扑感知设备和独占 CPU 的容器之间的 NUMA 对齐。</p>
+<p><strong>注意：</strong> 如果 Pod 被 <strong>TopologyManager</strong> 策略之一拒绝，它将被置于 <strong>Terminated</strong> 状态，并出现 Pod 准入错误和 <code>TopologyAffinityError</code> 的原因。 一旦 pod 处于此状态，<code>Kubernetes</code> 调度程序将不会尝试重新调度它。 因此，建议使用带 <code>replicas</code> 的 <code>deployment</code> 来应对在遇到此类故障时触发 pod 的重新部署。 还可以实施外部控制循环来触发具有 <code>TopologyAffinityError</code> 的 pod 的重新部署。</p>
+<h2 id="实现机制">实现机制</h2>
+<p><code>TopologyManager</code> 执行的主要逻辑的伪代码如下所示：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-golang" data-lang="golang"><span class="k">for</span> <span class="nx">container</span> <span class="o">:=</span> <span class="k">range</span> <span class="nb">append</span><span class="p">(</span><span class="nx">InitContainers</span><span class="p">,</span> <span class="nx">Containers</span><span class="o">...</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="nx">provider</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">HintProviders</span> <span class="p">{</span>
+        <span class="nx">hints</span> <span class="o">+=</span> <span class="nx">provider</span><span class="p">.</span><span class="nf">GetTopologyHints</span><span class="p">(</span><span class="nx">container</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="nx">bestHint</span> <span class="o">:=</span> <span class="nx">policy</span><span class="p">.</span><span class="nf">Merge</span><span class="p">(</span><span class="nx">hints</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="nx">provider</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">HintProviders</span> <span class="p">{</span>
+        <span class="nx">provider</span><span class="p">.</span><span class="nf">Allocate</span><span class="p">(</span><span class="nx">container</span><span class="p">,</span> <span class="nx">bestHint</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>下图总结了此循环期间采取的步骤：</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="numa-steps-during-loop.png"
+        data-srcset="/posts/kubernetes-topology-manager/numa-steps-during-loop.png, numa-steps-during-loop.png 1.5x, /posts/kubernetes-topology-manager/numa-steps-during-loop.png 2x"
+        data-sizes="auto"
+        alt="/posts/kubernetes-topology-manager/numa-steps-during-loop.png"
+        title="numa-steps-during-loop" /></p>
+<p>步骤说明如下：</p>
+<ol>
+<li>循环遍历 pod 中的所有容器。</li>
+<li>对于每个容器，从容器请求的每种拓扑感知资源类型（例如 <code>gpu-vendor.com/gpu</code>、<code>nic-vendor.com/nic</code>、<code>cpu</code> 等）的一组  <code>HintProviders</code> 中收集 <code>TopologyHints</code>。</li>
+<li>使用选定的策略，合并收集到的 <code>TopologyHints</code> 以找到在所有资源类型之间对齐资源分配的最佳提示。</li>
+<li>再次遍历 <code>HintProviders</code>，利用上一步中返回的最佳提示为容器分配资源。</li>
+<li>此循环在 pod 准入时间运行，如果这些步骤中的任何一个失败或根据所选策略无法满足对齐，则Pod注入失败。 相应地清除之前分配的任何资源。</li>
+</ol>
+<p>以下部分更详细地介绍了 <code>TopologyHints</code> 和 <code>HintProviders</code> 的确切结构，以及每个策略使用的合并策略的一些细节。</p>
+<h3 id="topologyhints">TopologyHints</h3>
+<p><code>TopologyHint</code> 对一组约束进行编码，从中可以满足给定的资源请求。 目前，我们考虑的唯一约束是 NUMA 对齐。 它的定义如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">type</span> <span class="nx">TopologyHint</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">NUMANodeAffinity</span> <span class="nx">bitmask</span><span class="p">.</span><span class="nx">BitMask</span>
+    <span class="nx">Preferred</span> <span class="kt">bool</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>NUMANodeAffinity</code> 字段包含可以满足资源请求的 NUMA 节点的位掩码。 例如，具有 2 个 NUMA 节点的系统上可能的掩码包括：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>00<span class="o">}</span>, <span class="o">{</span>01<span class="o">}</span>, <span class="o">{</span>10<span class="o">}</span>, <span class="o">{</span>11<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>Preferred</code> 字段包含一个布尔值，用于指示指定的提示是否优先选择。 使用 <code>best-effort</code> 策略，在生成最佳提示时，<code>Preferred</code> 提示将优先于非 <code>Preferred</code> 提示。 使用 <code>restricted</code> 和单 <code>numa-node</code> 策略，非 <code>Preferred</code> 的提示将被拒绝。</p>
+<p>通常，<code>HintProviders</code> 通过查看可以满足资源请求的当前可用资源集来生成 <code>TopologyHints</code>。 更具体地说，它们为可以满足资源请求的 NUMA 节点的每个可能掩码生成一个 <code>TopologyHint</code>。 如果掩码不能满足请求，则将其省略。 例如，当被要求分配 2 个资源时，<code>HintProvider</code> 可能会在具有 2 个 NUMA 节点的系统上提供以下提示。 这些提示显示两种资源可以来自单个 NUMA 节点（0 或 1），也可以分别来自不同的 NUMA 节点（但我们更希望它们仅来自一个）。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}</span>, <span class="o">{</span>11: False<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>目前，当且仅当 <code>NUMANodeAffinity</code> 编码可以满足资源请求的最小 NUMA 节点集时，所有 <code>HintProvider</code> 才将 <code>Preferred</code> 字段设置为 True 。 通常，这仅对于在其位掩码中设置了单个 NUMA 节点的 TopologyHint 为 True。 但是，如果满足资源请求的唯一方法是跨越多个 NUMA 节点（例如，请求 2 个设备并且系统上仅有的 2 个设备位于不同的 NUMA 节点上），则它也可能为 True：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>0011: True<span class="o">}</span>, <span class="o">{</span>0111: False<span class="o">}</span>, <span class="o">{</span>1011: False<span class="o">}</span>, <span class="o">{</span>1111: False<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>注意</strong>：以这种方式设置 <code>Preferred</code> 字段不是基于当前可用资源的集合。 它基于在一些最小的 NUMA 节点集上物理分配请求资源数量的能力。</p>
+<p>通过这种方式，如果在其他容器释放其资源之前无法满足实际的首选分配，则 <code>HintProvider</code> 可以返回所有 <code>Preferred</code> 字段设置为 False 的提示列表。 例如，请考虑图 1 中系统的以下场景：</p>
+<ol>
+<li>目前除分配给容器的CPU之外只剩2 CPU空闲</li>
+<li>剩余的 2 CPU 位于不同的 NUMA 节点上</li>
+<li>一个新的容器出现，要求 2 CPU</li>
+</ol>
+<p>在这种情况下，唯一生成的提示将是 {11: False} 而不是 {11: True}。 发生这种情况是因为可以从该系统上的同一个 NUMA 节点分配 2 个 CPU（鉴于当前的分配状态，现在不是这样）。 这个想法是，当可以满足最小对齐时，最好让 pod 准入失败并重试部署，而不是允许以次优对齐来调度 pod。</p>
+<h3 id="hintproviders">HintProviders</h3>
+<p><code>HintProvider</code> 是 <code>kubelet</code> 内部的一个组件，用于协调与 <code>TopologyManager</code> 对齐的资源分配。 目前 Kubernetes 中唯一的 <code>HintProvider</code> 是 <code>CPUManager</code> 和 <code>DeviceManager</code>。 我们计划很快添加对 <code>HugePages</code> 的支持。</p>
+<p>如前所述，<code>TopologyManager</code> 从 <code>HintProviders</code> 收集 <code>TopologyHints</code>，使用合并后的最佳提示触发对齐的资源分配。 因此，<code>HintProviders</code> 实现了以下接口：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">type</span> <span class="nx">HintProvider</span> <span class="kd">interface</span> <span class="p">{</span>
+    <span class="nf">GetTopologyHints</span><span class="p">(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">][]</span><span class="nx">TopologyHint</span>
+    <span class="nf">Allocate</span><span class="p">(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="kt">error</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>请注意，对 <code>GetTopologyHints()</code> 的调用返回一个 <code>map\[string][]TopologyHint</code>。 这允许单个 <code>HintProvider</code> 为多种资源类型提供提示，而不仅仅是一种。 例如，<code>DeviceManager</code> 需要这样做，以便为其插件注册的每个资源类型传回提示。</p>
+<p>当 <code>HintProviders</code> 生成他们的提示时，他们只考虑如何满足系统上<code>当前可用资源</code>的对齐，不考虑已分配给其他容器的任何资源。</p>
+<p>例如，考虑图 1 中的系统，其中有以下两个容器从中请求资源：</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="two_container_allocate.png"
+        data-srcset="/posts/kubernetes-topology-manager/two_container_allocate.png, two_container_allocate.png 1.5x, /posts/kubernetes-topology-manager/two_container_allocate.png 2x"
+        data-sizes="auto"
+        alt="/posts/kubernetes-topology-manager/two_container_allocate.png"
+        title="image-20210706204221089" /></p>
+<p>如果 Container0 是在系统上分配的第一个容器，则将为规范中的三种拓扑感知资源类型生成以下提示集：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">               cpu: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}</span>, <span class="o">{</span>11: False<span class="o">}}</span>
+gpu-vendor.com/gpu: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}}</span>
+nic-vendor.com/nic: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>对应的对齐结果：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>cpu: <span class="o">{</span>0, 1<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="numa-hint-provider1.png"
+        data-srcset="/posts/kubernetes-topology-manager/numa-hint-provider1.png, numa-hint-provider1.png 1.5x, /posts/kubernetes-topology-manager/numa-hint-provider1.png 2x"
+        data-sizes="auto"
+        alt="/posts/kubernetes-topology-manager/numa-hint-provider1.png"
+        title="img" /></p>
+<p>当考虑 Container1 时，这些资源被假定为不可用，因此只会生成以下提示集：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">               cpu: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}</span>, <span class="o">{</span>11: False<span class="o">}}</span>
+gpu-vendor.com/gpu: <span class="o">{{</span>10: True<span class="o">}}</span>
+nic-vendor.com/nic: <span class="o">{{</span>10: True<span class="o">}}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>对其结果如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>cpu: <span class="o">{</span>4, 5<span class="o">}</span>, gpu: 1, nic: 1<span class="o">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>注意</strong>：与本节开头提供的伪代码不同，对 <code>Allocate()</code> 的调用实际上并没有直接采用一个合并后的最佳提示的参数。 相反，<code>TopologyManager</code> 实现了以下 <code>Store</code> 接口，<code>HintProviders</code> 可以查询该接口以检索为特定容器生成的提示：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">type</span> <span class="nx">Store</span> <span class="kd">interface</span> <span class="p">{</span>
+    <span class="nf">GetAffinity</span><span class="p">(</span><span class="nx">podUID</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">containerName</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">TopologyHint</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>将其分离到其自己的 API 调用中，允许人们在 pod 准入循环之外访问此提示。 这对于调试以及通过 kubectl 等工具获取生成的提示很有用。</p>
+<h3 id="policymerge">Policy.Merge</h3>
+<p>由给定策略定义的合并策略决定了它如何将所有 <code>HintProvider</code> 生成的一组 <code>TopologyHint</code> 组合成单个 <code>TopologyHint</code>。</p>
+<p>所有受支持策略的合并策略都以相同的方式开始：</p>
+<ol>
+<li>取为每种资源类型生成的 <code>TopologyHints</code> 的叉积</li>
+<li>对于叉积中的每个条目，将每个 <code>TopologyHint</code> 的 NUMA Affinity进行按位与计算，并将结果设置为到合并提示的 NUMA Affinity。</li>
+<li>如果条目中的所有提示都将 <code>Preferred</code> 设置为 True ，则在生成的合并提示中将 <code>Preferred</code> 设置为 True。</li>
+<li>如果即使条目中的一个提示已将 <code>Preferred</code> 设置为 False ，生成的合并提示中 <code>Preferred</code>为 False 。 如果其 NUMA Affinity 包含全 0，则合并提示中 Preferred 也为 False。</li>
+</ol>
+<p>按照上一节的示例，Container0 生成的提示为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">               cpu: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}</span>, <span class="o">{</span>11: False<span class="o">}}</span>
+gpu-vendor.com/gpu: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}}</span>
+nic-vendor.com/nic: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>上述算法产生以下叉积和合并后的提示：</p>
+<table>
+<thead>
+<tr>
+<th><strong><code>{cpu, gpu-vendor.com/gpu, nic-vendor.com/nic}</code></strong></th>
+<th>&ldquo;merged&rdquo; hint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>{{01: True}, {01: True}, {01: True}}</code></strong></td>
+<td><strong><code>{01: True}</code></strong></td>
+</tr>
+<tr>
+<td><strong><code>{{01: True}, {01: True}, {10: True}}</code></strong></td>
+<td><strong><code>{00: False}</code></strong></td>
+</tr>
+<tr>
+<td><strong><code>{{01: True}, {10: True}, {01: True}}</code></strong></td>
+<td><strong><code>{00: False}</code></strong></td>
+</tr>
+<tr>
+<td><strong><code>{{01: True}, {10: True}, {10: True}}</code></strong></td>
+<td><strong><code>{00: False}</code></strong></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><strong><code>{{10: True}, {01: True}, {01: True}}</code></strong></td>
+<td><strong><code>{00: False}</code></strong></td>
+</tr>
+<tr>
+<td><strong><code>{{10: True}, {01: True}, {10: True}}</code></strong></td>
+<td><strong><code>{00: False}</code></strong></td>
+</tr>
+<tr>
+<td><strong><code>{{10: True}, {10: True}, {01: True}}</code></strong></td>
+<td><strong><code>{00: False}</code></strong></td>
+</tr>
+<tr>
+<td><strong><code>{{10: True}, {10: True}, {10: True}}</code></strong></td>
+<td><strong><code>{01: True}</code></strong></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><strong><code>{{11: False}, {01: True}, {01: True}}</code></strong></td>
+<td><strong><code>{01: False}</code></strong></td>
+</tr>
+<tr>
+<td><strong><code>{{11: False}, {01: True}, {10: True}}</code></strong></td>
+<td><strong><code>{00: False}</code></strong></td>
+</tr>
+<tr>
+<td><strong><code>{{11: False}, {10: True}, {01: True}}</code></strong></td>
+<td><strong><code>{00: False}</code></strong></td>
+</tr>
+<tr>
+<td><strong><code>{{11: False}, {10: True}, {10: True}}</code></strong></td>
+<td><strong><code>{10: False}</code></strong></td>
+</tr>
+</tbody>
+</table>
+<p>一旦合并提示列表生成，剩下的工作就由特定的 <code>TopologyManager</code> 策略来决定将哪个提示视为最佳提示。</p>
+<p>一般来说，这包括：</p>
+<ol>
+<li>按“狭窄程度”对合并的提示进行排序。 窄度定义为在提示的 NUMA Affinity 掩码中设置的位数。 设置的位越少，提示越窄。 对于在其 NUMA Affinity 掩码中设置相同位数的提示，具有最低位设置的提示被认为更窄。</li>
+<li>按 <code>Preferred</code> 字段对合并的提示进行排序。 与将 Preferred 设置为 False 的提示相比，将 Preferred 设置为 True 的提示更可能被视为候选对象。</li>
+<li>选择具有最佳设置的最窄提示。</li>
+</ol>
+<p>在 <code>best-effort</code> 策略的情况下，此算法将始终导致某些提示被选为最佳提示，最终Pod准入通过。 <code>HintProviders</code> 根据这个最佳提示进行资源分配。</p>
+<p>但是，在 <code>restricted</code> 和 <code>single-numa-node</code> 策略的情况下，任何选择的 <code>Preferred</code> 设置为False 的提示将被立即拒绝，导致pod 准入失败并且无法资源分配。 此外 <code>single-numa-node</code> 还将拒绝在其 Affinity 掩码中设置了多个 NUMA 节点的提示。</p>
+<p>在上面的示例中，所有策略都会使用 {01: True} 提示，Pod准入成功。</p>
+<h2 id="upcoming-enhancements">Upcoming enhancements</h2>
+<p>虽然 1.18 版本和 Beta 版升级带来了一些重要的增强和修复，但仍然存在许多限制，<a href="https://kubernetes.io/docs/tasks/administer-cluster/topology-manager/#known-limitations" target="_blank" rel="noopener noreffer">如下所述</a>。 我们已经在努力解决这些限制以及更多问题。</p>
+<p>本节将介绍我们计划在不久的将来为 <code>TopologyManager</code> 实施的一组增强功能。 这个列表并不详尽，但它很好地说明了我们前进的方向。它按照我们期望看到每个增强完成的时间范围进行排序。</p>
+<p>如果您想参与其中的任何增强功能，请参加每周一次的 <a href="https://github.com/kubernetes/community/tree/master/sig-node" target="_blank" rel="noopener noreffer">Kubernetes SIG-node 会议</a>以了解更多信息并成为社区工作的一部分！</p>
+<h3 id="supporting-device-specific-constraints">Supporting device-specific constraints</h3>
+<p>目前，NUMA 亲和性是 <code>TopologyManager</code> 为资源对齐考虑的唯一约束。 此外，可以对 <code>TopologyHint</code> 进行的唯一扩展涉及 <code>node-level</code> 约束，例如跨设备类型的 PCIe 总线对齐。 尝试向该结构添加任何特定于设备的约束（例如，一组 GPU 设备之间的内部 NVLINK 拓扑）将是棘手的。</p>
+<p>因此，我们建议对设备插件接口进行扩展，允许插件声明其拓扑感知分配首选项，而无需向 kubelet 公开任何特定于设备的拓扑信息。 通过这种方式，<code>TopologyManager</code> 可以被限制为仅处理常见的节点级拓扑约束，同时仍然可以将特定于设备的拓扑约束合并到其分配决策中。</p>
+<p>可以在<a href="https://github.com/kubernetes/enhancements/pull/1121" target="_blank" rel="noopener noreffer">此处</a>找到此提案的详细信息，并且将很快在 Kubernetes 1.19 中提供。</p>
+<h3 id="numa-alignment-for-hugepages">NUMA alignment for hugepages</h3>
+<p>如前所述，<code>TopologyManager</code> 当前仅有的两个 <code>HintProvider</code> :  <code>CPUManager</code> 和 <code>DeviceManager</code>。 但是，目前正在增加巨页的支持。 随着这项工作的完成，<code>TopologyManager</code> 最终将能够在同一个 NUMA 节点上分配内存、hugepages、CPU 和 PCI 设备。</p>
+<p>这项工作的 <a href="https://github.com/kubernetes/enhancements/blob/253f1e5bdd121872d2d0f7020a5ac0365b229e30/keps/sig-node/20200203-memory-manager.md" target="_blank" rel="noopener noreffer">KEP</a> 目前正在审查中，并且正在制作原型以尽快实现此功能。</p>
+<h3 id="scheduler-awareness">Scheduler awareness</h3>
+<p>目前，<code>TopologyManager</code> 充当 Pod 准入控制器，它不直接参与 pod 的调度决策。相反，当 kubernetes 调度程序（或在部署中运行的任何调度程序）将 pod 放置在节点上运行时，<code>TopologyManager</code> 将决定是“接纳”还是“拒绝”该 pod。如果 Pod 由于缺乏可用的 NUMA 对齐资源而被拒绝，事情会变得有点有趣。这个 kubernetes <a href="https://github.com/kubernetes/kubernetes/issues/84869" target="_blank" rel="noopener noreffer">issue</a> 很好地突出并讨论了这种情况。</p>
+<p>那么我们如何着手解决这个限制呢？我们可以利用 Kubernetes 调度框架来实现！该框架提供了一组新的插件 API，这些 API 与现有的 Kubernetes 调度程序集成，并允许实现调度功能，例如 NUMA 对齐。</p>
+<p>如何实现这些扩展与 <code>TopologyManager</code> 集成的细节尚未制定。我们仍然需要回答以下问题：</p>
+<ol>
+<li>我们是否需要重复的逻辑在 <code>TopologyManager</code> 和调度程序中决定设备的亲和性？</li>
+<li>我们是否需要一个新的 API 来从 <code>TopologyManager</code> 获取 <code>TopologyHints</code> 到调度程序插件？</li>
+</ol>
+<p>此功能的工作应在接下来的几个月内开始，敬请期待！</p>
+<h3 id="per-pod-alignment-policy">Per-pod alignment policy</h3>
+<p>如前所述，单个策略通过全局 kubelet 标志应用于节点上的所有 pod，而不是允许用户逐个 pod（或逐个容器）选择不同的策略。</p>
+<p>虽然我们同意这将是一个很棒的功能，但在实现之前还有很多障碍需要克服。 最大的障碍是此增强功能需要更改 API 才能在 <code>Pod spce</code> 或其关联的 <code>RuntimeClass</code> 中表达所需的对齐策略。</p>
+<p>我们现在才开始认真讨论这个功能，它离可用还有几个版本。</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>随着 <code>TopologyManager</code> 在 1.18 中升级为 <code>Beta</code>，我们鼓励大家尝试并期待您的任何反馈。 在过去的几个版本中进行了许多修复和增强，大大提高了 <code>TopologyManager</code> 及其 <code>HintProviders</code> 的功能和可靠性。 虽然仍然存在许多限制，但我们计划进行一系列增强来解决这些问题，并期待在即将发布的版本中为您提供许多新功能。</p>
+<p>如果您有其他增强功能的想法或对某些功能的渴望，请随时告诉我们。 团队始终对增强和改进 <code>TopologyManager</code> 的建议持开放态度。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2021-07-07</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/kubernetes-topology-manager/" data-title="Kubenetes NUMA拓扑感知功能介绍" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/kubernetes-topology-manager/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/kubernetes-topology-manager/" data-title="Kubenetes NUMA拓扑感知功能介绍" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/kubernetes-topology-manager/" data-title="Kubenetes NUMA拓扑感知功能介绍"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/kubernetes-topology-manager/" data-title="Kubenetes NUMA拓扑感知功能介绍"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/kubernetes-topology-manager/" data-title="Kubenetes NUMA拓扑感知功能介绍" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/kubernetes-topology-manager/" data-title="Kubenetes NUMA拓扑感知功能介绍" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/kubernetes-topology-manager/" data-title="Kubenetes NUMA拓扑感知功能介绍"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/kubernetes-interpodaffinity/" class="prev" rel="prev" title="Kube-scheduler InterPodAffinity性能优化史"><i class="fas fa-angle-left fa-fw"></i>Kube-scheduler InterPodAffinity性能优化史</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

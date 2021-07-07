@@ -1,0 +1,15 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>原理介绍 - 分类 - kaku&#39;s blog</title>
+        <link>https://www.likakuli.com/categories/%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/</link>
+        <description>原理介绍 - 分类 - kaku&#39;s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Fri, 18 Jun 2021 18:59:04 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/" rel="self" type="application/rss+xml" /><item>
+    <title>Kubenetes NUMA拓扑感知功能介绍</title>
+    <link>https://www.likakuli.com/posts/kubernetes-topology-manager/</link>
+    <pubDate>Fri, 18 Jun 2021 18:59:04 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kubernetes-topology-manager/</guid>
+    <description><![CDATA[由来 最近的工作内容中涉及到了 NUMA 感知相关的功能，之前没有特意去看过 kubelet 相关部分的实现，也是趁此机会把落下的补补。在看代码的过程中，NUMA 感知部]]></description>
+</item></channel>
+</rss>
