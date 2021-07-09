@@ -27,7 +27,7 @@ NUMA 系统上的所有内存都分为一组NUMA 节点，每个节点代表一�
 
 例如，在图 1 中，CPU 0-3 被称为 NUMA node 0 的一部分，而 CPU 4-7 是 NUMA node 1 的一部分。同样，GPU 0 和 NIC 0 被称为 NUMA node 0 的一部分，因为它们 连接到 Socket 0，其 CPU 都是 NUMA node 0 的一部分。 NUMA node 1 上的 GPU 1 和 NIC 1 也是如此。
 
-![example-numa-system](example-numa-system.png)
+<img src="example-numa-system.png" alt="example-numa-system" style="zoom:150%;" />
 
 尽管上面的示例显示了 NUMA 节点到 Socket 的 1-1 映射，但在一般情况下不一定如此。 单个 NUMA 节点上可能有多个 Socket，或者单个 Socket 的单个 CPU 可能连接到不同的 NUMA 节点。 此外，Sub-NUMA Clustering（在最近的英特尔 CPU 上可用）等新兴技术允许单个 CPU 与多个 NUMA 节点相关联，只要它们对两个节点的内存访问时间相同（或差异可以忽略不计）。
 
@@ -120,7 +120,7 @@ for container := range append(InitContainers, Containers...) {
 
 下图总结了此循环期间采取的步骤：
 
-![numa-steps-during-loop](numa-steps-during-loop.png)
+<img src="numa-steps-during-loop.png" alt="numa-steps-during-loop" style="zoom:150%;" />
 
 步骤说明如下：
 
@@ -196,7 +196,7 @@ type HintProvider interface {
 
 如果 Container0 是在系统上分配的第一个容器，则将为规范中的三种拓扑感知资源类型生成以下提示集：
 
-```shell
+```tex
                cpu: {{01: True}, {10: True}, {11: False}}
 gpu-vendor.com/gpu: {{01: True}, {10: True}}
 nic-vendor.com/nic: {{01: True}, {10: True}}
@@ -208,11 +208,11 @@ nic-vendor.com/nic: {{01: True}, {10: True}}
 {cpu: {0, 1}, gpu: 0, nic: 0}
 ```
 
-![img](numa-hint-provider1.png)
+<img src="numa-hint-provider1.png" alt="img" style="zoom:150%;" />
 
 当考虑 Container1 时，这些资源被假定为不可用，因此只会生成以下提示集：
 
-```shell
+```tex
                cpu: {{01: True}, {10: True}, {11: False}}
 gpu-vendor.com/gpu: {{10: True}}
 nic-vendor.com/nic: {{10: True}}
@@ -247,7 +247,7 @@ type Store interface {
 
 按照上一节的示例，Container0 生成的提示为：
 
-```shell
+```tex
                cpu: {{01: True}, {10: True}, {11: False}}
 gpu-vendor.com/gpu: {{01: True}, {10: True}}
 nic-vendor.com/nic: {{01: True}, {10: True}}

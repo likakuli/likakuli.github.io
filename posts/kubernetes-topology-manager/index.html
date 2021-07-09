@@ -10,7 +10,7 @@
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-topology-manager/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2021-06-18T18:59:04&#43;08:00" />
-<meta property="article:modified_time" content="2021-07-07T22:45:53&#43;08:00" />
+<meta property="article:modified_time" content="2021-07-09T14:24:08&#43;08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -30,7 +30,7 @@
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/kubernetes-topology-manager\/"
         },"genre": "posts","keywords": "kubernetes","wordcount":  6015 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-topology-manager\/","datePublished": "2021-06-18T18:59:04+08:00","dateModified": "2021-07-07T22:45:53+08:00","publisher": {
+        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-topology-manager\/","datePublished": "2021-06-18T18:59:04+08:00","dateModified": "2021-07-09T14:24:08+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -165,14 +165,7 @@
 <p>NUMA 系统上的所有内存都分为一组NUMA 节点，每个节点代表一组 CPU 或设备的本地内存。 如果单个 CPU 的本地内存与该 NUMA 节点相关联，则我们将其称为 NUMA 节点的一部分。</p>
 <p>基于访问外围设备时所必须通过的最短互连数量，我们将外围设备视为 NUMA 节点的一部分。</p>
 <p>例如，在图 1 中，CPU 0-3 被称为 NUMA node 0 的一部分，而 CPU 4-7 是 NUMA node 1 的一部分。同样，GPU 0 和 NIC 0 被称为 NUMA node 0 的一部分，因为它们 连接到 Socket 0，其 CPU 都是 NUMA node 0 的一部分。 NUMA node 1 上的 GPU 1 和 NIC 1 也是如此。</p>
-<p><img
-        class="lazyload"
-        src="/svg/loading.min.svg"
-        data-src="example-numa-system.png"
-        data-srcset="/posts/kubernetes-topology-manager/example-numa-system.png, example-numa-system.png 1.5x, /posts/kubernetes-topology-manager/example-numa-system.png 2x"
-        data-sizes="auto"
-        alt="/posts/kubernetes-topology-manager/example-numa-system.png"
-        title="example-numa-system" /></p>
+<p><img src="example-numa-system.png" alt="example-numa-system" style="zoom:150%;" /></p>
 <p>尽管上面的示例显示了 NUMA 节点到 Socket 的 1-1 映射，但在一般情况下不一定如此。 单个 NUMA 节点上可能有多个 Socket，或者单个 Socket 的单个 CPU 可能连接到不同的 NUMA 节点。 此外，Sub-NUMA Clustering（在最近的英特尔 CPU 上可用）等新兴技术允许单个 CPU 与多个 NUMA 节点相关联，只要它们对两个节点的内存访问时间相同（或差异可以忽略不计）。</p>
 <h2 id="numa-对齐">NUMA 对齐</h2>
 <p>TopologyManager 提供了如下几种对齐策略：</p>
@@ -300,14 +293,7 @@
 </code></pre></td></tr></table>
 </div>
 </div><p>下图总结了此循环期间采取的步骤：</p>
-<p><img
-        class="lazyload"
-        src="/svg/loading.min.svg"
-        data-src="numa-steps-during-loop.png"
-        data-srcset="/posts/kubernetes-topology-manager/numa-steps-during-loop.png, numa-steps-during-loop.png 1.5x, /posts/kubernetes-topology-manager/numa-steps-during-loop.png 2x"
-        data-sizes="auto"
-        alt="/posts/kubernetes-topology-manager/numa-steps-during-loop.png"
-        title="numa-steps-during-loop" /></p>
+<p><img src="numa-steps-during-loop.png" alt="numa-steps-during-loop" style="zoom:150%;" /></p>
 <p>步骤说明如下：</p>
 <ol>
 <li>循环遍历 pod 中的所有容器。</li>
@@ -405,9 +391,9 @@
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">               cpu: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}</span>, <span class="o">{</span>11: False<span class="o">}}</span>
-gpu-vendor.com/gpu: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}}</span>
-nic-vendor.com/nic: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}}</span>
+<pre class="chroma"><code class="language-tex" data-lang="tex">               cpu: <span class="nb">{{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>, <span class="nb">{</span>11: False<span class="nb">}}</span>
+gpu-vendor.com/gpu: <span class="nb">{{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}}</span>
+nic-vendor.com/nic: <span class="nb">{{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>对应的对齐结果：</p>
@@ -419,14 +405,7 @@ nic-vendor.com/nic: <span class="o">{{</span>01: True<span class="o">}</span>, <
 <pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>cpu: <span class="o">{</span>0, 1<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
 </code></pre></td></tr></table>
 </div>
-</div><p><img
-        class="lazyload"
-        src="/svg/loading.min.svg"
-        data-src="numa-hint-provider1.png"
-        data-srcset="/posts/kubernetes-topology-manager/numa-hint-provider1.png, numa-hint-provider1.png 1.5x, /posts/kubernetes-topology-manager/numa-hint-provider1.png 2x"
-        data-sizes="auto"
-        alt="/posts/kubernetes-topology-manager/numa-hint-provider1.png"
-        title="img" /></p>
+</div><p><img src="numa-hint-provider1.png" alt="img" style="zoom:150%;" /></p>
 <p>当考虑 Container1 时，这些资源被假定为不可用，因此只会生成以下提示集：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -435,9 +414,9 @@ nic-vendor.com/nic: <span class="o">{{</span>01: True<span class="o">}</span>, <
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">               cpu: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}</span>, <span class="o">{</span>11: False<span class="o">}}</span>
-gpu-vendor.com/gpu: <span class="o">{{</span>10: True<span class="o">}}</span>
-nic-vendor.com/nic: <span class="o">{{</span>10: True<span class="o">}}</span>
+<pre class="chroma"><code class="language-tex" data-lang="tex">               cpu: <span class="nb">{{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>, <span class="nb">{</span>11: False<span class="nb">}}</span>
+gpu-vendor.com/gpu: <span class="nb">{{</span>10: True<span class="nb">}}</span>
+nic-vendor.com/nic: <span class="nb">{{</span>10: True<span class="nb">}}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>对其结果如下：</p>
@@ -480,9 +459,9 @@ nic-vendor.com/nic: <span class="o">{{</span>10: True<span class="o">}}</span>
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">               cpu: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}</span>, <span class="o">{</span>11: False<span class="o">}}</span>
-gpu-vendor.com/gpu: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}}</span>
-nic-vendor.com/nic: <span class="o">{{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}}</span>
+<pre class="chroma"><code class="language-tex" data-lang="tex">               cpu: <span class="nb">{{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>, <span class="nb">{</span>11: False<span class="nb">}}</span>
+gpu-vendor.com/gpu: <span class="nb">{{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}}</span>
+nic-vendor.com/nic: <span class="nb">{{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>上述算法产生以下叉积和合并后的提示：</p>
@@ -604,7 +583,7 @@ nic-vendor.com/nic: <span class="o">{{</span>01: True<span class="o">}</span>, <
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2021-07-07</span>
+                <span>更新于 2021-07-09</span>
             </div>
             <div class="post-info-license"></div>
         </div>
