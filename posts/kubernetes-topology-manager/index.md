@@ -248,7 +248,7 @@ type Store interface {
 按照上一节的示例，Container0 生成的提示为：
 
 ```tex
-               cpu: [{01: True}, {10: True}, {11: False}]
+               cpu: [{01: True}, {10: True}, {11: False}]F
 gpu-vendor.com/gpu: [{01: True}, {10: True}]
 nic-vendor.com/nic: [{01: True}, {10: True}]
 ```
@@ -257,20 +257,20 @@ nic-vendor.com/nic: [{01: True}, {10: True}]
 
 | **`{cpu, gpu-vendor.com/gpu, nic-vendor.com/nic}`** | "merged" hint     |
 | --------------------------------------------------- | ----------------- |
-| **`{{01: True}, {01: True}, {01: True}}`**          | **`{01: True}`**  |
-| **`{{01: True}, {01: True}, {10: True}}`**          | **`{00: False}`** |
-| **`{{01: True}, {10: True}, {01: True}}`**          | **`{00: False}`** |
-| **`{{01: True}, {10: True}, {10: True}}`**          | **`{00: False}`** |
+| **`[{01: True}, {01: True}, {01: True}]`**          | **`{01: True}`**  |
+| **`[{01: True}, {01: True}, {10: True}]`**          | **`{00: False}`** |
+| **`[{01: True}, {10: True}, {01: True}]`**          | **`{00: False}`** |
+| **`[{01: True}, {10: True}, {10: True}]`**          | **`{00: False}`** |
 |                                                     |                   |
-| **`{{10: True}, {01: True}, {01: True}}`**          | **`{00: False}`** |
-| **`{{10: True}, {01: True}, {10: True}}`**          | **`{00: False}`** |
-| **`{{10: True}, {10: True}, {01: True}}`**          | **`{00: False}`** |
-| **`{{10: True}, {10: True}, {10: True}}`**          | **`{01: True}`**  |
+| **`[{10: True}, {01: True}, {01: True}]`**          | **`{00: False}`** |
+| **`[{10: True}, {01: True}, {10: True}]`**          | **`{00: False}`** |
+| **`[{10: True}, {10: True}, {01: True}]`**          | **`{00: False}`** |
+| **`[{10: True}, {10: True}, {10: True}]`**          | **`{01: True}`**  |
 |                                                     |                   |
-| **`{{11: False}, {01: True}, {01: True}}`**         | **`{01: False}`** |
-| **`{{11: False}, {01: True}, {10: True}}`**         | **`{00: False}`** |
-| **`{{11: False}, {10: True}, {01: True}}`**         | **`{00: False}`** |
-| **`{{11: False}, {10: True}, {10: True}}`**         | **`{10: False}`** |
+| **`[{11: False}, {01: True}, {01: True}]`**         | **`{01: False}`** |
+| **`[{11: False}, {01: True}, {10: True}]`**         | **`{00: False}`** |
+| **`[{11: False}, {10: True}, {01: True}]`**         | **`{00: False}`** |
+| **`[{11: False}, {10: True}, {10: True}]`**         | **`{10: False}`** |
 
 一旦合并提示列表生成，剩下的工作就由特定的 `TopologyManager` 策略来决定将哪个提示视为最佳提示。
 
