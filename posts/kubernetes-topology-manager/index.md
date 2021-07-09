@@ -197,9 +197,9 @@ type HintProvider interface {
 如果 Container0 是在系统上分配的第一个容器，则将为规范中的三种拓扑感知资源类型生成以下提示集：
 
 ```tex
-               cpu: {{01: True}, {10: True}, {11: False}}
-gpu-vendor.com/gpu: {{01: True}, {10: True}}
-nic-vendor.com/nic: {{01: True}, {10: True}}
+               cpu: [{01: True}, {10: True}, {11: False}]
+gpu-vendor.com/gpu: [{01: True}, {10: True}]
+nic-vendor.com/nic: [{01: True}, {10: True}]
 ```
 
 对应的对齐结果：
@@ -213,9 +213,9 @@ nic-vendor.com/nic: {{01: True}, {10: True}}
 当考虑 Container1 时，这些资源被假定为不可用，因此只会生成以下提示集：
 
 ```tex
-               cpu: {{01: True}, {10: True}, {11: False}}
-gpu-vendor.com/gpu: {{10: True}}
-nic-vendor.com/nic: {{10: True}}
+               cpu: [{01: True}, {10: True}, {11: False}]
+gpu-vendor.com/gpu: [{10: True}]
+nic-vendor.com/nic: [{10: True}]
 ```
 
 对其结果如下：
@@ -248,9 +248,9 @@ type Store interface {
 按照上一节的示例，Container0 生成的提示为：
 
 ```tex
-               cpu: {{01: True}, {10: True}, {11: False}}
-gpu-vendor.com/gpu: {{01: True}, {10: True}}
-nic-vendor.com/nic: {{01: True}, {10: True}}
+               cpu: [{01: True}, {10: True}, {11: False}]
+gpu-vendor.com/gpu: [{01: True}, {10: True}]
+nic-vendor.com/nic: [{01: True}, {10: True}]
 ```
 
 上述算法产生以下叉积和合并后的提示：
