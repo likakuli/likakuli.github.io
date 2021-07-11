@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Fri, 18 Jun 2021 18:59:04 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 10 Jul 2021 21:58:59 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>思想随笔1 - 思考思考的过程</title>
+    <link>https://www.likakuli.com/posts/thoughtfulessay/</link>
+    <pubDate>Sat, 10 Jul 2021 21:58:59 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/thoughtfulessay/</guid>
+    <description><![CDATA[机缘巧合 去年一个偶然的机会在抖音上刷到了&quot;姜胡说&quot;，里面不乏一些有趣且发人深思的内容，在其中一期中胡子提到了几本书，其中]]></description>
+</item><item>
     <title>Kubenetes NUMA拓扑感知功能介绍</title>
     <link>https://www.likakuli.com/posts/kubernetes-topology-manager/</link>
     <pubDate>Fri, 18 Jun 2021 18:59:04 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kubernetes-informer/</guid>
     <description><![CDATA[开局一张图，剩下全靠编 详细内容参考： Informer DeltaFIFO Informer LocalStore 未完待续]]></description>
-</item><item>
-    <title>Informer LocalStore源码解析</title>
-    <link>https://www.likakuli.com/posts/kubernetes-informer-localstore/</link>
-    <pubDate>Thu, 18 Mar 2021 20:35:51 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-informer-localstore/</guid>
-    <description><![CDATA[按照惯例，先上图，cache对应Informer中的Local Store。 直接撸源码（基于1.12版本，有删减，不影响主要逻辑） 1 2 3 4 5 6]]></description>
 </item></channel>
 </rss>
