@@ -9,8 +9,8 @@
 <meta property="og:description" content="通过外部域名访问knative集群内的服务" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/knative-ingress-gateway/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2020-07-09T21:00:07&#43;08:00" />
-<meta property="article:modified_time" content="2020-11-04T22:17:21&#43;08:00" />
+<meta property="article:published_time" content="2020-07-09T21:00:07+08:00" />
+<meta property="article:modified_time" content="2020-11-04T22:17:21+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -151,7 +151,7 @@
 <p>申请完域名后，分别通过域名和IP:PORT形式访问已部署的helloworld服务</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -186,7 +186,7 @@
 </span><span class="lnt">33
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">curl -v -H <span class="s2">&#34;Host: api-test.sls.intra.kaku.com&#34;</span> http://api-test.sls.intra.kaku.com/
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">curl -v -H <span class="s2">&#34;Host: api-test.sls.intra.kaku.com&#34;</span> http://api-test.sls.intra.kaku.com/
 *   Trying 10.88.128.112...
 * TCP_NODELAY <span class="nb">set</span>
 * Connected to api-test.sls.intra.kaku.com <span class="o">(</span>10.88.128.112<span class="o">)</span> port <span class="m">80</span> <span class="o">(</span><span class="c1">#0)</span>
@@ -238,7 +238,7 @@ curl -v -H <span class="s2">&#34;Host:api-test.sls.intra.kaku.com&#34;</span> ht
 <p>控制这两个属性的地方都在net-istio的controller中，webhook对应的是net-istio的webhook，按照上面的分析，我们需要在webhook中添加对应的代码，主要改动两个地方，如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -272,7 +272,7 @@ curl -v -H <span class="s2">&#34;Host:api-test.sls.intra.kaku.com&#34;</span> ht
 </span><span class="lnt">32
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 注册virtualservice类型，表示要对其进行mutate的操作，我们只需要在此注册即可，controller会自动修改对应的MutatingWebhookConfiguration，添加对应的资源和操作
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 注册virtualservice类型，表示要对其进行mutate的操作，我们只需要在此注册即可，controller会自动修改对应的MutatingWebhookConfiguration，添加对应的资源和操作
 </span><span class="c1"></span><span class="kd">var</span> <span class="nx">types</span> <span class="p">=</span> <span class="kd">map</span><span class="p">[</span><span class="nx">schema</span><span class="p">.</span><span class="nx">GroupVersionKind</span><span class="p">]</span><span class="nx">resourcesemantics</span><span class="p">.</span><span class="nx">GenericCRD</span><span class="p">{</span>
 	<span class="nx">appsv1</span><span class="p">.</span><span class="nx">SchemeGroupVersion</span><span class="p">.</span><span class="nf">WithKind</span><span class="p">(</span><span class="s">&#34;Deployment&#34;</span><span class="p">):</span> <span class="o">&amp;</span><span class="nx">defaults</span><span class="p">.</span><span class="nx">IstioDeployment</span><span class="p">{},</span>
   <span class="nx">v1alpha3</span><span class="p">.</span><span class="nx">SchemeGroupVersion</span><span class="p">.</span><span class="nf">WithKind</span><span class="p">(</span><span class="s">&#34;VirtualService&#34;</span><span class="p">):</span> <span class="o">&amp;</span><span class="nx">defaults</span><span class="p">.</span><span class="nx">IstioVirtualService</span><span class="p">{},</span>
@@ -310,7 +310,7 @@ curl -v -H <span class="s2">&#34;Host:api-test.sls.intra.kaku.com&#34;</span> ht
 <p>因为vs是由king创建的，所以在创建king的地方修改，这样在king创建vs的时候会自动带上我们自定义的domains，如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -343,7 +343,7 @@ curl -v -H <span class="s2">&#34;Host:api-test.sls.intra.kaku.com&#34;</span> ht
 </span><span class="lnt">31
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 通过annotation的方式，把需要添加到hosts中的域名放到annotation中
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 通过annotation的方式，把需要添加到hosts中的域名放到annotation中
 </span><span class="c1">// MakeIngressSpec creates a new IngressSpec
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">MakeIngressSpec</span><span class="p">(</span>
 	<span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span>
@@ -422,7 +422,7 @@ curl -v -H <span class="s2">&#34;Host:api-test.sls.intra.kaku.com&#34;</span> ht
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

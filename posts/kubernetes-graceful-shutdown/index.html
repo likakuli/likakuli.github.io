@@ -9,8 +9,8 @@
 <meta property="og:description" content="优雅退出" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-graceful-shutdown/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2020-06-23T19:46:45&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2020-06-23T19:46:45+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -145,7 +145,7 @@
 <p>从时间线来看，确实从删除到调度成功耗时超过了30s，但是从容器创建出来到调度成功才1s，大部分耗时是在删除到新创建的阶段。熟悉k8s的同学应该知道，删除Pod的api支持设置删除方式：backgroud、foregroud，区别就是后台删除是异步的，调用api后立马返回，前台删除的话是同步的，会一直等容器真正删除后才返回，默认为backgroud。也就是说20:39:38提示的删除成功只是api调用成功，容器并未真正的删除，容器的删除操作一直在后台执行，直到20:40:11才删除成功，删除后立马创建新的容器。可以通过kubelet的日志证明这一点，下面的日志是经过筛选后的</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -181,7 +181,7 @@
 </span><span class="lnt">34
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">I0603 20:39:37.908557    <span class="m">3033</span> kubelet.go:1913<span class="o">]</span> SyncLoop <span class="o">(</span>DELETE, <span class="s2">&#34;api&#34;</span><span class="o">)</span>: <span class="s2">&#34;kirovpre-krds-sf-f3dec-0_default(01473fb7-a17b-11ea-8d10-c88d83d31d55)&#34;</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">I0603 20:39:37.908557    <span class="m">3033</span> kubelet.go:1913<span class="o">]</span> SyncLoop <span class="o">(</span>DELETE, <span class="s2">&#34;api&#34;</span><span class="o">)</span>: <span class="s2">&#34;kirovpre-krds-sf-f3dec-0_default(01473fb7-a17b-11ea-8d10-c88d83d31d55)&#34;</span>
 I0603 20:39:37.908655    <span class="m">3033</span> kubelet_pods.go:1433<span class="o">]</span> Generating status <span class="k">for</span> <span class="s2">&#34;kirovpre-krds-sf-f3dec-0_default(01473fb7-a17b-11ea-8d10-c88d83d31d55)&#34;</span>
 I0603 20:39:37.908799    <span class="m">3033</span> kuberuntime_container.go:468<span class="o">]</span> Running preStop hook <span class="k">for</span> container <span class="s2">&#34;docker://5fe57cf36af267adae571272f234762ad8741922e24074182ff25301e953ec72&#34;</span>
 I0603 20:39:37.916683    <span class="m">3033</span> status_manager.go:499<span class="o">]</span> Patch status <span class="k">for</span> pod <span class="s2">&#34;kirovpre-krds-sf-f3dec-0_default(01473fb7-a17b-11ea-8d10-c88d83d31d55)&#34;</span> with <span class="s2">&#34;{}&#34;</span>
@@ -235,7 +235,7 @@ I0603 20:40:11.519514    <span class="m">3033</span> kubelet.go:2109<span class=
 <p>上述步骤可以和日志一一对应起来，如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -259,7 +259,7 @@ I0603 20:40:11.519514    <span class="m">3033</span> kubelet.go:2109<span class=
 </span><span class="lnt">22
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="err">#</span> <span class="nx">对应步骤2</span><span class="err">，</span><span class="nx">从37到40</span><span class="err">，</span><span class="nx">正好sleep了3s</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="err">#</span> <span class="nx">对应步骤2</span><span class="err">，</span><span class="nx">从37到40</span><span class="err">，</span><span class="nx">正好sleep了3s</span>
 <span class="nx">I0603</span> <span class="mi">20</span><span class="p">:</span><span class="mi">39</span><span class="p">:</span><span class="mf">37.908799</span>    <span class="mi">3033</span> <span class="nx">kuberuntime_container</span><span class="p">.</span><span class="k">go</span><span class="p">:</span><span class="mi">468</span><span class="p">]</span> <span class="nx">Running</span> <span class="nx">preStop</span> <span class="nx">hook</span> <span class="k">for</span> <span class="nx">container</span> <span class="s">&#34;docker://5fe57cf36af267adae571272f234762ad8741922e24074182ff25301e953ec72&#34;</span>
 <span class="nx">I0603</span> <span class="mi">20</span><span class="p">:</span><span class="mi">39</span><span class="p">:</span><span class="mf">40.975805</span>    <span class="mi">3033</span> <span class="nx">kuberuntime_container</span><span class="p">.</span><span class="k">go</span><span class="p">:</span><span class="mi">485</span><span class="p">]</span> <span class="nx">preStop</span> <span class="nx">hook</span> <span class="k">for</span> <span class="nx">container</span> <span class="p">{</span><span class="s">&#34;docker&#34;</span> <span class="s">&#34;5fe57cf36af267adae571272f234762ad8741922e24074182ff25301e953ec72&#34;</span><span class="p">}</span> <span class="nx">completed</span>
  
@@ -335,7 +335,7 @@ I0603 20:40:11.519514    <span class="m">3033</span> kubelet.go:2109<span class=
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

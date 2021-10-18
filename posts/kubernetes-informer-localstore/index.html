@@ -9,8 +9,8 @@
 <meta property="og:description" content="按照惯例，先上图，cache对应Informer中的Local Store。 直接撸源码（基于1.12版本，有删减，不影响主要逻辑） 1 2 3 4 5 6" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-informer-localstore/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2021-03-18T20:35:51&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2021-03-18T20:35:51+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -141,7 +141,7 @@
 <p>直接撸源码（基于1.12版本，有删减，不影响主要逻辑）</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -160,7 +160,7 @@
 </span><span class="lnt">17
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/store.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/store.go
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">Store</span> <span class="kd">interface</span> <span class="p">{</span>
    <span class="nf">Add</span><span class="p">(</span><span class="nx">obj</span> <span class="kd">interface</span><span class="p">{})</span> <span class="kt">error</span>
    <span class="nf">Update</span><span class="p">(</span><span class="nx">obj</span> <span class="kd">interface</span><span class="p">{})</span> <span class="kt">error</span>
@@ -182,7 +182,7 @@
 </div><p>Store为最基本的存储接口，提供增删改查基本功能，要求对象有唯一键，键的计算方式由接口的具体实现决定，很好理解。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -203,7 +203,7 @@
 </span><span class="lnt">19
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/index.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/index.go
 </span><span class="c1">// Indexer is a storage interface that lets you list objects using multiple indexing functions
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">Indexer</span> <span class="kd">interface</span> <span class="p">{</span>
    <span class="nx">Store</span>
@@ -227,7 +227,7 @@
 </div><p>Indexer在Store基础上扩展了索引能力，就好比给数据库添加的索引，以便查询更快，那么肯定需要有个结构来保存索引</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -241,7 +241,7 @@
 </span><span class="lnt">12
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/index.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/index.go
 </span><span class="c1">// IndexFunc knows how to provide an indexed value for an object.
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">IndexFunc</span> <span class="kd">func</span><span class="p">(</span><span class="nx">obj</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">([]</span><span class="kt">string</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
   
@@ -263,7 +263,7 @@
 <p>如果还是不懂，就先往下看，看Indexer的具体实现</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -308,7 +308,7 @@
 </span><span class="lnt">43
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/store.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/store.go
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">cache</span> <span class="kd">struct</span> <span class="p">{</span>
    <span class="c1">// cacheStorage bears the burden of thread safety for the cache
 </span><span class="c1"></span>   <span class="nx">cacheStorage</span> <span class="nx">ThreadSafeStore</span>
@@ -356,7 +356,7 @@
 </div><p>上面代码很好理解，cache主要由线程安全的map[string]interface{}实现，Go的旧版本中没有sync.Map，这里还是利用sync.RWMutex实现，在这里又看到了上面出现的indexers和indices，还出现了一个新的函数类型KeyFunc，背后其实也只对应一个函数MetaNamespaceKeyFunc，下面通过分析cache.Add方法的实现来具体看下indexers、indices、KeyFunc是如何协调工作的</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -367,7 +367,7 @@
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Add inserts an item into the cache.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Add inserts an item into the cache.
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">cache</span><span class="p">)</span> <span class="nf">Add</span><span class="p">(</span><span class="nx">obj</span> <span class="kd">interface</span><span class="p">{})</span> <span class="kt">error</span> <span class="p">{</span>
    <span class="nx">key</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">keyFunc</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span>
    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
@@ -381,7 +381,7 @@
 </div><p>代码很简单，就是通过KeyFunc计算出obj的键，然后放到字典中，继续看字典的Add实现</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -390,7 +390,7 @@
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">threadSafeMap</span><span class="p">)</span> <span class="nf">Add</span><span class="p">(</span><span class="nx">key</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">obj</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">threadSafeMap</span><span class="p">)</span> <span class="nf">Add</span><span class="p">(</span><span class="nx">key</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">obj</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">{</span>
    <span class="nx">c</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
    <span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
    <span class="nx">oldObject</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
@@ -402,7 +402,7 @@
 </div><p>也很简单，取出当前key对应的obj，更新Indices，这里终于出现了我们关注的数据结构，继续看</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -432,7 +432,7 @@
 </span><span class="lnt">28
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback">// updateIndices modifies the objects location in the managed indexes, if this is an update, you must provide an oldObj
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">// updateIndices modifies the objects location in the managed indexes, if this is an update, you must provide an oldObj
 // updateIndices must be called from a function that already has a lock on the cache
 func (c *threadSafeMap) updateIndices(oldObj interface{}, newObj interface{}, key string) {
    // if we got an old object, we need to remove it before we add it again
@@ -513,7 +513,7 @@ func (c *threadSafeMap) updateIndices(oldObj interface{}, newObj interface{}, ke
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

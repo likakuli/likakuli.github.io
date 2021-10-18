@@ -9,8 +9,8 @@
 <meta property="og:description" content="背景 线上master的apiserver组件内存报警，内存使用量持续增长，监控如下 排查过程 从监控上看和另外一个程序（管理员平台）的内存使用情" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-apiserver-goroutine-leak/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2019-12-06T17:15:45&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2019-12-06T17:15:45+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -174,7 +174,7 @@
 <p>同时在浏览器中访问http://ip:port/debug/pprof/goroutine 可以看到具体goroutine数量和执行函数的行号，此处忘记截图了，不过和上面的信息吻合，且更信息因为携带了行号的信息，可以看到是如下代码出的问题（代码版本1.12.4）</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -210,7 +210,7 @@
 </span><span class="lnt">34
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// k8s.io/kubernetes/vendor/k8s.io/apiserver/pkg/server/filters/timeout.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// k8s.io/kubernetes/vendor/k8s.io/apiserver/pkg/server/filters/timeout.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">timeoutHandler</span><span class="p">)</span> <span class="nf">ServeHTTP</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">r</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">r</span><span class="p">,</span> <span class="nx">after</span><span class="p">,</span> <span class="nx">postTimeoutFn</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">t</span><span class="p">.</span><span class="nf">timeout</span><span class="p">(</span><span class="nx">r</span><span class="p">)</span>
 	<span class="k">if</span> <span class="nx">after</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
@@ -255,7 +255,7 @@
 <p>印象中记得之前看k8s版本升级的release-note时有提到过修复apiserver leak字样的信息，然后就去官方项目中查，结果没找到，然后直接去看了对应文件的<a href="https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apiserver/pkg/server/filters/timeout.go" target="_blank" rel="noopener noreffer">最新版本代码</a>，看history，终于找到了相关的修复的<a href="https://github.com/kubernetes/kubernetes/commit/a4ae7b9081f3ddedd0d588688215ddbe26274f75#diff-4271e9acdab54fd07404a569fdd5011f" target="_blank" rel="noopener noreffer">commit</a>，合入1.17。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -278,7 +278,7 @@
 </span><span class="lnt">21
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="k">case</span> <span class="o">&lt;-</span><span class="nx">after</span><span class="p">:</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="k">case</span> <span class="o">&lt;-</span><span class="nx">after</span><span class="p">:</span>
 		<span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
 			<span class="c1">// resultCh needs to have a reader, since the function doing
 </span><span class="c1"></span>			<span class="c1">// the work needs to send to it. This is defer&#39;d to ensure it runs
@@ -345,7 +345,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

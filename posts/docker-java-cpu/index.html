@@ -9,8 +9,8 @@
 <meta property="og:description" content="背景 容器原生设计为单进程模型，但公司线上运行的服务以多进程的方式运行，而且里面包含了很多的agent，例如日志采集、监控采集、数据配送等，耦" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/docker-java-cpu/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2021-02-10T11:41:20&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2021-02-10T11:41:20+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -143,10 +143,10 @@
 <p>首先需要确定下容器内java服务获取到的真正的cpu核数，可以执行如下命令</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">java -XX:+UnlockDiagnosticVMOptions -XX:+PrintContainerInfo -version
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">java -XX:+UnlockDiagnosticVMOptions -XX:+PrintContainerInfo -version
 </code></pre></td></tr></table>
 </div>
 </div><p>输出结果中可以看到获取到的核数确实不是我们申请的核数，也就是说虽然采用了没问题的jdk版本，但还是获取到了错误的核数。</p>
@@ -198,7 +198,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

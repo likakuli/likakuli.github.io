@@ -9,8 +9,8 @@
 <meta property="og:description" content="DeltaFIFO位于Reflector和LocalStore之间，看名字知道是个先进先出的队列，作用就是缓存数据变化，直接看代码 1 2 3 4 5" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-informer-deltafifo/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2021-03-18T17:33:44&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2021-03-18T17:33:44+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -132,7 +132,7 @@
 <p>DeltaFIFO位于Reflector和LocalStore之间，看名字知道是个先进先出的队列，作用就是缓存数据变化，直接看代码</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -187,7 +187,7 @@
 </span><span class="lnt">53
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">DeltaFIFO</span> <span class="kd">struct</span> <span class="p">{</span>
    <span class="c1">// lock/cond protects access to &#39;items&#39; and &#39;queue&#39;.
 </span><span class="c1"></span>   <span class="c1">// 读写锁，性能要比Mutex好
@@ -245,7 +245,7 @@
 </div><p>Delta就是数据的变化，用字典存储达到更快的检索速度，而且Deltas是要求有序的，而字典的遍历是无序的，所以用slice保存key的集合，以达到先进先出效果。结合上图来看，DeltaFIFO就是一个用来存储kubernetes资源变化的先进先出的队列。DeltaFIFO队列功能是通过实现如下接口实现的</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -272,7 +272,7 @@
 </span><span class="lnt">25
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/fifo.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/fifo.go
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">Queue</span> <span class="kd">interface</span> <span class="p">{</span>
    <span class="c1">// 存储接口，再Indexer分析过了
 </span><span class="c1"></span>   <span class="nx">Store</span>           
@@ -303,7 +303,7 @@
 <p>接着看DeltaFIFO具体实现，还是比较简单的</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -399,7 +399,7 @@
 </span><span class="lnt">94
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
 </span><span class="c1"></span>  
 <span class="c1">// 添加对象接口
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <span class="o">*</span><span class="nx">DeltaFIFO</span><span class="p">)</span> <span class="nf">Add</span><span class="p">(</span><span class="nx">obj</span> <span class="kd">interface</span><span class="p">{})</span> <span class="kt">error</span> <span class="p">{</span>
@@ -498,7 +498,7 @@
 </div><p>上面的实现因为比较简单，而且大部分函数都用到了queueActionLocked()函数，所以我要对这个函数做比较细致的说明</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -534,7 +534,7 @@
 </span><span class="lnt">34
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <span class="o">*</span><span class="nx">DeltaFIFO</span><span class="p">)</span> <span class="nf">queueActionLocked</span><span class="p">(</span><span class="nx">actionType</span> <span class="nx">DeltaType</span><span class="p">,</span> <span class="nx">obj</span> <span class="kd">interface</span><span class="p">{})</span> <span class="kt">error</span> <span class="p">{</span>
     <span class="c1">// 前面提到的计算对象键的函数
 </span><span class="c1"></span>    <span class="nx">id</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">f</span><span class="p">.</span><span class="nf">KeyOf</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span>
@@ -573,7 +573,7 @@
 </div><p>接着看下合并的操作</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -614,7 +614,7 @@
 </span><span class="lnt">39
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">dedupDeltas</span><span class="p">(</span><span class="nx">deltas</span> <span class="nx">Deltas</span><span class="p">)</span> <span class="nx">Deltas</span> <span class="p">{</span>
     <span class="c1">// 小于2个delta，那就是1个呗，没啥好合并的
 </span><span class="c1"></span>    <span class="nx">n</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">deltas</span><span class="p">)</span>
@@ -658,7 +658,7 @@
 </div><p>接下来看Replace函数，这个也是Store定义的接口</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -740,7 +740,7 @@
 </span><span class="lnt">80
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <span class="o">*</span><span class="nx">DeltaFIFO</span><span class="p">)</span> <span class="nf">Replace</span><span class="p">(</span><span class="nx">list</span> <span class="p">[]</span><span class="kd">interface</span><span class="p">{},</span> <span class="nx">resourceVersion</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
     <span class="nx">f</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
     <span class="k">defer</span> <span class="nx">f</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
@@ -828,7 +828,7 @@
 <p>现在，我们来看看Queue相对于Stored扩展的Pop接口</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -871,7 +871,7 @@
 </span><span class="lnt">41
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <span class="o">*</span><span class="nx">DeltaFIFO</span><span class="p">)</span> <span class="nf">Pop</span><span class="p">(</span><span class="nx">process</span> <span class="nx">PopProcessFunc</span><span class="p">)</span> <span class="p">(</span><span class="kd">interface</span><span class="p">{},</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
     <span class="nx">f</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
     <span class="k">defer</span> <span class="nx">f</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
@@ -918,7 +918,7 @@
 <p>再来看下其他函数</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1002,7 +1002,7 @@
 </span><span class="lnt">82
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码源自client-go/tools/cache/delta_fifo.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <span class="o">*</span><span class="nx">DeltaFIFO</span><span class="p">)</span> <span class="nf">HasSynced</span><span class="p">()</span> <span class="kt">bool</span> <span class="p">{</span>
     <span class="nx">f</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
     <span class="k">defer</span> <span class="nx">f</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
@@ -1139,7 +1139,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

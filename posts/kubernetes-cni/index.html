@@ -9,8 +9,8 @@
 <meta property="og:description" content="kubelet与cni交互流程" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-cni/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2019-07-16T13:53:02&#43;08:00" />
-<meta property="article:modified_time" content="2020-10-16T18:17:42&#43;08:00" />
+<meta property="article:published_time" content="2019-07-16T13:53:02+08:00" />
+<meta property="article:modified_time" content="2020-10-16T18:17:42+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -147,7 +147,7 @@
 <p>kubelet 在初始化的时候如果使用containerRuntime为Docker，则会起动dockershim rpc server</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -181,7 +181,7 @@
 </span><span class="lnt">32
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="k">case</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">DockerContainerRuntime</span><span class="p">:</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="k">case</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">DockerContainerRuntime</span><span class="p">:</span>
 		<span class="c1">// Create and start the CRI shim running as a grpc server.
 </span><span class="c1"></span>		<span class="nx">streamingConfig</span> <span class="o">:=</span> <span class="nf">getStreamingConfig</span><span class="p">(</span><span class="nx">kubeCfg</span><span class="p">,</span> <span class="nx">kubeDeps</span><span class="p">,</span> <span class="nx">crOptions</span><span class="p">)</span>
     <span class="c1">// 主要函数
@@ -218,7 +218,7 @@
 </div><p>创建 dockerservice 对象时初始化cniplugin</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -263,7 +263,7 @@
 </span><span class="lnt">43
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// rpc server端
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// rpc server端
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewDockerService</span><span class="p">(</span><span class="nx">config</span> <span class="o">*</span><span class="nx">ClientConfig</span><span class="p">,</span> <span class="nx">podSandboxImage</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">streamingConfig</span> <span class="o">*</span><span class="nx">streaming</span><span class="p">.</span><span class="nx">Config</span><span class="p">,</span> <span class="nx">pluginSettings</span> <span class="o">*</span><span class="nx">NetworkPluginSettings</span><span class="p">,</span>
 	<span class="nx">cgroupsName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">kubeCgroupDriver</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">dockershimRootDir</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">startLocalStreamingServer</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">(</span><span class="nx">DockerService</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
   <span class="o">...</span>
@@ -311,7 +311,7 @@
 </div><p>初始化cniplugin，会根据pluginDir<strong>查找符合条件的第一个 CNI config 文件</strong>，并以此 config 文件查找到对应的 CNI bin</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -377,7 +377,7 @@
 </span><span class="lnt">64
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// InitNetworkPlugin inits the plugin that matches networkPluginName. Plugins must have unique names.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// InitNetworkPlugin inits the plugin that matches networkPluginName. Plugins must have unique names.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">InitNetworkPlugin</span><span class="p">(</span><span class="nx">plugins</span> <span class="p">[]</span><span class="nx">NetworkPlugin</span><span class="p">,</span> <span class="nx">networkPluginName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">host</span> <span class="nx">Host</span><span class="p">,</span> <span class="nx">hairpinMode</span> <span class="nx">kubeletconfig</span><span class="p">.</span><span class="nx">HairpinMode</span><span class="p">,</span> <span class="nx">nonMasqueradeCIDR</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">mtu</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">NetworkPlugin</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="k">if</span> <span class="nx">networkPluginName</span> <span class="o">==</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
 		<span class="c1">// default to the no_op plugin
@@ -445,7 +445,7 @@
 </div>
 </div><div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -502,7 +502,7 @@
 </span><span class="lnt">55
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// plugin目录中找到符合.conf，.conflist，.json为后缀的文件，用文件名来排序，并从文件
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// plugin目录中找到符合.conf，.conflist，.json为后缀的文件，用文件名来排序，并从文件
 </span><span class="c1">// 名列表中找到符合cni 配置规则的plugin配置文件并返回，找到一个立即返回
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">getDefaultCNINetwork</span><span class="p">(</span><span class="nx">confDir</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">binDirs</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">cniNetwork</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">files</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">libcni</span><span class="p">.</span><span class="nf">ConfFiles</span><span class="p">(</span><span class="nx">confDir</span><span class="p">,</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;.conf&#34;</span><span class="p">,</span> <span class="s">&#34;.conflist&#34;</span><span class="p">,</span> <span class="s">&#34;.json&#34;</span><span class="p">})</span>
@@ -569,7 +569,7 @@
 </ul>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -621,7 +621,7 @@
 </span><span class="lnt">50
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// makePodSourceConfig 为kubelet 提供 pod update 事件来源，目前支持三种，监听url，
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// makePodSourceConfig 为kubelet 提供 pod update 事件来源，目前支持三种，监听url，
 </span><span class="c1">// 监听目录，watch apiserver，每种来源都有对应的channel
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">makePodSourceConfig</span><span class="p">(</span><span class="nx">kubeCfg</span> <span class="o">*</span><span class="nx">kubeletconfiginternal</span><span class="p">.</span><span class="nx">KubeletConfiguration</span><span class="p">,</span> <span class="nx">kubeDeps</span> <span class="o">*</span><span class="nx">Dependencies</span><span class="p">,</span> <span class="nx">nodeName</span> <span class="nx">types</span><span class="p">.</span><span class="nx">NodeName</span><span class="p">,</span> <span class="nx">bootstrapCheckpointPath</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">config</span><span class="p">.</span><span class="nx">PodConfig</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">manifestURLHeader</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">http</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
@@ -676,7 +676,7 @@
 </div><p>之后每个pod来源的更新都会发送事件到podcfg的update channel</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -717,7 +717,7 @@
 </span><span class="lnt">39
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// syncLoop is the main loop for processing changes. It watches for changes from
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// syncLoop is the main loop for processing changes. It watches for changes from
 </span><span class="c1">// three channels (file, apiserver, and http) and creates a union of them. For
 </span><span class="c1">// any new change seen, will run a sync against desired state and running state. If
 </span><span class="c1">// no changes are seen to the configuration, will synchronize the last known desired
@@ -761,7 +761,7 @@
 </div><h1 id="pod-创建">POD 创建</h1>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">  1
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
 </span><span class="lnt">  2
 </span><span class="lnt">  3
 </span><span class="lnt">  4
@@ -903,7 +903,7 @@
 </span><span class="lnt">140
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// syncLoopIteration reads from various channels and dispatches pods to the
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// syncLoopIteration reads from various channels and dispatches pods to the
 </span><span class="c1">// given handler.
 </span><span class="c1">//
 </span><span class="c1">// Arguments:
@@ -1052,7 +1052,7 @@ syncPod时会调用createPodSandbox 来创建pause container（infrastructure co
 err = ds.network.SetUpPod(config.GetMetadata().Namespace, config.GetMetadata().Name, cID, config.Annotations)</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">  1
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
 </span><span class="lnt">  2
 </span><span class="lnt">  3
 </span><span class="lnt">  4
@@ -1169,7 +1169,7 @@ err = ds.network.SetUpPod(config.GetMetadata().Namespace, config.GetMetadata().N
 </span><span class="lnt">115
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 为了能够保证业务pod在异常退出时仍然能够保存网络信息，因此创建pause (infra)容器来共享网络配置
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 为了能够保证业务pod在异常退出时仍然能够保存网络信息，因此创建pause (infra)容器来共享网络配置
 </span><span class="c1">// pause container也叫做 infrastructure-container， 
 </span><span class="c1">// RunPodSandbox creates and starts a pod-level sandbox. Runtimes should ensure
 </span><span class="c1">// the sandbox is in ready state.
@@ -1289,7 +1289,7 @@ err = ds.network.SetUpPod(config.GetMetadata().Namespace, config.GetMetadata().N
 </div><p>SetUpPod -&gt; addToNetwork，cniNet.AddNetworkList 根据 CNI 执行 CNI binary，并将 CNI config 文件内容作为 stdin ，将podName, podNamespace， podSandboxID 等以 env 的形式传递给 CNI binary</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1308,7 +1308,7 @@ err = ds.network.SetUpPod(config.GetMetadata().Namespace, config.GetMetadata().N
 </span><span class="lnt">17
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">plugin</span> <span class="o">*</span><span class="nx">cniNetworkPlugin</span><span class="p">)</span> <span class="nf">addToNetwork</span><span class="p">(</span><span class="nx">network</span> <span class="o">*</span><span class="nx">cniNetwork</span><span class="p">,</span> <span class="nx">podName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">podNamespace</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">podSandboxID</span> <span class="nx">kubecontainer</span><span class="p">.</span><span class="nx">ContainerID</span><span class="p">,</span> <span class="nx">podNetnsPath</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">annotations</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">cnitypes</span><span class="p">.</span><span class="nx">Result</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">plugin</span> <span class="o">*</span><span class="nx">cniNetworkPlugin</span><span class="p">)</span> <span class="nf">addToNetwork</span><span class="p">(</span><span class="nx">network</span> <span class="o">*</span><span class="nx">cniNetwork</span><span class="p">,</span> <span class="nx">podName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">podNamespace</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">podSandboxID</span> <span class="nx">kubecontainer</span><span class="p">.</span><span class="nx">ContainerID</span><span class="p">,</span> <span class="nx">podNetnsPath</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">annotations</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">cnitypes</span><span class="p">.</span><span class="nx">Result</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">rt</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">plugin</span><span class="p">.</span><span class="nf">buildCNIRuntimeConf</span><span class="p">(</span><span class="nx">podName</span><span class="p">,</span> <span class="nx">podNamespace</span><span class="p">,</span> <span class="nx">podSandboxID</span><span class="p">,</span> <span class="nx">podNetnsPath</span><span class="p">,</span> <span class="nx">annotations</span><span class="p">)</span>
 	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
 		<span class="nx">glog</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;Error adding network when building cni runtime conf: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
@@ -1368,7 +1368,7 @@ err = ds.network.SetUpPod(config.GetMetadata().Namespace, config.GetMetadata().N
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

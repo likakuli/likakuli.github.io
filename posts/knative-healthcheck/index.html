@@ -9,8 +9,8 @@
 <meta property="og:description" content="knative健康检查" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/knative-healthcheck/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2020-08-20T13:26:19&#43;08:00" />
-<meta property="article:modified_time" content="2020-11-04T22:17:21&#43;08:00" />
+<meta property="article:published_time" content="2020-08-20T13:26:19+08:00" />
+<meta property="article:modified_time" content="2020-11-04T22:17:21+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -146,7 +146,7 @@
 <p>首先根据错误提示及日志信息，可以发现是在做健康检查的时候出的问题，期望得到200，但是得到了404</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -183,7 +183,7 @@
 </span><span class="lnt">35
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Prober</span><span class="p">)</span> <span class="nf">probeVerifier</span><span class="p">(</span><span class="nx">item</span> <span class="o">*</span><span class="nx">workItem</span><span class="p">)</span> <span class="nx">prober</span><span class="p">.</span><span class="nx">Verifier</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Prober</span><span class="p">)</span> <span class="nf">probeVerifier</span><span class="p">(</span><span class="nx">item</span> <span class="o">*</span><span class="nx">workItem</span><span class="p">)</span> <span class="nx">prober</span><span class="p">.</span><span class="nx">Verifier</span> <span class="p">{</span>
 	<span class="k">return</span> <span class="kd">func</span><span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Response</span><span class="p">,</span> <span class="nx">_</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="p">(</span><span class="kt">bool</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 		<span class="c1">// In the happy path, the probe request is forwarded to Activator or Queue-Proxy and the response (HTTP 200)
 </span><span class="c1"></span>		<span class="c1">// contains the &#34;K-Network-Hash&#34; header that can be compared with the expected hash. If the hashes match,
@@ -223,7 +223,7 @@
 </div><p>其实这时候大致也能猜到是什么原因了，因为我们定制了通过USN进行过滤，探活的时候，Url中其实是没有USN的。下一步就是顺藤摸瓜，找到探活对应的代码验证我们的猜想，也比较简单</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -244,7 +244,7 @@
 </span><span class="lnt">19
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// processWorkItem processes a single work item from workQueue.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// processWorkItem processes a single work item from workQueue.
 </span><span class="c1">// It returns false when there is no more items to process, true otherwise.
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Prober</span><span class="p">)</span> <span class="nf">processWorkItem</span><span class="p">()</span> <span class="kt">bool</span> <span class="p">{</span>
 	<span class="o">...</span>
@@ -270,7 +270,7 @@
 <p>修改也就比较简单了，在添加wotkitem时，预先把USN添加到path中即可</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -286,7 +286,7 @@
 </span><span class="lnt">14
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">gatewayPodTargetLister</span><span class="p">)</span> <span class="nf">ListProbeTargets</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">ing</span> <span class="o">*</span><span class="nx">v1alpha1</span><span class="p">.</span><span class="nx">Ingress</span><span class="p">)</span> <span class="p">([]</span><span class="nx">status</span><span class="p">.</span><span class="nx">ProbeTarget</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">gatewayPodTargetLister</span><span class="p">)</span> <span class="nf">ListProbeTargets</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">ing</span> <span class="o">*</span><span class="nx">v1alpha1</span><span class="p">.</span><span class="nx">Ingress</span><span class="p">)</span> <span class="p">([]</span><span class="nx">status</span><span class="p">.</span><span class="nx">ProbeTarget</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="o">...</span>
 			<span class="c1">// Use sorted hosts list for consistent ordering.
 </span><span class="c1"></span>			<span class="k">for</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">host</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">gatewayHosts</span><span class="p">[</span><span class="nx">gatewayName</span><span class="p">].</span><span class="nf">List</span><span class="p">()</span> <span class="p">{</span>
@@ -345,7 +345,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

@@ -9,8 +9,8 @@
 <meta property="og:description" content="endpoint变化" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-ep-event/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2020-06-23T19:53:31&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2020-06-23T19:53:31+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -163,7 +163,7 @@
 <p>众所周知，k8s针对不同的资源类型会有相应的controller与之对应，控制其及其关联资源的生命周期的变化，Endpoint也不例外，在kube-controller-manager中有endpoint controller，查看其逻辑，主要相关的部分如下所示</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -222,7 +222,7 @@
 </span><span class="lnt">57
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">EndpointController</span><span class="p">)</span> <span class="nf">syncService</span><span class="p">(</span><span class="nx">key</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">EndpointController</span><span class="p">)</span> <span class="nf">syncService</span><span class="p">(</span><span class="nx">key</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
 	<span class="o">...</span>
   
 	<span class="nx">subsets</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">v1</span><span class="p">.</span><span class="nx">EndpointSubset</span><span class="p">{}</span>
@@ -284,7 +284,7 @@
 </div><p>主要的处理函数为syncService，去掉了一些逻辑，主要的处理逻辑在32行，遍历Pod，查看其PodReady Condition是否为true，true的会会把其IP放入subnet的Addresses结构中，否则放入NotReadyAddresses中。Condition主要是kubelet设置的，在generateAPIPodStatus的时候会进行设置，如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -343,7 +343,7 @@
 </span><span class="lnt">57
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// generateAPIPodStatus creates the final API pod status for a pod, given the
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// generateAPIPodStatus creates the final API pod status for a pod, given the
 </span><span class="c1">// internal pod status.
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">kl</span> <span class="o">*</span><span class="nx">Kubelet</span><span class="p">)</span> <span class="nf">generateAPIPodStatus</span><span class="p">(</span><span class="nx">pod</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span> <span class="nx">podStatus</span> <span class="o">*</span><span class="nx">kubecontainer</span><span class="p">.</span><span class="nx">PodStatus</span><span class="p">)</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodStatus</span> <span class="p">{</span>
 	<span class="nx">glog</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">3</span><span class="p">).</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;Generating status for %q&#34;</span><span class="p">,</span> <span class="nx">format</span><span class="p">.</span><span class="nf">Pod</span><span class="p">(</span><span class="nx">pod</span><span class="p">))</span>
@@ -405,7 +405,7 @@
 </div><p>代码比较直观，根据实际的PodStatus（从docker中获取的信息）生成新的Status，用来更新Pod Status属性，其中会设置各种Condition，通过GeneratePodReadyCondition实现，里面具体又调用了GenerateContainersReadyCondition生成Pod内各container的ContainerReadyCondition，从而设置PodReadyCondition的值，如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">  1
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
 </span><span class="lnt">  2
 </span><span class="lnt">  3
 </span><span class="lnt">  4
@@ -507,7 +507,7 @@
 </span><span class="lnt">100
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// GeneratePodReadyCondition returns &#34;Ready&#34; condition of a pod.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// GeneratePodReadyCondition returns &#34;Ready&#34; condition of a pod.
 </span><span class="c1">// The status of &#34;Ready&#34; condition is &#34;True&#34;, if all containers in a pod are ready
 </span><span class="c1">// AND all matching conditions specified in the ReadinessGates have status equal to &#34;True&#34;.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">GeneratePodReadyCondition</span><span class="p">(</span><span class="nx">spec</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">PodSpec</span><span class="p">,</span> <span class="nx">conditions</span> <span class="p">[]</span><span class="nx">v1</span><span class="p">.</span><span class="nx">PodCondition</span><span class="p">,</span> <span class="nx">containerStatuses</span> <span class="p">[]</span><span class="nx">v1</span><span class="p">.</span><span class="nx">ContainerStatus</span><span class="p">,</span> <span class="nx">podPhase</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodPhase</span><span class="p">)</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodCondition</span> <span class="p">{</span>
@@ -615,7 +615,7 @@
 <h4 id="原地升级">原地升级</h4>
 <p>原地升级是批量变更Pod的Image属性，kubelet watch到Pod变化，经过一起列处理，最终来到syncPod函数，但是第一次到来的时候，容器还是running的，最终设置的pod ready condition为true，然后经过computePodAction发现container的hash变了，需要重启container，最终触发killContainer，中间还涉及到优雅删除等问题，最终的效果就是进行了批量原地升级后，并不会立马上报pod not ready，而是经过了一段时间，又因为endpoint的update事件一次更新一个ip，2s内收到的update事件就可能不全，从而导致出现反复的摘流再接流再摘流，对业务造成影响。</p>
 <h3 id="修改方案">修改方案</h3>
-<p>通过mutatingwebhook实现一个通用的能力，针对endpoint的create和update事件，从配置中心（内部组件）中获取对应的配置，并通过规则引擎（开源版本可参考 <a href="https://github.com/antonmedv/expr">https://github.com/antonmedv/expr</a> ），对subnet中的Addresses和NotReadyAddresses做一些修改，这样可以实现无侵入式的修改，也比较灵活，可以对配置进行实时修改等，后续像sidecar这种根据用户需求来设置pod ready condition的情况，也无需修改代码，只需要添加配置即可，而且也可以通过condition看到真实的Container、Pod状态</p>
+<p>通过mutatingwebhook实现一个通用的能力，针对endpoint的create和update事件，从配置中心（内部组件）中获取对应的配置，并通过规则引擎（开源版本可参考 <a href="https://github.com/antonmedv/expr" target="_blank" rel="noopener noreffer">https://github.com/antonmedv/expr</a> ），对subnet中的Addresses和NotReadyAddresses做一些修改，这样可以实现无侵入式的修改，也比较灵活，可以对配置进行实时修改等，后续像sidecar这种根据用户需求来设置pod ready condition的情况，也无需修改代码，只需要添加配置即可，而且也可以通过condition看到真实的Container、Pod状态</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -657,7 +657,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

@@ -5,32 +5,32 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noodp" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
-        <title>Kubernetes Informer - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Kubernetes Informer" />
-<meta property="og:description" content="开局一张图，剩下全靠编 详细内容参考： Informer DeltaFIFO Informer LocalStore 未完待续" />
+        <title>那些年，我们一起追的Bug - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="那些年，我们一起追的Bug" />
+<meta property="og:description" content="背景 上半年遇到了一些绑核相关的 bug，分析了其原因，但没有总结整理下来，现在又碰到了，补一下作业，同时也希望可以帮助大家快速从坑里爬出来。本" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-informer/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2021-03-18T20:40:39+08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
+<meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-cpu-manager/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-10-16T16:06:50+08:00" />
+<meta property="article:modified_time" content="2021-10-16T16:06:50+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
-<meta name="twitter:title" content="Kubernetes Informer"/>
-<meta name="twitter:description" content="开局一张图，剩下全靠编 详细内容参考： Informer DeltaFIFO Informer LocalStore 未完待续"/>
+<meta name="twitter:title" content="那些年，我们一起追的Bug"/>
+<meta name="twitter:description" content="背景 上半年遇到了一些绑核相关的 bug，分析了其原因，但没有总结整理下来，现在又碰到了，补一下作业，同时也希望可以帮助大家快速从坑里爬出来。本"/>
 <meta name="application-name" content="LoveIt">
 <meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/kubernetes-informer/" /><link rel="prev" href="https://www.likakuli.com/posts/kubernetes-informer-localstore/" /><link rel="next" href="https://www.likakuli.com/posts/sourcecodereading/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/kubernetes-cpu-manager/" /><link rel="prev" href="https://www.likakuli.com/posts/thoughtfulessay/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
     {
         "@context": "http://schema.org",
         "@type": "BlogPosting",
-        "headline": "Kubernetes Informer",
+        "headline": "那些年，我们一起追的Bug",
         "inLanguage": "zh-CN",
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": "https:\/\/www.likakuli.com\/posts\/kubernetes-informer\/"
-        },"genre": "posts","keywords": "informer, kubernetes","wordcount":  26 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-informer\/","datePublished": "2021-03-18T20:40:39+08:00","dateModified": "2021-04-15T20:54:53+08:00","publisher": {
+            "@id": "https:\/\/www.likakuli.com\/posts\/kubernetes-cpu-manager\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  1801 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/kubernetes-cpu-manager\/","datePublished": "2021-10-16T16:06:50+08:00","dateModified": "2021-10-16T16:06:50+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -109,10 +109,10 @@
                 <div class="container"><div class="toc" id="toc-auto">
             <h2 class="toc-title">目录</h2>
             <div class="toc-content always-active" id="toc-content-auto"></div>
-        </div><article class="page single"><h1 class="single-title animated flipInX">Kubernetes Informer</h1><div class="post-meta">
-            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-03-18">2021-03-18</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 26 字&nbsp;
-                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 1 分钟&nbsp;<span id="/posts/kubernetes-informer/" class="leancloud_visitors" data-flag-title="Kubernetes Informer">
+        </div><article class="page single"><h1 class="single-title animated flipInX">那些年，我们一起追的Bug</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a>&nbsp;<a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-10-16">2021-10-16</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1801 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 4 分钟&nbsp;<span id="/posts/kubernetes-cpu-manager/" class="leancloud_visitors" data-flag-title="那些年，我们一起追的Bug">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
@@ -120,20 +120,81 @@
                     <span>目录</span>
                     <span><i class="details-icon fas fa-angle-right"></i></span>
                 </div>
-                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents"></nav></div>
-            </div><div class="content" id="content"><p>开局一张图，剩下全靠编</p>
-<p><img
-        class="lazyload"
-        src="/svg/loading.min.svg"
-        data-src="informer.jpeg"
-        data-srcset="/posts/kubernetes-informer/informer.jpeg, informer.jpeg 1.5x, /posts/kubernetes-informer/informer.jpeg 2x"
-        data-sizes="auto"
-        alt="/posts/kubernetes-informer/informer.jpeg"
-        title="img" /></p>
-<p>详细内容参考：</p>
-<p><a href="../kubernetes-informer-deltafifo" rel="">Informer DeltaFIFO</a></p>
-<p><a href="../kubernetes-informer-localstore" rel="">Informer LocalStore</a></p>
-<p>未完待续</p>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#背景">背景</a></li>
+        <li><a href="#发展历程">发展历程</a></li>
+        <li><a href="#问题表现">问题表现</a></li>
+        <li><a href="#解决方案">解决方案</a></li>
+        <li><a href="#原理介绍">原理介绍</a></li>
+        <li><a href="#相关issue--pr">相关ISSUE &amp; PR</a>
+          <ul>
+            <li><a href="#issue">ISSUE</a></li>
+            <li><a href="#pr">PR</a></li>
+          </ul>
+        </li>
+        <li><a href="#已知问题">已知问题</a>
+          <ul>
+            <li><a href="#118-之前的版本">1.18 之前的版本</a></li>
+            <li><a href="#所有版本">所有版本</a></li>
+          </ul>
+        </li>
+        <li><a href="#总结">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="背景">背景</h2>
+<p>上半年遇到了一些绑核相关的 bug，分析了其原因，但没有总结整理下来，现在又碰到了，补一下作业，同时也希望可以帮助大家快速从坑里爬出来。本篇会总结绑核相关的 bug，部分官网已修复，部分尚未修复，与 k8s 版本有关，感兴趣的可以对 k8s 进行一些考古，翻一翻从 1.8 到现在 CPU Manager 的发展过程，当然下面也会做简单介绍。</p>
+<h2 id="发展历程">发展历程</h2>
+<p>CPU Manager 作为 alpha 特性引入 Kubernetes 1.8 版本，1.12 开始转换为 beta 状态。如何使用，参数配置不是这里的重点，可以参考<a href="https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/" target="_blank" rel="noopener noreffer">官网</a>。在此基础上还有 NUMA Topology Aware 的能力，可以参考<a href="./kubernetes-topology-manager" rel="">前篇</a>。</p>
+<h2 id="问题表现">问题表现</h2>
+<p>绑核的功能实现是在 kubelet 当中的，在容器启动之前会经过 admit 机制进行校验宿主上是否有足够资源供绑核使用。如果资源不足，则容器准入失败，会报错提示 cpu 资源不足，<strong>not enough cpus available to satisfy request</strong>。</p>
+<p><strong>此问题存在于1.8之后的所有版本中，所以如果在线上遇到的话不要惊讶，一直在修复，从未被彻底修复，这可能也是为什么直到现在仍然处于 beta 状态的原因。针对此现象的所有的 PR 都只是对已知原因的修复，且当前仍存在原因已知但尚未修复的问题。</strong></p>
+<h2 id="解决方案">解决方案</h2>
+<p>根据我的经验，遇到此类问题最直接有效的解决方案分三步，就如同把大象装冰箱一样简单：</p>
+<ol>
+<li>停止 Kubelet 进程</li>
+<li>删除本地 cpu_manager_state 文件</li>
+<li>重启 Kubelet 进程</li>
+</ol>
+<p>可以解决99%的此类问题，如果还是无法解决且 k8s 版本 &lt; 1.18，那就需要祭出更厉害的武功秘籍了：</p>
+<ol>
+<li>docker ps 查找同 Pod 同 Conatiner Name（.spec.containers 中同一个 name 的 container）的记录，大概率会存在多条记录，例如存在 Created 状态的 container，这时需要删除这些个多余的 container</li>
+<li>按照上面的1，2，3再来一次即可</li>
+</ol>
+<p>如果还是没有解决，那么恭喜你，你可能遇到未知原因的问题了，希望你可以深入排查并反馈给社区，帮助更多受害者。</p>
+<h2 id="原理介绍">原理介绍</h2>
+<p><img src="./cpu_manager.png" alt="cpu manager" style="zoom:150%;" /></p>
+<p>上图是最新版本 k8s 中的实现，在不同 k8s 版本中实现方式不同，上图中的虚线框中的部分在低版本中是不存在的。在低版本中，计算绑核信息以及设置绑核信息到容器是在 Reconsile 和 PreStartContaier 中实现的，而现版本是在 Reconsile 和 Admit、PreCreateContainer 实现的，即在 Admit 时会计算出容器所需资源并保存在内存中，在真正调用 Docker 之前，从内存中获取到容器绑核信息并设置到其 Config 中，然后传递给 Docker，而老版本中是先创建出来容器，然后再调用 Docker API 去更新其绑核信息。</p>
+<h2 id="相关issue--pr">相关ISSUE &amp; PR</h2>
+<h3 id="issue">ISSUE</h3>
+<p>感兴趣的可以翻翻历史 ISSUE，此问题从 1.8 开始有大量相关的 ISSUE，下面列几个比较典型的</p>
+<p><a href="https://github.com/kubernetes/kubernetes/issues/63018" target="_blank" rel="noopener noreffer">Internal PreStartContainer hook failed: not enough cpus available to satisfy request #63018</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/issues/79159" target="_blank" rel="noopener noreffer">[cpumanager] AddContainer error: not enough cpus available to satisfy request #79159</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/issues/83476" target="_blank" rel="noopener noreffer">TopologyManager: Guarantee Aligned resources for Multiple Containers #83476</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/issues/90303" target="_blank" rel="noopener noreffer">Container cpuset lost, apparently due to race between PostStopContainer() and new container creation #90303</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/issues/103952" target="_blank" rel="noopener noreffer">The CPU manager does not work correctly for the guaranteed pod with multiple containers #103952</a></p>
+<h3 id="pr">PR</h3>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/52363" target="_blank" rel="noopener noreffer">Make CPU manager release CPUs when Pod enters completed phase #52363</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/67430" target="_blank" rel="noopener noreffer">cpumanager: rollback state if updateContainerCPUSet failed #67430</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/68619" target="_blank" rel="noopener noreffer">clean containers in reconcileState of cpuManager #68619</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/84462" target="_blank" rel="noopener noreffer">Update CPUManager stored state semantics #84462</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/90377" target="_blank" rel="noopener noreffer">Fix exclusive CPU allocations being deleted at container restart #90377</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/103979" target="_blank" rel="noopener noreffer">Do not clear state of pods pending admission for CPU/Memory/Device manager #103979</a></p>
+<p>Slack 上有一段专门针对 CPU Manager 问题的讨论，可以加深对问题的理解，见<a href="https://kubernetes.slack.com/archives/C0BP8PW9G/p1587155932390500" target="_blank" rel="noopener noreffer">这里</a>。</p>
+<p>其中针对1.22及以上版本绑核相关的 bug 和 kubelet 重构有关，参考<a href="https://github.com/kubernetes/kubernetes/issues/103952#issuecomment-888387811" target="_blank" rel="noopener noreffer">这里</a>。在 1.22 开始 kubelet 进行了很大的重构，参考 <a href="https://github.com/kubernetes/kubernetes/commit/3eadd1a9ead7a009a9abfbd603a5efd0560473cc" target="_blank" rel="noopener noreffer">Commit</a>，在此 PR 合入之后出现了一些相关的 Bug 以及 Failing Test 的错误，针对其想要实现的功能也存在一个<a href="https://docs.google.com/document/d/1Pic5TPntdJnYfIpBeZndDelM-AbS4FN9H2GTLFhoJ04/edit#" target="_blank" rel="noopener noreffer">文档</a>。这里不再多说，针对上述 Commit 和 设计文档会再另开一篇来介绍，因为其本质和 CPU Manager 无关，但是是非常重大的一个改变。</p>
+<h2 id="已知问题">已知问题</h2>
+<h3 id="118-之前的版本">1.18 之前的版本</h3>
+<p>需要根据具体使用的 k8s 版本确定有哪些修复的 PR 还没有合入。</p>
+<p>即使所有 PR 都已经合入了，也还是可能遇到问题的。原因如下：当遇到机器异常，如 docker 异常、load 高、io 使用率高时问题出现概率会增加，根本原因就在于 1.18 之前的版本 cpu_manager_state 文件对应的数据结构为 <code>map[ContainerID]resource</code>，也就是说他是以 container ID 作为 Key 的，这也就是为什么会有上面解决方案中提到更厉害的的秘籍，因为同 Pod，同 Container Name 存在多个 Container，每个都有自己的 ID，但逻辑上应该只记录一个到 cpu_manager_state 中，但实际上记录了多个。</p>
+<p>在 1.18 之后，cpu_manager_state 文件数据结构发生改变，变为<code>map[PODUID]map[ContainerName]resource</code>，就可以避免出现同 Pod 同 Container Name 的容器占用多份资源的问题。</p>
+<h3 id="所有版本">所有版本</h3>
+<p>对于强制删除的Pod，如果在其删除过程中遇到某些原因导致 Container 无法删除导致其内存和 cpu_manager_state 中记录的信息与实际使用不符时，也可能会遇到此问题。这种问题理论上通过简单的3步解决方案即可解决。</p>
+<h2 id="总结">总结</h2>
+<p>如果一定要使用绑核功能，请尽量使用 1.18 及以上版本，同时当前最新版 1.23 尚未正式 release，且 1.22 开始对 Kubulet 进行了部分重构，存在大量已知问题，建议采用 1.18 ~ 1.21 中的版本。如果还是遇到此问题，参考上述解决方案。</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -149,27 +210,26 @@
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2021-04-15</span>
+                <span>更新于 2021-10-16</span>
             </div>
             <div class="post-info-license"></div>
         </div>
         <div class="post-info-line">
             <div class="post-info-md"></div>
             <div class="post-info-share">
-                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer" data-hashtags="informer,kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-hashtag="informer"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/kubernetes-informer/" data-title="Kubernetes Informer"><i class="fab fa-evernote fa-fw"></i></a></span>
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/kubernetes-cpu-manager/" data-title="那些年，我们一起追的Bug" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/kubernetes-cpu-manager/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/kubernetes-cpu-manager/" data-title="那些年，我们一起追的Bug" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/kubernetes-cpu-manager/" data-title="那些年，我们一起追的Bug"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/kubernetes-cpu-manager/" data-title="那些年，我们一起追的Bug"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/kubernetes-cpu-manager/" data-title="那些年，我们一起追的Bug" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/kubernetes-cpu-manager/" data-title="那些年，我们一起追的Bug" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/kubernetes-cpu-manager/" data-title="那些年，我们一起追的Bug"><i class="fab fa-evernote fa-fw"></i></a></span>
             </div>
         </div>
     </div>
 
     <div class="post-info-more">
-        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/informer/">informer</a>,&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
         <section>
             <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
         </section>
     </div>
 
-    <div class="post-nav"><a href="/posts/kubernetes-informer-localstore/" class="prev" rel="prev" title="Informer LocalStore源码解析"><i class="fas fa-angle-left fa-fw"></i>Informer LocalStore源码解析</a>
-            <a href="/posts/sourcecodereading/" class="next" rel="next" title="关于阅读源码的一些思考">关于阅读源码的一些思考<i class="fas fa-angle-right fa-fw"></i></a></div>
+    <div class="post-nav"><a href="/posts/thoughtfulessay/" class="prev" rel="prev" title="思想随笔1 - 思考思考的过程"><i class="fas fa-angle-left fa-fw"></i>思想随笔1 - 思考思考的过程</a></div>
 </div>
 <div id="comments"><div id="valine" class="comment"></div><noscript>
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.

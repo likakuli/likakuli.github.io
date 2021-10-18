@@ -9,8 +9,8 @@
 <meta property="og:description" content="1. 背景 承接上文，近期我们排查弹性云线上几起故障时，故障由多个因素共同引起，列举如下： 弹性云在逐步灰度升级docker版本至 18.06.3-ce 由于历史原因，弹" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/docker-pod-terminating2/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2020-10-31T10:51:39&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2020-10-31T10:51:39+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -163,7 +163,7 @@
 <p>下面开始验证：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -211,7 +211,7 @@
 </span><span class="lnt">46
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">////// docker 1.13.1 验证步骤及结果
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">////// docker 1.13.1 验证步骤及结果
 // 1. 重新加载配置
 <span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ sudo systemctl daemon-reload
  
@@ -264,7 +264,7 @@ apache   <span class="m">19978</span> <span class="m">19973</span>  <span class=
 <p>那么现在压力转移到 docker <code>18.06.3-ce</code> 这边来了，新版本是否仍然存在这个问题呢？</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -286,7 +286,7 @@ apache   <span class="m">19978</span> <span class="m">19973</span>  <span class=
 </span><span class="lnt">20
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">////// docker 18.06.3-ce 验证步骤及结果
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">////// docker 18.06.3-ce 验证步骤及结果
 <span class="o">[</span>stupig@hostname ~<span class="o">]</span>$ sudo systemctl daemon-reload
  
  
@@ -315,7 +315,7 @@ apache   <span class="m">19978</span> <span class="m">19973</span>  <span class=
 <p>既然核心问题在于挂载点是否被泄漏，那么我们就以挂载点为切入点，深入分析两个版本docker的差异性。我们对比在两个环境下执行完 <code>步骤4</code> 后，不同进程内的挂载详情，结果如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -356,7 +356,7 @@ apache   <span class="m">19978</span> <span class="m">19973</span>  <span class=
 </span><span class="lnt">39
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">// docker 1.13.1
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// docker 1.13.1
 <span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ sudo docker run -d nginx
 0fe8d412f99a53229ea0df3ec44c93496e150a39f724ea304adb7f924910d61b
  
@@ -427,7 +427,7 @@ root      <span class="m">63694</span>      <span class="m">1</span>  <span clas
 <p>仍然从挂载点切入，既然两个版本的docker所创建的挂载点在共享命名空间中就已经出现差异，我们顺藤摸瓜，找找容器读写层挂载点链路上是否存在差异：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -464,7 +464,7 @@ root      <span class="m">63694</span>      <span class="m">1</span>  <span clas
 </span><span class="lnt">35
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">// docker 1.13.1
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">// docker 1.13.1
 // 本挂载点
 <span class="o">[</span>stupig@hostname2 ~<span class="o">]</span>$ grep -rw /home/docker_rt/overlay2/4e09fa6803feab9d96fe72a44fb83d757c1788812ff60071ac2e62a5cf14cd97/merged /proc/<span class="nv">$$</span>/mountinfo
 <span class="m">223</span> <span class="m">1143</span> 0:40 / /home/docker_rt/overlay2/4e09fa6803feab9d96fe72a44fb83d757c1788812ff60071ac2e62a5cf14cd97/merged rw,relatime - overlay overlay rw,lowerdir<span class="o">=</span>XXX,upperdir<span class="o">=</span>XXX,workdir<span class="o">=</span>XXX
@@ -515,7 +515,7 @@ root      <span class="m">63694</span>      <span class="m">1</span>  <span clas
 <p>如何验证这个猜想呢？现在，其实我们已经具备了检索代码的关键目标，docker <code>1.13.1</code> 会设置容器镜像层根目录的传递属性。拿着这个先验知识，我们直接查代码，检索过程基本没费什么功夫，直接展示相关代码：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -555,7 +555,7 @@ root      <span class="m">63694</span>      <span class="m">1</span>  <span clas
 </span><span class="lnt">38
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// filepath: daemon/graphdriver/overlay2/overlay.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// filepath: daemon/graphdriver/overlay2/overlay.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">init</span><span class="p">()</span> <span class="p">{</span>
    <span class="nx">graphdriver</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="nx">driverName</span><span class="p">,</span> <span class="nx">Init</span><span class="p">)</span>
 <span class="p">}</span>
@@ -650,7 +650,7 @@ root      <span class="m">63694</span>      <span class="m">1</span>  <span clas
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

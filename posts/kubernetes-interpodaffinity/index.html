@@ -9,8 +9,8 @@
 <meta property="og:description" content="从事Kubernetes相关工作的同学对Kube-scheduler一定不会感到陌生，有的甚至还可能遇到过里面的一些问题，本篇主要介绍其中的" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-interpodaffinity/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2021-06-08T20:24:22&#43;08:00" />
-<meta property="article:modified_time" content="2021-06-12T12:36:38&#43;08:00" />
+<meta property="article:published_time" content="2021-06-08T20:24:22+08:00" />
+<meta property="article:modified_time" content="2021-06-12T12:36:38+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -147,7 +147,7 @@
 <p><code>InterPodAffinity</code>采用的算法比较简单暴力，伪代码大致如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -158,7 +158,7 @@
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="k">for</span> i房源 in 所有房源
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="k">for</span> i房源 in 所有房源
 	<span class="k">for</span> j租客 in i房源
 		<span class="k">for</span> k项 in 加减分项
 			<span class="k">if</span> j租客 满足 k项
@@ -175,7 +175,7 @@
 <p>时间复杂度上没有变化，本次做的改进围绕锁来进行。使用切片取代字典，切片长度等于房源数量，利用下标一一对应。改进后如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -184,7 +184,7 @@
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="k">for</span> i房源 in 所有房源
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="k">for</span> i房源 in 所有房源
 	<span class="k">for</span> j租客 in i房源
 		<span class="k">for</span> k项 in 加减分项
 			<span class="k">if</span> j租客 满足 k项
@@ -198,7 +198,7 @@
 <p>时间复杂度发生变化，从<code>M * N * X * M</code> 变为 <code>M * N * X</code>。通过一个<code>map[拓扑key]map[拓扑value]得分</code>的结构取代了最里层的循环，在整个大循环结束后，最后再额外进行一次循环就可以了。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -210,7 +210,7 @@
 </span><span class="lnt">10
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="k">for</span> i房源 in 所有房源
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="k">for</span> i房源 in 所有房源
 	<span class="k">for</span> j租客 in i房源
 		<span class="k">for</span> k项 in 加减分项
 			<span class="k">if</span> j租客 满足 k项
@@ -228,7 +228,7 @@
 <p>本次的改进主要是去掉了锁，在时间复杂上没有变化。同样采用了全局map，但是在进行拓扑分数计算时并没有传入全局的map，而是每个房源对应一个map，暂且称为sub_map。代码中维护了一个sub_maps的切片，由于sub_map各用各的不存在并发问题，且把sub_map添加到sub_maps中时可以通过原子操作实现，在并发计算完所有房源的拓扑的分后，再统一把所有的子map进行处理，分数统一设置到全局的map中，剩下的处理逻辑就和三代最后的处理逻辑一样了。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -243,7 +243,7 @@
 </span><span class="lnt">13
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">index :<span class="o">=</span> -1
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">index :<span class="o">=</span> -1
 
 <span class="k">for</span> i房源 in 所有房源
 	<span class="k">for</span> j租客 in i房源
@@ -301,7 +301,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

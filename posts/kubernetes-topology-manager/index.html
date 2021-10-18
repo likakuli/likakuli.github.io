@@ -9,8 +9,8 @@
 <meta property="og:description" content="由来 最近的工作内容中涉及到了 NUMA 感知相关的功能，之前没有特意去看过 kubelet 相关部分的实现，也是趁此机会把落下的补补。在看代码的过程中，NUMA 感知部" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-topology-manager/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2021-06-18T18:59:04&#43;08:00" />
-<meta property="article:modified_time" content="2021-07-09T14:39:49&#43;08:00" />
+<meta property="article:published_time" content="2021-06-18T18:59:04+08:00" />
+<meta property="article:modified_time" content="2021-07-09T14:39:49+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -180,21 +180,21 @@
 <p><code>kubelet</code>可供设置的策略如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">--topology-manager-policy<span class="o">=</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">--topology-manager-policy<span class="o">=</span>
     <span class="o">[</span>none <span class="p">|</span> best-effort <span class="p">|</span> restricted <span class="p">|</span> single-numa-node<span class="o">]</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>通过feature gate来控制功能的开启，于1.16引入，自1.18开始默认开启，形式如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">--feature-gates<span class="o">=</span><span class="s2">&#34;...,TopologyManager=&lt;true|false&gt;&#34;</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">--feature-gates<span class="o">=</span><span class="s2">&#34;...,TopologyManager=&lt;true|false&gt;&#34;</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>为了根据所选策略触发对齐，用户必须根据特定要求在其 <code>pod.spec</code> 中设置 CPU 和 device 的request值。</p>
@@ -203,7 +203,7 @@
 <p>例如，假设 <code>CPUManager</code> 在其 &ndash;static 策略启用的情况下运行，并且 <code>gpu-vendor.com</code> 和 <code>nic-vendor.com</code> 的设备插件已扩展为与 <code>TopologyManager</code> 正确集成，则下面的 pod 规范足以触发 <code>TopologyManager</code> 运行其选定的策略：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -215,7 +215,7 @@
 </span><span class="lnt">10
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">spec:
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">spec:
    containers:
    - name: numa-aligned-container
      image: alpine
@@ -230,7 +230,7 @@
 </div><p>遵循上一节中的图 1，这将导致以下对齐分配之一：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -245,7 +245,7 @@
 </span><span class="lnt">13
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>cpu: <span class="o">{</span>0, 1<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>cpu: <span class="o">{</span>0, 1<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
 <span class="o">{</span>cpu: <span class="o">{</span>0, 2<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
 <span class="o">{</span>cpu: <span class="o">{</span>0, 3<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
 <span class="o">{</span>cpu: <span class="o">{</span>1, 2<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
@@ -266,7 +266,7 @@
 <p><code>TopologyManager</code> 执行的主要逻辑的伪代码如下所示：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -279,7 +279,7 @@
 </span><span class="lnt">11
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-golang" data-lang="golang"><span class="k">for</span> <span class="nx">container</span> <span class="o">:=</span> <span class="k">range</span> <span class="nb">append</span><span class="p">(</span><span class="nx">InitContainers</span><span class="p">,</span> <span class="nx">Containers</span><span class="o">...</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="k">for</span> <span class="nx">container</span> <span class="o">:=</span> <span class="k">range</span> <span class="nb">append</span><span class="p">(</span><span class="nx">InitContainers</span><span class="p">,</span> <span class="nx">Containers</span><span class="o">...</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">for</span> <span class="nx">provider</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">HintProviders</span> <span class="p">{</span>
         <span class="nx">hints</span> <span class="o">+=</span> <span class="nx">provider</span><span class="p">.</span><span class="nf">GetTopologyHints</span><span class="p">(</span><span class="nx">container</span><span class="p">)</span>
     <span class="p">}</span>
@@ -307,13 +307,13 @@
 <p><code>TopologyHint</code> 对一组约束进行编码，从中可以满足给定的资源请求。 目前，我们考虑的唯一约束是 NUMA 对齐。 它的定义如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">type</span> <span class="nx">TopologyHint</span> <span class="kd">struct</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">type</span> <span class="nx">TopologyHint</span> <span class="kd">struct</span> <span class="p">{</span>
     <span class="nx">NUMANodeAffinity</span> <span class="nx">bitmask</span><span class="p">.</span><span class="nx">BitMask</span>
     <span class="nx">Preferred</span> <span class="kt">bool</span>
 <span class="p">}</span>
@@ -322,29 +322,29 @@
 </div><p><code>NUMANodeAffinity</code> 字段包含可以满足资源请求的 NUMA 节点的位掩码。 例如，具有 2 个 NUMA 节点的系统上可能的掩码包括：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>00<span class="o">}</span>, <span class="o">{</span>01<span class="o">}</span>, <span class="o">{</span>10<span class="o">}</span>, <span class="o">{</span>11<span class="o">}</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>00<span class="o">}</span>, <span class="o">{</span>01<span class="o">}</span>, <span class="o">{</span>10<span class="o">}</span>, <span class="o">{</span>11<span class="o">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p><code>Preferred</code> 字段包含一个布尔值，用于指示指定的提示是否优先选择。 使用 <code>best-effort</code> 策略，在生成最佳提示时，<code>Preferred</code> 提示将优先于非 <code>Preferred</code> 提示。 使用 <code>restricted</code> 和单 <code>numa-node</code> 策略，非 <code>Preferred</code> 的提示将被拒绝。</p>
 <p>通常，<code>HintProviders</code> 通过查看可以满足资源请求的当前可用资源集来生成 <code>TopologyHints</code>。 更具体地说，它们为可以满足资源请求的 NUMA 节点的每个可能掩码生成一个 <code>TopologyHint</code>。 如果掩码不能满足请求，则将其省略。 例如，当被要求分配 2 个资源时，<code>HintProvider</code> 可能会在具有 2 个 NUMA 节点的系统上提供以下提示。 这些提示显示两种资源可以来自单个 NUMA 节点（0 或 1），也可以分别来自不同的 NUMA 节点（但我们更希望它们仅来自一个）。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}</span>, <span class="o">{</span>11: False<span class="o">}</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>01: True<span class="o">}</span>, <span class="o">{</span>10: True<span class="o">}</span>, <span class="o">{</span>11: False<span class="o">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>目前，当且仅当 <code>NUMANodeAffinity</code> 编码可以满足资源请求的最小 NUMA 节点集时，所有 <code>HintProvider</code> 才将 <code>Preferred</code> 字段设置为 True 。 通常，这仅对于在其位掩码中设置了单个 NUMA 节点的 TopologyHint 为 True。 但是，如果满足资源请求的唯一方法是跨越多个 NUMA 节点（例如，请求 2 个设备并且系统上仅有的 2 个设备位于不同的 NUMA 节点上），则它也可能为 True：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>0011: True<span class="o">}</span>, <span class="o">{</span>0111: False<span class="o">}</span>, <span class="o">{</span>1011: False<span class="o">}</span>, <span class="o">{</span>1111: False<span class="o">}</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>0011: True<span class="o">}</span>, <span class="o">{</span>0111: False<span class="o">}</span>, <span class="o">{</span>1011: False<span class="o">}</span>, <span class="o">{</span>1111: False<span class="o">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p><strong>注意</strong>：以这种方式设置 <code>Preferred</code> 字段不是基于当前可用资源的集合。 它基于在一些最小的 NUMA 节点集上物理分配请求资源数量的能力。</p>
@@ -360,13 +360,13 @@
 <p>如前所述，<code>TopologyManager</code> 从 <code>HintProviders</code> 收集 <code>TopologyHints</code>，使用合并后的最佳提示触发对齐的资源分配。 因此，<code>HintProviders</code> 实现了以下接口：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">type</span> <span class="nx">HintProvider</span> <span class="kd">interface</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">type</span> <span class="nx">HintProvider</span> <span class="kd">interface</span> <span class="p">{</span>
     <span class="nf">GetTopologyHints</span><span class="p">(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">][]</span><span class="nx">TopologyHint</span>
     <span class="nf">Allocate</span><span class="p">(</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="kt">error</span>
 <span class="p">}</span>
@@ -386,12 +386,12 @@
 <p>如果 Container0 是在系统上分配的第一个容器，则将为规范中的三种拓扑感知资源类型生成以下提示集：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-tex" data-lang="tex">               cpu: [<span class="nb">{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>, <span class="nb">{</span>11: False<span class="nb">}</span>]
+<pre tabindex="0" class="chroma"><code class="language-tex" data-lang="tex">               cpu: [<span class="nb">{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>, <span class="nb">{</span>11: False<span class="nb">}</span>]
 gpu-vendor.com/gpu: [<span class="nb">{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>]
 nic-vendor.com/nic: [<span class="nb">{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>]
 </code></pre></td></tr></table>
@@ -399,22 +399,22 @@ nic-vendor.com/nic: [<span class="nb">{</span>01: True<span class="nb">}</span>,
 </div><p>对应的对齐结果：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>cpu: <span class="o">{</span>0, 1<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>cpu: <span class="o">{</span>0, 1<span class="o">}</span>, gpu: 0, nic: 0<span class="o">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p><img src="numa-hint-provider1.png" alt="img" style="zoom:150%;" /></p>
 <p>当考虑 Container1 时，这些资源被假定为不可用，因此只会生成以下提示集：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-tex" data-lang="tex">               cpu: [<span class="nb">{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>, <span class="nb">{</span>11: False<span class="nb">}</span>]
+<pre tabindex="0" class="chroma"><code class="language-tex" data-lang="tex">               cpu: [<span class="nb">{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>, <span class="nb">{</span>11: False<span class="nb">}</span>]
 gpu-vendor.com/gpu: [<span class="nb">{</span>10: True<span class="nb">}</span>]
 nic-vendor.com/nic: [<span class="nb">{</span>10: True<span class="nb">}</span>]
 </code></pre></td></tr></table>
@@ -422,21 +422,21 @@ nic-vendor.com/nic: [<span class="nb">{</span>10: True<span class="nb">}</span>]
 </div><p>对其结果如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>cpu: <span class="o">{</span>4, 5<span class="o">}</span>, gpu: 1, nic: 1<span class="o">}</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="o">{</span>cpu: <span class="o">{</span>4, 5<span class="o">}</span>, gpu: 1, nic: 1<span class="o">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p><strong>注意</strong>：与本节开头提供的伪代码不同，对 <code>Allocate()</code> 的调用实际上并没有直接采用一个合并后的最佳提示的参数。 相反，<code>TopologyManager</code> 实现了以下 <code>Store</code> 接口，<code>HintProviders</code> 可以查询该接口以检索为特定容器生成的提示：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">type</span> <span class="nx">Store</span> <span class="kd">interface</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">type</span> <span class="nx">Store</span> <span class="kd">interface</span> <span class="p">{</span>
     <span class="nf">GetAffinity</span><span class="p">(</span><span class="nx">podUID</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">containerName</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">TopologyHint</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
@@ -454,12 +454,12 @@ nic-vendor.com/nic: [<span class="nb">{</span>10: True<span class="nb">}</span>]
 <p>按照上一节的示例，Container0 生成的提示为：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-tex" data-lang="tex">               cpu: [<span class="nb">{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>, <span class="nb">{</span>11: False<span class="nb">}</span>]F
+<pre tabindex="0" class="chroma"><code class="language-tex" data-lang="tex">               cpu: [<span class="nb">{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>, <span class="nb">{</span>11: False<span class="nb">}</span>]F
 gpu-vendor.com/gpu: [<span class="nb">{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>]
 nic-vendor.com/nic: [<span class="nb">{</span>01: True<span class="nb">}</span>, <span class="nb">{</span>10: True<span class="nb">}</span>]
 </code></pre></td></tr></table>
@@ -609,7 +609,7 @@ nic-vendor.com/nic: [<span class="nb">{</span>01: True<span class="nb">}</span>,
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

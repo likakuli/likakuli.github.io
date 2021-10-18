@@ -9,8 +9,8 @@
 <meta property="og:description" content="Prometheus" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/prometheus/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2018-06-21T23:10:36&#43;08:00" />
-<meta property="article:modified_time" content="2020-11-04T22:17:21&#43;08:00" />
+<meta property="article:published_time" content="2018-06-21T23:10:36+08:00" />
+<meta property="article:modified_time" content="2020-11-04T22:17:21+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -195,7 +195,7 @@
 <h3 id="prometheusconfigyaml">prometheus.config.yaml</h3>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">  1
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
 </span><span class="lnt">  2
 </span><span class="lnt">  3
 </span><span class="lnt">  4
@@ -359,7 +359,7 @@
 </span><span class="lnt">162
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v2</span><span class="w">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v2</span><span class="w">
 </span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ConfigMap</span><span class="w">
 </span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
 </span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus-config</span><span class="w">
@@ -527,7 +527,7 @@
 <h3 id="prometheusdeployyaml">Prometheus.deploy.yaml</h3>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -599,7 +599,7 @@
 </span><span class="lnt">70
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w"> 
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nn">---</span><span class="w"> 
 </span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apps/v1beta2 </span><span class="w">
 </span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Deployment </span><span class="w">
 </span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w"> 
@@ -683,19 +683,19 @@
 <p>scrape_configs中配置的kubernetes-pods、kubernetes-services等Job，可能在target界面看不到，因为需要添加对应的Annotation，例如Pod添加如下的Annotation后，就会在上面的界面中出现，注意这里是在Pod的annotation里添加，而不是在Deploy的annotation</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">prometheus.io/scrape</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">prometheus.io/scrape</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
 </span></code></pre></td></tr></table>
 </div>
 </div><p>service的话按照上述配置中写的，则需要添加如下的Annotation</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">prometheus.io/probe</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">prometheus.io/probe</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;true&#34;</span><span class="w">
 </span></code></pre></td></tr></table>
 </div>
 </div><p>我们可以在Graph界面进行查询，可以以Console或者Graph的形式展示查询的结果，Prometheus提供了强大的查询语法，参考<a href="https://prometheus.io/docs/prometheus/latest/querying/basics/" target="_blank" rel="noopener noreffer">这里</a>，下图为查询每个Node的CPU使用率</p>
@@ -711,7 +711,7 @@
 <h3 id="alertmanagerconfigyaml">alertmanager.config.yaml</h3>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -748,7 +748,7 @@
 </span><span class="lnt">35
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ConfigMap</span><span class="w">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ConfigMap</span><span class="w">
 </span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
 </span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
 </span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
@@ -789,7 +789,7 @@
 <h3 id="alertmanagerdeployyaml">alertmanager.deploy.yaml</h3>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -850,7 +850,7 @@
 </span><span class="lnt">59
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">extensions/v1beta1</span><span class="w">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">extensions/v1beta1</span><span class="w">
 </span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Deployment</span><span class="w">
 </span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
 </span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">alertmanager</span><span class="w">
@@ -915,7 +915,7 @@
 <p><strong>node-cpu-usage.rules</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -928,7 +928,7 @@
 </span><span class="lnt">11
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">groups</span><span class="p">:</span><span class="w">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">groups</span><span class="p">:</span><span class="w">
 </span><span class="w"></span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">node-cpu-usage</span><span class="w">
 </span><span class="w">  </span><span class="nt">rules</span><span class="p">:</span><span class="w">
 </span><span class="w">  </span>- <span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l">HighRateError</span><span class="w">
@@ -945,17 +945,17 @@
 <p>通过如下命令创建rule对应的ConfigMap</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">kubectl create cm prometheus-rules --from-file<span class="o">=</span>prometheus-rules -o yaml --dry-run <span class="p">|</span> kubectl create -n kube-system -f -
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl create cm prometheus-rules --from-file<span class="o">=</span>prometheus-rules -o yaml --dry-run <span class="p">|</span> kubectl create -n kube-system -f -
 </code></pre></td></tr></table>
 </div>
 </div><h3 id="alertmanager-templates">alertmanager-templates</h3>
 <p><strong>default.tmpl</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">  1
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
 </span><span class="lnt">  2
 </span><span class="lnt">  3
 </span><span class="lnt">  4
@@ -1149,7 +1149,7 @@
 </span><span class="lnt">192
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-html" data-lang="html">{{ define &#34;__alertmanager&#34; }}AlertManager{{ end }}
+<pre tabindex="0" class="chroma"><code class="language-html" data-lang="html">{{ define &#34;__alertmanager&#34; }}AlertManager{{ end }}
 {{ define &#34;__alertmanagerURL&#34; }}{{ .ExternalURL }}/#/alerts?receiver={{ .Receiver }}{{ end }}
 
 {{ define &#34;__subject&#34; }}[{{ .Status | toUpper }}{{ if eq .Status &#34;firing&#34; }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join &#34; &#34; }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join &#34; &#34; }}{{ end }}){{ end }}{{ end }}
@@ -1346,13 +1346,13 @@ Alerts Resolved:
 </div><p><strong>slack.tmpl</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-html" data-lang="html">{{ define &#34;slack.devops.text&#34; }}
+<pre tabindex="0" class="chroma"><code class="language-html" data-lang="html">{{ define &#34;slack.devops.text&#34; }}
 {{range .Alerts}}{{.Annotations.DESCRIPTION}}
 {{end}}
 {{ end }}
@@ -1361,10 +1361,10 @@ Alerts Resolved:
 </div><p>同alertmanager-rules，alertmanager-templates也是一个文件夹，里面有两个文件，通过如下命令在集群内创建对应的ConfigMap</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">kubectl create configmap alertmanager-templates --from-file<span class="o">=</span>alertmanager-templates -o json --dry-run <span class="p">|</span> kubectl apply --namespace<span class="o">=</span>kube-system -f -
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl create configmap alertmanager-templates --from-file<span class="o">=</span>alertmanager-templates -o json --dry-run <span class="p">|</span> kubectl apply --namespace<span class="o">=</span>kube-system -f -
 </code></pre></td></tr></table>
 </div>
 </div><p>到这里就完成了所有的部署，部署成功后，切换到Alert页面可以看到如下</p>
@@ -1418,7 +1418,7 @@ Alerts Resolved:
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

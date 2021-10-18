@@ -9,8 +9,8 @@
 <meta property="og:description" content="kubernetes deploy with CA" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-ca/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2018-05-24T21:56:42&#43;08:00" />
-<meta property="article:modified_time" content="2020-10-16T18:17:42&#43;08:00" />
+<meta property="article:published_time" content="2018-05-24T21:56:42+08:00" />
+<meta property="article:modified_time" content="2020-10-16T18:17:42+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -230,7 +230,7 @@
 <p><strong>这里采用二进制源码包安装，当然也可以使用go命令安装</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -257,7 +257,7 @@
 </span><span class="lnt">25
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="nb">cd</span> /usr/local/bin
 
 
@@ -288,7 +288,7 @@ chmod +x *
 <p><strong>创建 CA 配置文件</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -343,7 +343,7 @@ chmod +x *
 </span><span class="lnt">53
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 mkdir /opt/ssl
 
 
@@ -416,7 +416,7 @@ vim ca-config.json
 <p><strong>创建 CA 证书签名请求</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -459,7 +459,7 @@ vim ca-config.json
 </span><span class="lnt">41
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># ca-csr.json 文件</span>
 
 
@@ -514,7 +514,7 @@ vim ca-csr.json
 <p><strong>生成 CA 证书和私钥</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -525,7 +525,7 @@ vim ca-csr.json
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 cfssl gencert -initca ca-csr.json <span class="p">|</span> cfssljson -bare ca
 
 
@@ -539,7 +539,7 @@ ca.csr  ca-key.pem  ca.pem  ca-csr.json  ca-config.json
 </div><p><strong>分发证书</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -570,7 +570,7 @@ ca.csr  ca-key.pem  ca.pem  ca-csr.json  ca-config.json
 </span><span class="lnt">29
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 创建证书目录</span>
 
 mkdir -p /etc/kubernetes/ssl
@@ -627,7 +627,7 @@ scp *.csr 10.202.43.134:/etc/kubernetes/ssl/
 </blockquote>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -680,7 +680,7 @@ scp *.csr 10.202.43.134:/etc/kubernetes/ssl/
 </span><span class="lnt">51
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 vim etcd-csr.json
 
 
@@ -736,7 +736,7 @@ vim etcd-csr.json
 </div><p><strong>生成 etcd 证书和私钥</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -753,7 +753,7 @@ vim etcd-csr.json
 </span><span class="lnt">15
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 cfssl gencert -ca<span class="o">=</span>ca.pem <span class="se">\
 </span><span class="se"></span>
   -ca-key<span class="o">=</span>ca-key.pem <span class="se">\
@@ -773,7 +773,7 @@ etcd.csr  etcd-csr.json  etcd-key.pem  etcd.pem
 </div><p><strong>拷贝到etcd服务器</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -792,7 +792,7 @@ etcd.csr  etcd-csr.json  etcd-key.pem  etcd.pem
 </span><span class="lnt">17
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># etcd-1 </span>
 
 cp etcd*.pem /etc/kubernetes/ssl/
@@ -814,7 +814,7 @@ scp etcd*.pem 10.202.43.134:/etc/kubernetes/ssl/
 </div><p><strong>修改 etcd 配置</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -891,7 +891,7 @@ scp etcd*.pem 10.202.43.134:/etc/kubernetes/ssl/
 </span><span class="lnt">75
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># etcd-1</span>
 
 
@@ -972,7 +972,7 @@ vim /usr/lib/systemd/system/etcd.service
 <p><strong>证书相关的配置</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -987,7 +987,7 @@ vim /usr/lib/systemd/system/etcd.service
 </span><span class="lnt">13
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 --cert-file<span class="o">=</span>/etc/kubernetes/ssl/etcd.pem 
 
 --key-file<span class="o">=</span>/etc/kubernetes/ssl/etcd-key.pem 
@@ -1005,7 +1005,7 @@ vim /usr/lib/systemd/system/etcd.service
 </div><p><strong>分别启动 etcd 集群</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1030,7 +1030,7 @@ vim /usr/lib/systemd/system/etcd.service
 </span><span class="lnt">23
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 systemctl daemon-reload
 
 
@@ -1058,7 +1058,7 @@ systemctl status etcd
 </div><p><strong>验证 etcd 集群状态</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1071,7 +1071,7 @@ systemctl status etcd
 </span><span class="lnt">11
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 etcdctl --endpoints<span class="o">=</span>https://10.202.43.132:2379,https://10.202.43.133:2379,https://10.202.43.134:2379<span class="se">\
 </span><span class="se"></span>
         --cert-file<span class="o">=</span>/etc/kubernetes/ssl/etcd.pem <span class="se">\
@@ -1088,7 +1088,7 @@ etcdctl --endpoints<span class="o">=</span>https://10.202.43.132:2379,https://10
 <p><strong>创建 admin 证书和私钥</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1165,7 +1165,7 @@ etcdctl --endpoints<span class="o">=</span>https://10.202.43.132:2379,https://10
 </span><span class="lnt">75
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 创建证书签名请求</span>
 
 
@@ -1259,7 +1259,7 @@ scp admin*.pem 10.202.43.133:/etc/kubernetes/ssl/
 </blockquote>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1300,7 +1300,7 @@ scp admin*.pem 10.202.43.133:/etc/kubernetes/ssl/
 </span><span class="lnt">39
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 配置 kubernetes 集群</span>
 
 
@@ -1344,7 +1344,7 @@ kubectl config use-context kubernetes
 </div><p><strong>创建 kubernetes 证书和私钥</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1443,7 +1443,7 @@ kubectl config use-context kubernetes
 </span><span class="lnt">97
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 创建证书签名请求</span>
 
 
@@ -1549,7 +1549,7 @@ scp kubernetes*.pem 10.202.43.133:/etc/kubernetes/ssl/
 </blockquote>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1620,7 +1620,7 @@ scp kubernetes*.pem 10.202.43.133:/etc/kubernetes/ssl/
 </span><span class="lnt">69
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 生成 token</span>
 
 
@@ -1693,7 +1693,7 @@ scp audit-policy.yaml 10.202.43.133:/etc/kubernetes/
 </div>
 </div><div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1790,7 +1790,7 @@ scp audit-policy.yaml 10.202.43.133:/etc/kubernetes/
 </span><span class="lnt">95
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 vim /usr/lib/systemd/system/kube-apiserver.service
 
 
@@ -1890,7 +1890,7 @@ vim /usr/lib/systemd/system/kube-apiserver.service
 </div><p><strong>证书相关配置</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1923,7 +1923,7 @@ vim /usr/lib/systemd/system/kube-apiserver.service
 </span><span class="lnt">31
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 --admission-control<span class="o">=</span>NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,NodeRestriction    								<span class="c1"># 1.8开始需要添加 NodeRestriction</span>
 
 --audit-policy-file<span class="o">=</span>/etc/kubernetes/audit-policy.yaml
@@ -1959,7 +1959,7 @@ vim /usr/lib/systemd/system/kube-apiserver.service
 </div><h3 id="配置-kube-controller-manager">配置 kube-controller-manager</h3>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -2008,7 +2008,7 @@ vim /usr/lib/systemd/system/kube-apiserver.service
 </span><span class="lnt">47
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 创建 kube-controller-manager.service 文件</span>
 
 
@@ -2060,14 +2060,14 @@ vim /usr/lib/systemd/system/kube-controller-manager.service
 </div><p><strong>证书相关配置</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 --service-account-private-key-file<span class="o">=</span>/etc/kubernetes/ssl/ca-key.pem 
 
 --root-ca-file<span class="o">=</span>/etc/kubernetes/ssl/ca.pem 
@@ -2077,7 +2077,7 @@ vim /usr/lib/systemd/system/kube-controller-manager.service
 </div><h3 id="配置-kube-scheduler">配置 kube-scheduler</h3>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -2118,7 +2118,7 @@ vim /usr/lib/systemd/system/kube-controller-manager.service
 </span><span class="lnt">39
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 创建 kube-cheduler.service 文件</span>
 
 
@@ -2165,7 +2165,7 @@ vim /usr/lib/systemd/system/kube-scheduler.service
 </blockquote>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -2178,7 +2178,7 @@ vim /usr/lib/systemd/system/kube-scheduler.service
 </span><span class="lnt">11
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 先创建认证请求</span>
 
 <span class="c1"># user 为 master 中 token.csv 文件里配置的用户</span>
@@ -2194,7 +2194,7 @@ kubectl create clusterrolebinding kubelet-bootstrap --clusterrole<span class="o"
 </div><p><strong>配置 kubelet.kubeconfig</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -2251,7 +2251,7 @@ kubectl create clusterrolebinding kubelet-bootstrap --clusterrole<span class="o"
 </span><span class="lnt">55
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 配置集群，server参数为apiserver地址，可以使用haproxy或nginx来代替直接使用ip,达到k8s多主的目的</span>
 
 
@@ -2311,7 +2311,7 @@ mv bootstrap.kubeconfig /etc/kubernetes/
 </div><p><strong>配置 kubelet.service</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -2376,7 +2376,7 @@ mv bootstrap.kubeconfig /etc/kubernetes/
 </span><span class="lnt">63
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 创建 kubelet 目录</span>
 
 
@@ -2444,7 +2444,7 @@ vim /usr/lib/systemd/system/kubelet.service
 </div><p><strong>证书相关配置</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -2453,7 +2453,7 @@ vim /usr/lib/systemd/system/kubelet.service
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 --experimental-bootstrap-kubeconfig<span class="o">=</span>/etc/kubernetes/bootstrap.kubeconfig 
 
 --kubeconfig<span class="o">=</span>/etc/kubernetes/kubelet.kubeconfig 
@@ -2465,7 +2465,7 @@ vim /usr/lib/systemd/system/kubelet.service
 </div><p><strong>配置 TLS 认证</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -2516,7 +2516,7 @@ vim /usr/lib/systemd/system/kubelet.service
 </span><span class="lnt">49
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 查看 csr 的名称</span>
 
 
@@ -2571,7 +2571,7 @@ ls /etc/kubernetes/ssl/kubelet*
 <p><strong>创建 kube-proxy 证书和私钥</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -2646,7 +2646,7 @@ ls /etc/kubernetes/ssl/kubelet*
 </span><span class="lnt">73
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 vim kube-proxy-csr.json
 
 
@@ -2732,7 +2732,7 @@ scp kube-proxy* 10.202.43.134:/etc/kubernetes/ssl/
 <p><strong>配置 kube-proxy.kubeconfig</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -2797,7 +2797,7 @@ scp kube-proxy* 10.202.43.134:/etc/kubernetes/ssl/
 </span><span class="lnt">63
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 配置集群, server参数为apiserver地址，可以使用haproxy或nginx来代替直接使用ip,达到k8s多主的目的</span>
 
 
@@ -2868,7 +2868,7 @@ scp kube-proxy.kubeconfig 10.202.43.134:/etc/kubernetes/
 </blockquote>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -2939,7 +2939,7 @@ scp kube-proxy.kubeconfig 10.202.43.134:/etc/kubernetes/
 </span><span class="lnt">69
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 创建 kube-proxy 目录</span>
 
 
@@ -3013,12 +3013,12 @@ vim /usr/lib/systemd/system/kube-proxy.service
 </div><p><strong>证书相关配置</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 --kubeconfig<span class="o">=</span>/etc/kubernetes/kube-proxy.kubeconfig
 
 </code></pre></td></tr></table>
@@ -3027,7 +3027,7 @@ vim /usr/lib/systemd/system/kube-proxy.service
 <p><strong>配置 coredns.yaml</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -3084,7 +3084,7 @@ vim /usr/lib/systemd/system/kube-proxy.service
 </span><span class="lnt">55
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 下载配置文件</span>
 
 
@@ -3150,7 +3150,7 @@ kubectl apply -f coredns.yaml
 <p><strong>客户端在集群外</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -3159,7 +3159,7 @@ kubectl apply -f coredns.yaml
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># 在任一 master 节点执行瑞安命令便可在集群外通过http://masterip:8001访问api server</span>
 
 
@@ -3171,7 +3171,7 @@ kubectl proxy --address 0.0.0.0 --accept-hosts <span class="s1">&#39;.*&#39;</sp
 </div><p><strong>集群内访问</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -3230,7 +3230,7 @@ kubectl proxy --address 0.0.0.0 --accept-hosts <span class="s1">&#39;.*&#39;</sp
 </span><span class="lnt">57
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">
 <span class="c1"># kubectl get secret</span>
 
 NAME                  TYPE                                  DATA      AGE
@@ -3354,7 +3354,7 @@ eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW5
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

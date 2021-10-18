@@ -9,8 +9,8 @@
 <meta property="og:description" content="现象 线上k8s集群报警，宿主fd利用率超过80%，登陆查看dockerd内存使用26G 排查思路 由于之前已经遇到过多次dockerd资源泄露的" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/docker-leak3/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2020-12-24T17:26:12&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2020-12-24T17:26:12+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -161,11 +161,11 @@
 <p>为了可以使用pprof分析内存泄露位置，首先为dockerd打开debug模式，需要修改service文件，添加如下两句</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash"><span class="nv">ExecReload</span><span class="o">=</span>/bin/kill -s HUP <span class="nv">$MAINPID</span> 
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="nv">ExecReload</span><span class="o">=</span>/bin/kill -s HUP <span class="nv">$MAINPID</span> 
 <span class="nv">KillMode</span><span class="o">=</span>process
 </code></pre></td></tr></table>
 </div>
@@ -204,7 +204,7 @@
 <p>对应上图的话，goroutine泄露是由上面最后docker kill时的wait chan close导致的，wait的时候会启动另一个goroutine，每次docker kill都会造成这两个goroutine的泄露。对应代码如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">  1
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
 </span><span class="lnt">  2
 </span><span class="lnt">  3
 </span><span class="lnt">  4
@@ -315,7 +315,7 @@
 </span><span class="lnt">109
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Kill forcefully terminates a container.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Kill forcefully terminates a container.
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">daemon</span> <span class="o">*</span><span class="nx">Daemon</span><span class="p">)</span> <span class="nf">Kill</span><span class="p">(</span><span class="nx">container</span> <span class="o">*</span><span class="nx">containerpkg</span><span class="p">.</span><span class="nx">Container</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
    <span class="k">if</span> <span class="p">!</span><span class="nx">container</span><span class="p">.</span><span class="nf">IsRunning</span><span class="p">()</span> <span class="p">{</span>
       <span class="k">return</span> <span class="nf">errNotRunning</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
@@ -543,7 +543,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

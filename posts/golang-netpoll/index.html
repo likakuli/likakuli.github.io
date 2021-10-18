@@ -9,8 +9,8 @@
 <meta property="og:description" content="golang netpoll 源码分析" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/golang-netpoll/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2018-06-10T13:59:38&#43;08:00" />
-<meta property="article:modified_time" content="2020-11-04T22:17:21&#43;08:00" />
+<meta property="article:published_time" content="2018-06-10T13:59:38+08:00" />
+<meta property="article:modified_time" content="2020-11-04T22:17:21+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -167,7 +167,7 @@
 <p>涉及到的一些结构：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -223,7 +223,7 @@
 </span><span class="lnt">54
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">TCPListener</span> <span class="kd">struct</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">TCPListener</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span>
 <span class="p">}</span>
 
@@ -283,12 +283,12 @@
 <p>上面提到的<code>net.conn</code>的读写等操作实际上就是调用的<code>poll.FD</code>对应的方法，<code>poll.FD</code>中包含一个重要结构<code>poll.pollDesc</code>，其定义如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">pollDesc</span> <span class="kd">struct</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">pollDesc</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">runtimeCtx</span> <span class="kt">uintptr</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
@@ -296,7 +296,7 @@
 </div><p>可以看到其中只包含一个指针，这个指针具体代表的其实是另一个同名不同包的结构<code>runtime.pollDesc</code>，定义如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -325,7 +325,7 @@
 </span><span class="lnt">27
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Network poller descriptor.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Network poller descriptor.
 </span><span class="c1">//
 </span><span class="c1">// No heap pointers.
 </span><span class="c1">//
@@ -357,7 +357,7 @@
 </div><p><code>runtime.pollDesc</code>包含自身类型的一个指针，用来保存下一个<code>runtime.pollDesc</code>的地址，go中有很多类似的实现，用来实现链表，可以减少数据结构的大小，所有的<code>runtime.pollDesc</code>保存在<code>runtime.pollCache</code>结构中，定义如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -368,7 +368,7 @@
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">pollCache</span> <span class="kd">struct</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">pollCache</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">lock</span>  <span class="nx">mutex</span>
 	<span class="nx">first</span> <span class="o">*</span><span class="nx">pollDesc</span>
 	<span class="c1">// PollDesc objects must be type-stable,
@@ -383,7 +383,7 @@
 <h3 id="listen">Listen</h3>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -429,7 +429,7 @@
 </span><span class="lnt">44
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">Listen</span><span class="p">(</span><span class="nx">network</span><span class="p">,</span> <span class="nx">address</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">Listener</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">Listen</span><span class="p">(</span><span class="nx">network</span><span class="p">,</span> <span class="nx">address</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">Listener</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">addrs</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">DefaultResolver</span><span class="p">.</span><span class="nf">resolveAddrList</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="s">&#34;listen&#34;</span><span class="p">,</span> <span class="nx">network</span><span class="p">,</span> <span class="nx">address</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
 	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
 		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">OpError</span><span class="p">{</span><span class="nx">Op</span><span class="p">:</span> <span class="s">&#34;listen&#34;</span><span class="p">,</span> <span class="nx">Net</span><span class="p">:</span> <span class="nx">network</span><span class="p">,</span> <span class="nx">Source</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">Addr</span><span class="p">:</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">Err</span><span class="p">:</span> <span class="nx">err</span><span class="p">}</span>
@@ -478,7 +478,7 @@
 </div><p>当我们调用net.Listen(&ldquo;tcp&rdquo;,addr)时，根据address类型会命中ListenTCP函数去执行，ListenTCP函数很简单，基本处理逻辑都在listenTCP函数中，往下看</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -495,7 +495,7 @@
 </span><span class="lnt">15
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">listenTCP</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">network</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">laddr</span> <span class="o">*</span><span class="nx">TCPAddr</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">TCPListener</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">listenTCP</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">network</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">laddr</span> <span class="o">*</span><span class="nx">TCPAddr</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">TCPListener</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">fd</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">internetSocket</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">network</span><span class="p">,</span> <span class="nx">laddr</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_STREAM</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#34;listen&#34;</span><span class="p">)</span>
 	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
 		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
@@ -515,7 +515,7 @@
 </div><p>listenTCP函数，在此函数中终于见到了期望看到的fd字眼，跳到internetSocket函数，可以看到最终的fd是由socket函数产生的，继续</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -577,7 +577,7 @@
 </span><span class="lnt">60
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// socket returns a network file descriptor that is ready for
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// socket returns a network file descriptor that is ready for
 </span><span class="c1">// asynchronous I/O using the network poller.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">socket</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">net</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">,</span> <span class="nx">proto</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">ipv6only</span> <span class="kt">bool</span><span class="p">,</span> <span class="nx">laddr</span><span class="p">,</span> <span class="nx">raddr</span> <span class="nx">sockaddr</span><span class="p">)</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">s</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">sysSocket</span><span class="p">(</span><span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">,</span> <span class="nx">proto</span><span class="p">)</span>
@@ -642,7 +642,7 @@
 </div><p>首先调用sysSocket函数生成一个非阻塞的socket，并且设置<a href="https://blog.csdn.net/justmeloo/article/details/40184039" target="_blank" rel="noopener noreffer">close-on-exec</a>标志，生成过程如下首先调用socketFunc，也就是Socket函数，再调用socket函数，继续调用RawSyscall，RawSyscall是由<a href="http://blog.rootk.com/post/golang-asm.html" target="_blank" rel="noopener noreffer">汇编</a>实现的，上述过程最终返回生成的socket对应的系统文件描述符（并不是netFD）。涉及到的代码如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -721,7 +721,7 @@
 </span><span class="lnt">77
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Wrapper around the socket system call that marks the returned file
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Wrapper around the socket system call that marks the returned file
 </span><span class="c1">// descriptor as nonblocking and close-on-exec.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">sysSocket</span><span class="p">(</span><span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">,</span> <span class="nx">proto</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">s</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">socketFunc</span><span class="p">(</span><span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span><span class="p">|</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_NONBLOCK</span><span class="p">|</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_CLOEXEC</span><span class="p">,</span> <span class="nx">proto</span><span class="p">)</span>
@@ -803,7 +803,7 @@
 </div><p>有了真正的系统文件描述符之后紧接着通过newFD函数来初始化一个netFD</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -818,7 +818,7 @@
 </span><span class="lnt">13
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">newFD</span><span class="p">(</span><span class="nx">sysfd</span><span class="p">,</span> <span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">net</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">netFD</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">newFD</span><span class="p">(</span><span class="nx">sysfd</span><span class="p">,</span> <span class="nx">family</span><span class="p">,</span> <span class="nx">sotype</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">net</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">netFD</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">ret</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">netFD</span><span class="p">{</span>
 		<span class="nx">pfd</span><span class="p">:</span> <span class="nx">poll</span><span class="p">.</span><span class="nx">FD</span><span class="p">{</span>
 			<span class="nx">Sysfd</span><span class="p">:</span>         <span class="nx">sysfd</span><span class="p">,</span>
@@ -836,7 +836,7 @@
 </div><p>netFD创建好之后调用其listenStream方法，此方法中实现了socket的bind和listen，bind和listen最终也是走汇编代码，经过系统调用实现的。涉及到的代码如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">  1
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
 </span><span class="lnt">  2
 </span><span class="lnt">  3
 </span><span class="lnt">  4
@@ -967,7 +967,7 @@
 </span><span class="lnt">129
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">)</span> <span class="nf">listenStream</span><span class="p">(</span><span class="nx">laddr</span> <span class="nx">sockaddr</span><span class="p">,</span> <span class="nx">backlog</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">)</span> <span class="nf">listenStream</span><span class="p">(</span><span class="nx">laddr</span> <span class="nx">sockaddr</span><span class="p">,</span> <span class="nx">backlog</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
 	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">setDefaultListenerSockopts</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nx">Sysfd</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
 		<span class="k">return</span> <span class="nx">err</span>
 	<span class="p">}</span>
@@ -1101,7 +1101,7 @@
 </div><p>bind和listen执行完之后，netFD的init函数执行，初始化底层的epoll实例，并将fd添加到了epoll的事件队列中，最后设置析构函数供gc阶段调用，至此完成了整个Listen过程。代码如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1202,7 +1202,7 @@
 </span><span class="lnt">99
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">)</span> <span class="nf">init</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">fd</span> <span class="o">*</span><span class="nx">netFD</span><span class="p">)</span> <span class="nf">init</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
 	<span class="k">return</span> <span class="nx">fd</span><span class="p">.</span><span class="nx">pfd</span><span class="p">.</span><span class="nf">Init</span><span class="p">(</span><span class="nx">fd</span><span class="p">.</span><span class="nx">net</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
 <span class="p">}</span>
 
@@ -1307,7 +1307,7 @@
 <p>TCPListner有两个暴露出来的Accept相关的函数，分别为Accept和AcceptTCP，这里主要从AcceptTCP分析，因为后者被tcpKeepAliveListener的Accept函数调用，而tcpKeepAliveListener的Accept方法就是常用的建立web项目时，http.ListenAndServe中会用到的Accept方法，如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1320,7 +1320,7 @@
 </span><span class="lnt">11
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">TCPListener</span><span class="p">)</span> <span class="nf">AcceptTCP</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><span class="nx">TCPConn</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">TCPListener</span><span class="p">)</span> <span class="nf">AcceptTCP</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><span class="nx">TCPConn</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="k">if</span> <span class="p">!</span><span class="nx">l</span><span class="p">.</span><span class="nf">ok</span><span class="p">()</span> <span class="p">{</span>
 		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">EINVAL</span>
 	<span class="p">}</span>
@@ -1336,7 +1336,7 @@
 </div><p>可以看到实现逻辑基本都在accept方法内</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1399,7 +1399,7 @@
 </span><span class="lnt">61
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">ln</span> <span class="o">*</span><span class="nx">TCPListener</span><span class="p">)</span> <span class="nf">accept</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><span class="nx">TCPConn</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">ln</span> <span class="o">*</span><span class="nx">TCPListener</span><span class="p">)</span> <span class="nf">accept</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><span class="nx">TCPConn</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">fd</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ln</span><span class="p">.</span><span class="nx">fd</span><span class="p">.</span><span class="nf">accept</span><span class="p">()</span>
 	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
 		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
@@ -1465,7 +1465,7 @@
 </div><p>这里有两个函数比较重要，一个是accept，一个是fd.pd.waitRead，首先看accept的实现，最终还是会通过汇编进行系统调用。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1564,7 +1564,7 @@
 </span><span class="lnt">97
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Wrapper around the accept system call that marks the returned file
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Wrapper around the accept system call that marks the returned file
 </span><span class="c1">// descriptor as nonblocking and close-on-exec.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">accept</span><span class="p">(</span><span class="nx">s</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">Sockaddr</span><span class="p">,</span> <span class="kt">string</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">ns</span><span class="p">,</span> <span class="nx">sa</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">Accept4Func</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_NONBLOCK</span><span class="p">|</span><span class="nx">syscall</span><span class="p">.</span><span class="nx">SOCK_CLOEXEC</span><span class="p">)</span>
@@ -1666,7 +1666,7 @@
 </div><p>再看waitRead方法</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1681,7 +1681,7 @@
 </span><span class="lnt">13
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">pd</span> <span class="o">*</span><span class="nx">pollDesc</span><span class="p">)</span> <span class="nf">waitRead</span><span class="p">(</span><span class="nx">isFile</span> <span class="kt">bool</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">pd</span> <span class="o">*</span><span class="nx">pollDesc</span><span class="p">)</span> <span class="nf">waitRead</span><span class="p">(</span><span class="nx">isFile</span> <span class="kt">bool</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
 	<span class="k">return</span> <span class="nx">pd</span><span class="p">.</span><span class="nf">wait</span><span class="p">(</span><span class="sc">&#39;r&#39;</span><span class="p">,</span> <span class="nx">isFile</span><span class="p">)</span>
 <span class="p">}</span>
 
@@ -1699,7 +1699,7 @@
 </div><p>又出现一个只有函数声明的函数，和上面出现过的一样，可以通过go:linkname找到具体实现，如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -1759,7 +1759,7 @@
 </span><span class="lnt">58
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">//go:linkname poll_runtime_pollWait internal/poll.runtime_pollWait
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">//go:linkname poll_runtime_pollWait internal/poll.runtime_pollWait
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">poll_runtime_pollWait</span><span class="p">(</span><span class="nx">pd</span> <span class="o">*</span><span class="nx">pollDesc</span><span class="p">,</span> <span class="nx">mode</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">int</span> <span class="p">{</span>
 	<span class="nx">err</span> <span class="o">:=</span> <span class="nf">netpollcheckerr</span><span class="p">(</span><span class="nx">pd</span><span class="p">,</span> <span class="nb">int32</span><span class="p">(</span><span class="nx">mode</span><span class="p">))</span>
 	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
@@ -1864,7 +1864,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

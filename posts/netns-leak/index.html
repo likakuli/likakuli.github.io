@@ -9,8 +9,8 @@
 <meta property="og:description" content="1. 揭开面纱 周一，接到RD反馈线上容器网络访问存在异常，具体线上描述如下： 上游服务driver-api所有容器访问下游服务duse-api某一" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/netns-leak/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2020-10-26T21:42:48&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2020-10-26T21:42:48+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -156,10 +156,10 @@
 <p>当我们拿着arp解析的MAC地址与容器当前的MAC地址作比较时，发现MAC地址不一致。唔，基本上确定问题所在了，net ns泄漏了。执行如下命令验证：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">sudo ip netns ls <span class="p">|</span> <span class="k">while</span> <span class="nb">read</span> ns<span class="p">;</span> <span class="k">do</span> sudo ip netns <span class="nb">exec</span> <span class="nv">$ns</span> ip addr<span class="p">;</span> <span class="k">done</span> <span class="p">|</span> grep inet <span class="p">|</span> grep -v <span class="m">127</span> <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span> <span class="p">|</span> sort <span class="p">|</span> uniq -c
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">sudo ip netns ls <span class="p">|</span> <span class="k">while</span> <span class="nb">read</span> ns<span class="p">;</span> <span class="k">do</span> sudo ip netns <span class="nb">exec</span> <span class="nv">$ns</span> ip addr<span class="p">;</span> <span class="k">done</span> <span class="p">|</span> grep inet <span class="p">|</span> grep -v <span class="m">127</span> <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span> <span class="p">|</span> sort <span class="p">|</span> uniq -c
 </code></pre></td></tr></table>
 </div>
 </div><p>确实发现该容器对应的IP出现了两次，该容器IP对应了两个网络命名空间，也即该容器的网络命名空间出现了泄漏。</p>
@@ -185,14 +185,14 @@
 <p>我们梳理kubelet在该时间段对该容器的清理日志，核心相关日志展示如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">I0417 11:36:30.974674   <span class="m">37736</span> kubelet_pods.go:1180<span class="o">]</span> Killing unwanted pod <span class="s2">&#34;duse-api-sf-xxxxx-0&#34;</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">I0417 11:36:30.974674   <span class="m">37736</span> kubelet_pods.go:1180<span class="o">]</span> Killing unwanted pod <span class="s2">&#34;duse-api-sf-xxxxx-0&#34;</span>
 I0417 11:36:30.976803   <span class="m">37736</span> plugins.go:391<span class="o">]</span> Calling network plugin cni to tear down pod <span class="s2">&#34;duse-api-sf-80819-0_default&#34;</span>
 I0417 11:36:30.983499   <span class="m">37736</span> kubelet_pods.go:1780<span class="o">]</span> Orphaned pod <span class="s2">&#34;4ae28778-805c-11ea-a54c-b4055d1e6372&#34;</span> found, removing pod cgroups
 I0417 11:36:30.986360   <span class="m">37736</span> pod_container_manager_linux.go:167<span class="o">]</span> Attempt to <span class="nb">kill</span> process with pid: <span class="m">48892</span>
@@ -210,7 +210,7 @@ I0417 11:36:30.986382   <span class="m">37736</span> pod_container_manager_linux
 <p>这里提示一点：正常情况下，容器退出时，容器内所有进程都已退出。而上面之所以出现清理cgroup时需要杀死容器内未退出进程，是由于常驻协程的检测机制导致的，常驻协程判定Pod已终止运行的条件是：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -224,7 +224,7 @@ I0417 11:36:30.986382   <span class="m">37736</span> pod_container_manager_linux
 </span><span class="lnt">12
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// podIsTerminated returns true if pod is in the terminated state (&#34;Failed&#34; or &#34;Succeeded&#34;).
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// podIsTerminated returns true if pod is in the terminated state (&#34;Failed&#34; or &#34;Succeeded&#34;).
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">kl</span> <span class="o">*</span><span class="nx">Kubelet</span><span class="p">)</span> <span class="nf">podIsTerminated</span><span class="p">(</span><span class="nx">pod</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
    <span class="c1">// Check the cached pod status which was set after the last sync.
 </span><span class="c1"></span>   <span class="nx">status</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">statusManager</span><span class="p">.</span><span class="nf">GetPodStatus</span><span class="p">(</span><span class="nx">pod</span><span class="p">.</span><span class="nx">UID</span><span class="p">)</span>
@@ -242,14 +242,14 @@ I0417 11:36:30.986382   <span class="m">37736</span> pod_container_manager_linux
 <p>仅依据上面的kubelet日志，难以发现问题所在。我们接着又分析了cni插件的日志，截取cni在删除该Pod容器网络时的日志如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[</span>pid:98497<span class="o">]</span> 2020/04/17 11:36:30.990707 main.go:89: <span class="o">=====</span> start cni <span class="nv">process</span> <span class="o">=====</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="o">[</span>pid:98497<span class="o">]</span> 2020/04/17 11:36:30.990707 main.go:89: <span class="o">=====</span> start cni <span class="nv">process</span> <span class="o">=====</span>
 <span class="o">[</span>pid:98497<span class="o">]</span> 2020/04/17 11:36:30.990761 main.go:90: os env: <span class="o">[</span><span class="nv">CNI_COMMAND</span><span class="o">=</span>DEL <span class="nv">CNI_CONTAINERID</span><span class="o">=</span>c2ef79f7596b6b558f0c01c0715bac46714eefd1e9966625a09414c7218e1013 <span class="nv">CNI_NETNS</span><span class="o">=</span>/proc/48892/ns/net <span class="nv">CNI_ARGS</span><span class="o">=</span><span class="nv">IgnoreUnknown</span><span class="o">=</span>1<span class="p">;</span><span class="nv">K8S_POD_NAMESPACE</span><span class="o">=</span>default<span class="p">;</span><span class="nv">K8S_POD_NAME</span><span class="o">=</span>duse-api-sf-xxxxx-0<span class="p">;</span><span class="nv">K8S_POD_INFRA_CONTAINER_ID</span><span class="o">=</span>c2ef79f7596b6b558f0c01c0715bac46714eefd1e9966625a09414c7218e1013 <span class="nv">CNI_IFNAME</span><span class="o">=</span>eth0 <span class="nv">CNI_PATH</span><span class="o">=</span>/home/kaku/kakucloud/cni-plugins/bin <span class="nv">LANG</span><span class="o">=</span>en_US.UTF-8 <span class="nv">PATH</span><span class="o">=</span>/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin <span class="nv">KUBE_LOGTOSTDERR</span><span class="o">=</span>--logtostderr<span class="o">=</span><span class="nb">false</span> <span class="nv">KUBE_LOG_LEVEL</span><span class="o">=</span>--v<span class="o">=</span><span class="m">3</span> <span class="nv">KUBE_ALLOW_PRIV</span><span class="o">=</span>--allow-privileged<span class="o">=</span><span class="nb">true</span> <span class="nv">KUBE_MASTER</span><span class="o">=</span>--master<span class="o">=</span>https://10.xxx.xxx.xxx:xxxx <span class="nv">KUBELET_ADDRESS</span><span class="o">=</span>--address<span class="o">=</span>0.0.0.0 <span class="nv">KUBELET_HOSTNAME</span><span class="o">=</span>--hostname_override<span class="o">=</span>10.xxx.xxx.xxx <span class="nv">KUBELET_POD_INFRA_CONTAINER</span><span class="o">=</span> <span class="nv">KUBELET_ARGS</span><span class="o">=</span>--network-plugin<span class="o">=</span>cni --cni-bin-dir<span class="o">=</span>/home/kaku/kakucloud/cni-plugins/bin --cni-conf-dir<span class="o">=</span>/home/kaku/kakucloud/cni-plugins/conf --kubeconfig<span class="o">=</span>/etc/kubernetes/kubeconfig/kubelet.kubeconfig --cert-dir<span class="o">=</span>/etc/kubernetes/ssl --log-dir<span class="o">=</span>/var/log/kubernetes --stderrthreshold<span class="o">=</span><span class="m">3</span> --allowed-unsafe-sysctls<span class="o">=</span>net.*,kernel.shm*,kernel.msg*,kernel.sem,fs.mqueue.* --pod-infra-container-image<span class="o">=</span>registry.kaku.com/kakuk8s/pause:3.0 --eviction-hard<span class="o">=</span>  --image-gc-high-threshold<span class="o">=</span><span class="m">75</span> --image-gc-low-threshold<span class="o">=</span><span class="m">65</span> --feature-gates<span class="o">=</span><span class="nv">KubeletPluginsWatcher</span><span class="o">=</span><span class="nb">false</span> --restart-count-limit<span class="o">=</span><span class="m">5</span> --last-upgrade-time<span class="o">=</span>2019-07-01<span class="o">]</span>
 <span class="o">[</span>pid:98497<span class="o">]</span> 2020/04/17 11:36:30.990771 main.go:91: stdin : <span class="o">{</span><span class="s2">&#34;cniVersion&#34;</span>:<span class="s2">&#34;0.3.0&#34;</span>,<span class="s2">&#34;logDir&#34;</span>:<span class="s2">&#34;/home/kaku/kakucloud/cni-plugins/acllogs&#34;</span>,<span class="s2">&#34;name&#34;</span>:<span class="s2">&#34;ddcloudcni&#34;</span>,<span class="s2">&#34;type&#34;</span>:<span class="s2">&#34;aclCni&#34;</span><span class="o">}</span>
 <span class="o">[</span>pid:98497<span class="o">]</span> 2020/04/17 11:36:30.990790 main.go:181: failed to Statfs <span class="s2">&#34;/proc/48892/ns/net&#34;</span>: no such file or directory
@@ -259,7 +259,7 @@ I0417 11:36:30.986382   <span class="m">37736</span> pod_container_manager_linux
 </div><p>其中，main.go:181行的错误日志一下就抓住了我们的眼球，结合代码分析下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -275,7 +275,7 @@ I0417 11:36:30.986382   <span class="m">37736</span> pod_container_manager_linux
 </span><span class="lnt">14
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">cmdDel</span><span class="p">(</span><span class="nx">args</span> <span class="o">*</span><span class="nx">skel</span><span class="p">.</span><span class="nx">CmdArgs</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">cmdDel</span><span class="p">(</span><span class="nx">args</span> <span class="o">*</span><span class="nx">skel</span><span class="p">.</span><span class="nx">CmdArgs</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
 	<span class="nx">n</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">loadConf</span><span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">StdinData</span><span class="p">)</span>
 	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
 		<span class="k">return</span> <span class="nx">err</span>
@@ -380,7 +380,7 @@ I0417 11:36:30.986382   <span class="m">37736</span> pod_container_manager_linux
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

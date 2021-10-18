@@ -9,8 +9,8 @@
 <meta property="og:description" content="orphan controller revision cannot be adopt" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-controllerrevisionhistory-bug/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2020-04-01T10:52:12&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2020-04-01T10:52:12+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -154,7 +154,7 @@
 <p>经过添加trace信息打印每个阶段耗时，发现在根据statefulset获取其对应的controllerrevision时比较慢，如下代码段</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -162,7 +162,7 @@
 </span><span class="lnt">6
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// adoptOrphanRevisions adopts any orphaned ControllerRevisions matched by set&#39;s Selector.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// adoptOrphanRevisions adopts any orphaned ControllerRevisions matched by set&#39;s Selector.
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ssc</span> <span class="o">*</span><span class="nx">StatefulSetController</span><span class="p">)</span> <span class="nf">adoptOrphanRevisions</span><span class="p">(</span><span class="nx">set</span> <span class="o">*</span><span class="nx">apps</span><span class="p">.</span><span class="nx">StatefulSet</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
   <span class="c1">// 比较慢
 </span><span class="c1"></span>	<span class="nx">revisions</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ssc</span><span class="p">.</span><span class="nx">control</span><span class="p">.</span><span class="nf">ListRevisions</span><span class="p">(</span><span class="nx">set</span><span class="p">)</span>
@@ -173,7 +173,7 @@
 </div><p>而且同样的逻辑会在这里在执行一次</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -186,7 +186,7 @@
 </span><span class="lnt">11
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// syncStatefulSet syncs a tuple of (statefulset, []*v1.Pod).
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// syncStatefulSet syncs a tuple of (statefulset, []*v1.Pod).
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ssc</span> <span class="o">*</span><span class="nx">StatefulSetController</span><span class="p">)</span> <span class="nf">syncStatefulSet</span><span class="p">(</span><span class="nx">set</span> <span class="o">*</span><span class="nx">apps</span><span class="p">.</span><span class="nx">StatefulSet</span><span class="p">,</span> <span class="nx">pods</span> <span class="p">[]</span><span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
 	<span class="o">...</span>
 	<span class="c1">// TODO: investigate where we mutate the set during the update as it is not obvious.
@@ -248,7 +248,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

@@ -9,8 +9,8 @@
 <meta property="og:description" content="etcd分布式锁加锁失败" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/etcd-lock/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2019-01-31T14:20:28&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2019-01-31T14:20:28+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -151,12 +151,12 @@
 <p>很明显的是获取锁超时了，由于用的etcd的分布式锁，就怀疑是etcd出问题了，此时看到大量etcd日志，rejected connection from &ldquo;ip:port&rdquo; (error &ldquo;tls: first record does not look like a TLS handshake&rdquo;, ServerName &ldquo;&quot;)，怀疑是不是这个问题导致的，经过查询报错的IP，均为线上容器IP，登陆容器内看发现都是管理员平台的代码，里面也用到了py03的etcd，但是不是导致超时的原因。在排除各种可能之后，最后去etcd查看锁对应的key的情况，发现有两个key</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">/notifier/locker/<span class="o">{</span>leaseid<span class="o">}</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">/notifier/locker/<span class="o">{</span>leaseid<span class="o">}</span>
  
 /notifier/locker/rwl/<span class="o">{</span>leaseid<span class="o">}</span>
 </code></pre></td></tr></table>
@@ -167,7 +167,7 @@
 <p>首先从etcdctl lock命令开始，挑主要函数展示</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -179,7 +179,7 @@
 </span><span class="lnt">10
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码位置go.etcd.io/etcd/etcdctl/ctlv3/command/lock_command.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 代码位置go.etcd.io/etcd/etcdctl/ctlv3/command/lock_command.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">lockUntilSignal</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">lockname</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">cmdArgs</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
    <span class="o">...</span>
  
@@ -194,7 +194,7 @@
 </div><p>接下来进入到Lock函数，这是个关键函数，etcd的分布式锁就是在这里实现的</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -283,7 +283,7 @@
 </span><span class="lnt">87
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Lock</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Lock</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
    <span class="nx">s</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">s</span>
    <span class="nx">client</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">s</span><span class="p">.</span><span class="nf">Client</span><span class="p">()</span>
  
@@ -375,7 +375,7 @@
 </div><p>看完上面的代码基本知道了etcd分布式锁的实现机制了，但是还没看到哪里和前缀Prefix相关了。其实答案就藏在getOwner里，看上述代码，不管是执行Put还是Get，最终都有个getOwner的过程，看一下这个getOwner，options模式里有个v3.WithFirstCreate函数调用，看下这个函数</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -397,7 +397,7 @@
 </span><span class="lnt">20
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// WithFirstCreate gets the key with the oldest creation revision in the request range.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// WithFirstCreate gets the key with the oldest creation revision in the request range.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">WithFirstCreate</span><span class="p">()</span> <span class="p">[]</span><span class="nx">OpOption</span> <span class="p">{</span> <span class="k">return</span> <span class="nf">withTop</span><span class="p">(</span><span class="nx">SortByCreateRevision</span><span class="p">,</span> <span class="nx">SortAscend</span><span class="p">)</span> <span class="p">}</span>
  
 <span class="c1">// withTop gets the first key over the get&#39;s prefix given a sort order
@@ -425,12 +425,12 @@
 <p>结论是会加锁成功，看下源码</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">NewMutex</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Session</span><span class="p">,</span> <span class="nx">pfx</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">Mutex</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">NewMutex</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Session</span><span class="p">,</span> <span class="nx">pfx</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">Mutex</span> <span class="p">{</span>
    <span class="k">return</span> <span class="o">&amp;</span><span class="nx">Mutex</span><span class="p">{</span><span class="nx">s</span><span class="p">,</span> <span class="nx">pfx</span> <span class="o">+</span> <span class="s">&#34;/&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">nil</span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
@@ -479,7 +479,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

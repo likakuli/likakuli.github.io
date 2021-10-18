@@ -9,8 +9,8 @@
 <meta property="og:description" content="kubernetes&#39;s bug because of the resourceversion" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/kubernetes-ep-bug/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2018-05-26T16:20:01&#43;08:00" />
-<meta property="article:modified_time" content="2021-04-15T20:54:53&#43;08:00" />
+<meta property="article:published_time" content="2018-05-26T16:20:01+08:00" />
+<meta property="article:modified_time" content="2021-04-15T20:54:53+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -134,7 +134,7 @@
 <p><code>陆续创建、删除、创建 Kubernetes service 对象，然后&quot;kubectl delete svc xxx&quot;删掉创建时间靠前的 service，也就是往 service event list 末尾插入了一条 resourceVersion 比较小的记录，这将使得 controller-manager 去从已经爬过的 service event list 位置重新爬取重放，然后就重放了 service 的 ADDED、DELETED event，于是 controller-manager 内存里缓存的 service 对象被删除，导致 EndpointController 删除了“不存在的”service 对应的 endpoints。</code>)在日常操作中其实会经常出现，那岂不是很多集群都会存在这个问题，而且这个bug影响这么严重，为什么现在才被报出来？基于上述疑问，本文主要是到源码中一探究竟，源码版本1.9.2，按照文中指引可以快速定位到问题代码所在位置，话不多说，直接上代码，如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -210,7 +210,7 @@
 </span><span class="lnt">74
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// watchHandler watches w and keeps *resourceVersion up to date.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// watchHandler watches w and keeps *resourceVersion up to date.
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">Reflector</span><span class="p">)</span> <span class="nf">watchHandler</span><span class="p">(</span><span class="nx">w</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Interface</span><span class="p">,</span> <span class="nx">resourceVersion</span> <span class="o">*</span><span class="kt">string</span><span class="p">,</span> <span class="nx">errc</span> <span class="kd">chan</span> <span class="kt">error</span><span class="p">,</span> <span class="nx">stopCh</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="kt">error</span> <span class="p">{</span>
 	<span class="nx">start</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">clock</span><span class="p">.</span><span class="nf">Now</span><span class="p">()</span>
 	<span class="nx">eventCount</span> <span class="o">:=</span> <span class="mi">0</span>
@@ -289,7 +289,7 @@
 </div><p>这是文中指出的具体BUG所在，用错误的newResourceVersion去给resourceVersion和lastSyncResourceVersion赋了值，所以接下来就是要找这两个属性在什么地方被用到了，经过逐步查找代码引用，最后确定lastSyncResourceVersion和这个bug无关，那问题就出在了resourceVersion上，可以看到上面的方法中resourceVersion是通过指针传进来的，也就是说会影响到外面使用到这个属性的地方，继续查看watchHandler被调用的代码，如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">  1
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
 </span><span class="lnt">  2
 </span><span class="lnt">  3
 </span><span class="lnt">  4
@@ -402,7 +402,7 @@
 </span><span class="lnt">111
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// ListAndWatch first lists all items and get the resource version at the moment of call,
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// ListAndWatch first lists all items and get the resource version at the moment of call,
 </span><span class="c1">// and then use the resource version to watch.
 </span><span class="c1">// It returns error if ListAndWatch didn&#39;t even try to initialize watch.
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">Reflector</span><span class="p">)</span> <span class="nf">ListAndWatch</span><span class="p">(</span><span class="nx">stopCh</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="kt">error</span> <span class="p">{</span>
@@ -564,7 +564,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

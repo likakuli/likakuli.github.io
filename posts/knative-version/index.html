@@ -9,8 +9,8 @@
 <meta property="og:description" content="通过header访问指定版本" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/knative-version/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2020-08-19T17:26:47&#43;08:00" />
-<meta property="article:modified_time" content="2020-11-04T22:17:21&#43;08:00" />
+<meta property="article:published_time" content="2020-08-19T17:26:47+08:00" />
+<meta property="article:modified_time" content="2020-11-04T22:17:21+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -145,7 +145,7 @@
 <p>原生通过url来区分不同版本，实现方式是通过在生成vs时，设置其Match的条件Authroty为对应的url prefix即可。显然无法满足我们当前统一使用一个url的场景。但是我们可以参考其实现方式，换一个维度，靠header实现即可，但是又不能影响正常访问，即不添加header的时候，流量按照设置的比例打到不同的revision上，添加了header后，需要将流量打到指定版本，所以不能简单的在Match中添加Header，<strong>需要分别设置正常访问的情况和访问指定版本的情况，且访问指定版本的配置应该顺序靠前</strong>。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -220,7 +220,7 @@
 </span><span class="lnt">73
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// MakeIngressSpec creates a new IngressSpec
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// MakeIngressSpec creates a new IngressSpec
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">MakeIngressSpec</span><span class="p">(</span>
 	<span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span>
 	<span class="nx">r</span> <span class="o">*</span><span class="nx">servingv1</span><span class="p">.</span><span class="nx">Route</span><span class="p">,</span>
@@ -338,7 +338,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

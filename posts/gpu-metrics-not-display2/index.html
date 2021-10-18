@@ -9,8 +9,8 @@
 <meta property="og:description" content="问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/gpu-metrics-not-display2/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2021-05-30T14:23:24&#43;08:00" />
-<meta property="article:modified_time" content="2021-06-07T11:56:57&#43;08:00" />
+<meta property="article:published_time" content="2021-05-30T14:23:24+08:00" />
+<meta property="article:modified_time" content="2021-06-07T11:56:57+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -188,7 +188,7 @@
 <p>这里大致可以猜到赋值的地方了，因为这是一个专门用于GPU的环境变量，所以不可能直接在<code>Kubelet</code>中定义，那就只剩下nidia对应的k8s-device-plugin了，我们可以在其源码中找到对应的实现逻辑，如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -240,7 +240,7 @@
 </span><span class="lnt">50
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Constants to represent the various device list strategies
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Constants to represent the various device list strategies
 </span><span class="c1"></span><span class="kd">const</span> <span class="p">(</span>
 	<span class="nx">DeviceListStrategyEnvvar</span>       <span class="p">=</span> <span class="s">&#34;envvar&#34;</span>
 	<span class="nx">DeviceListStrategyVolumeMounts</span> <span class="p">=</span> <span class="s">&#34;volume-mounts&#34;</span>
@@ -299,7 +299,7 @@
 <p>接下来重点看下其设置cgroup的相关代码，cgroup参数组装的过程在<code>create</code>命令中，真正将参数设置到linux系统上是在<code>init</code>命令中进行的，且没有对参数做任何修改，所以我们看<code>create</code>部分cgroup参数是如何组装的，忽略掉不相关的代码：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -346,7 +346,7 @@
 </span><span class="lnt">45
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">CreateCgroupConfig</span><span class="p">(</span><span class="nx">opts</span> <span class="o">*</span><span class="nx">CreateOpts</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">configs</span><span class="p">.</span><span class="nx">Cgroup</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">CreateCgroupConfig</span><span class="p">(</span><span class="nx">opts</span> <span class="o">*</span><span class="nx">CreateOpts</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">configs</span><span class="p">.</span><span class="nx">Cgroup</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="o">...</span>
 
 	<span class="c1">// In rootless containers, any attempt to make cgroup changes is likely to fail.
@@ -396,7 +396,7 @@
 </div><p>可以看到是根据<code>spec.Linux.Resources.Devices</code>来设置device cgroup的，接下来就去对比一下普通容器和特权模式容器上述字段值得区别，如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -466,7 +466,7 @@
 </span><span class="lnt">68
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 普通容器</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 普通容器</span>
 root@node1:/var/run/containerd/io.containerd.runtime.v2.task/moby/a0f3c54d8c6beba5d9947723494e4c9b625f03ce4eb0c096e4cf46cae9e389e0
 <span class="c1"># cat config.json | jq .linux.resources.devices</span>
 <span class="o">[</span>
@@ -540,7 +540,7 @@ root@node1:/var/run/containerd/io.containerd.runtime.v2.task/moby/4bc7d5c323f707
 <p><code>OCI</code> spce文件中<code>spec.Linux.Resources.Devices</code>值则是由<code>containerd</code>设置的，<code>containerd</code>会判断容器是否开启特权模式进行响应的设置，相关代码如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -590,7 +590,7 @@ root@node1:/var/run/containerd/io.containerd.runtime.v2.task/moby/4bc7d5c323f707
 </span><span class="lnt">48
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">populateDefaultUnixSpec</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">s</span> <span class="o">*</span><span class="nx">Spec</span><span class="p">,</span> <span class="nx">id</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">populateDefaultUnixSpec</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">s</span> <span class="o">*</span><span class="nx">Spec</span><span class="p">,</span> <span class="nx">id</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
 	<span class="o">...</span>
 
 	<span class="o">*</span><span class="nx">s</span> <span class="p">=</span> <span class="nx">Spec</span><span class="p">{</span>
@@ -685,7 +685,7 @@ root@node1:/var/run/containerd/io.containerd.runtime.v2.task/moby/4bc7d5c323f707
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>

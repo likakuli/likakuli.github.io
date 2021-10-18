@@ -9,8 +9,8 @@
 <meta property="og:description" content="Knative根据Path转发请求" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/knative-pathfilter/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2020-08-19T17:26:18&#43;08:00" />
-<meta property="article:modified_time" content="2020-11-04T22:17:21&#43;08:00" />
+<meta property="article:published_time" content="2020-08-19T17:26:18+08:00" />
+<meta property="article:modified_time" content="2020-11-04T22:17:21+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -157,7 +157,7 @@
 <p>vs本身是支持根据Path转发的功能的，但是并没有在ksvc中暴露出来，所以我们需要在king创建vs的时候动态注入进去，同时在destination中添加url rewrite的逻辑。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -233,7 +233,7 @@
 </span><span class="lnt">74
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">makeVirtualServiceSpec</span><span class="p">(</span><span class="nx">ing</span> <span class="o">*</span><span class="nx">v1alpha1</span><span class="p">.</span><span class="nx">Ingress</span><span class="p">,</span> <span class="nx">gateways</span> <span class="kd">map</span><span class="p">[</span><span class="nx">v1alpha1</span><span class="p">.</span><span class="nx">IngressVisibility</span><span class="p">]</span><span class="nx">sets</span><span class="p">.</span><span class="nx">String</span><span class="p">,</span> <span class="nx">hosts</span> <span class="nx">sets</span><span class="p">.</span><span class="nx">String</span><span class="p">)</span> <span class="o">*</span><span class="nx">istiov1alpha3</span><span class="p">.</span><span class="nx">VirtualService</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">makeVirtualServiceSpec</span><span class="p">(</span><span class="nx">ing</span> <span class="o">*</span><span class="nx">v1alpha1</span><span class="p">.</span><span class="nx">Ingress</span><span class="p">,</span> <span class="nx">gateways</span> <span class="kd">map</span><span class="p">[</span><span class="nx">v1alpha1</span><span class="p">.</span><span class="nx">IngressVisibility</span><span class="p">]</span><span class="nx">sets</span><span class="p">.</span><span class="nx">String</span><span class="p">,</span> <span class="nx">hosts</span> <span class="nx">sets</span><span class="p">.</span><span class="nx">String</span><span class="p">)</span> <span class="o">*</span><span class="nx">istiov1alpha3</span><span class="p">.</span><span class="nx">VirtualService</span> <span class="p">{</span>
 	<span class="nx">spec</span> <span class="o">:=</span> <span class="nx">istiov1alpha3</span><span class="p">.</span><span class="nx">VirtualService</span><span class="p">{</span>
 		<span class="nx">Hosts</span><span class="p">:</span> <span class="nx">hosts</span><span class="p">.</span><span class="nf">List</span><span class="p">(),</span>
 	<span class="p">}</span>
@@ -312,7 +312,7 @@
 </div><p>修改比较简单，完全就是按照之前说的两点进行的。其中有一个比较tricky的地方就是实现url rewrite的方式，因为社区中的vs（istio里的crd）其实是存在问题的，我们为了规避这个问题，特意做了一些特殊设置。参考<a href="https://github.com/istio/istio/issues/8076" target="_blank" rel="noopener noreffer">这里</a>，大致意思就是目前vs不支持url rewrite为空，rewrite为空之后，实际访问的时候需要在url的最后加上/，否则会返回400，但是我们很多前端网站主页就是一个域名，后面不跟任何内容，那这时候就有问题了，总不能再告诉用户在最后输入一个/。规避方案其实也比较简单，就是上面代码中最后makeMatch处的if else语句，且一定要保证顺序，即最长的要在前面，因为遇到第一个匹配的规则后，后续规则会被忽略。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -322,7 +322,7 @@
 </span><span class="lnt">8
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"> <span class="nx">http</span><span class="p">:</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"> <span class="nx">http</span><span class="p">:</span>
   <span class="o">-</span> <span class="nx">match</span><span class="p">:</span>
     <span class="o">-</span> <span class="nx">uri</span><span class="p">:</span>
         <span class="nx">prefix</span><span class="p">:</span> <span class="s">&#34;/echo/&#34;</span>
@@ -376,7 +376,7 @@
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
             </noscript></div></article></div>
             </main><footer class="footer">
-        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.82.0">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
                 </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>
