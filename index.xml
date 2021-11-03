@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 16 Oct 2021 16:06:50 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 03 Nov 2021 19:18:00 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>docker for mac - 1</title>
+    <link>https://www.likakuli.com/posts/docker-for-mac-1/</link>
+    <pubDate>Wed, 03 Nov 2021 19:18:00 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/docker-for-mac-1/</guid>
+    <description><![CDATA[本篇由来 分享在使用 Docker for Mac 过程中遇到的问题，希望可以帮助到遇到问题的人。 网络不通 Docker for Mac 没有提供从宿主的macOS通过容器IP访问容器的方式。参]]></description>
+</item><item>
     <title>那些年，我们一起追的Bug</title>
     <link>https://www.likakuli.com/posts/kubernetes-cpu-manager/</link>
     <pubDate>Sat, 16 Oct 2021 16:06:50 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/crud/</guid>
     <description><![CDATA[CRUD还能这么玩？ 作为一名有多年经验的CRUD工程师，在做某项目时，需要在搭建完apiserver框架以及dao部分，三下五除二的就把ap]]></description>
-</item><item>
-    <title>关于阅读源码的一些思考</title>
-    <link>https://www.likakuli.com/posts/sourcecodereading/</link>
-    <pubDate>Sun, 18 Apr 2021 20:34:42 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/sourcecodereading/</guid>
-    <description><![CDATA[近期有个小需求，在不重建Container的前提下修改Pod结构中的Request值，限制仅可以调小。本以为很简单的一个需求，但实际花费了一]]></description>
 </item></channel>
 </rss>

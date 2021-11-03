@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/tags/docker/</link>
         <description>docker - 标签 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 30 May 2021 14:23:25 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/docker/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 03 Nov 2021 19:18:00 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/docker/" rel="self" type="application/rss+xml" /><item>
+    <title>docker for mac - 1</title>
+    <link>https://www.likakuli.com/posts/docker-for-mac-1/</link>
+    <pubDate>Wed, 03 Nov 2021 19:18:00 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/docker-for-mac-1/</guid>
+    <description><![CDATA[本篇由来 分享在使用 Docker for Mac 过程中遇到的问题，希望可以帮助到遇到问题的人。 网络不通 Docker for Mac 没有提供从宿主的macOS通过容器IP访问容器的方式。参]]></description>
+</item><item>
     <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
     <link>https://www.likakuli.com/posts/gpu-metrics-not-display3/</link>
     <pubDate>Sun, 30 May 2021 14:23:25 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/docker-hang/</guid>
     <description><![CDATA[转载自组内同事 1. 背景 最近升级了一版kubelet，修复因kubelet删除Pod慢导致平台删除集群超时的问题。在灰度redis隔离集群的时候]]></description>
-</item><item>
-    <title>Dockerd内存泄露</title>
-    <link>https://www.likakuli.com/posts/dockerd-memory-leak1/</link>
-    <pubDate>Tue, 09 Jul 2019 20:06:53 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/dockerd-memory-leak1/</guid>
-    <description><![CDATA[背景 线上部分宿主机dockerd占用内存过大，有的甚至超过100G，而整个宿主上的容器使用的内存还不如dockerd一个进程使用的多，现在的]]></description>
 </item></channel>
 </rss>
