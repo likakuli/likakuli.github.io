@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>admission webhook 花式玩法 - kinitiras - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="admission webhook 花式玩法 - kinitiras" />
+<meta property="og:description" content="项目由来 使用 kubernetes 的同学可能或多或少会有以下的实际业务或者需求场景： 为确保安全性，需要对某些资源进行删除保护，例如不允许删除 namespace、" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/kinitiras/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-05-12T10:21:43+08:00" />
+<meta property="article:modified_time" content="2022-05-12T18:11:12+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="admission webhook 花式玩法 - kinitiras"/>
+<meta name="twitter:description" content="项目由来 使用 kubernetes 的同学可能或多或少会有以下的实际业务或者需求场景： 为确保安全性，需要对某些资源进行删除保护，例如不允许删除 namespace、"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/kinitiras/" /><link rel="prev" href="https://www.likakuli.com/posts/docker-for-mac-1/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "admission webhook 花式玩法 - kinitiras",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/kinitiras\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  2281 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/kinitiras\/","datePublished": "2022-05-12T10:21:43+08:00","dateModified": "2022-05-12T18:11:12+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">admission webhook 花式玩法 - kinitiras</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%A1%B9%E7%9B%AE%E4%BB%8B%E7%BB%8D/"><i class="far fa-folder fa-fw"></i>项目介绍</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2022-05-12">2022-05-12</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 2281 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 5 分钟&nbsp;<span id="/posts/kinitiras/" class="leancloud_visitors" data-flag-title="admission webhook 花式玩法 - kinitiras">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#项目由来">项目由来</a></li>
+        <li><a href="#项目介绍">项目介绍</a></li>
+        <li><a href="#能力介绍">能力介绍</a>
+          <ul>
+            <li><a href="#mutate">Mutate</a></li>
+            <li><a href="#validate">Validate</a></li>
+          </ul>
+        </li>
+        <li><a href="#部署">部署</a>
+          <ul>
+            <li><a href="#部署-crd-资源">部署 CRD 资源</a></li>
+            <li><a href="#部署应用程序">部署应用程序</a></li>
+            <li><a href="#例子">例子</a></li>
+          </ul>
+        </li>
+        <li><a href="#小结">小结</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="项目由来">项目由来</h2>
+<p>使用 kubernetes 的同学可能或多或少会有以下的实际业务或者需求场景：</p>
+<ul>
+<li>为确保安全性，需要对某些资源进行删除保护，例如不允许删除 namespace、crd 定义等；</li>
+<li>根据服务画像为不同的服务设置不同的属性，这些属性基本是业务无感的，例如设置不同的超售比、设置不同的 Label 以及调度特性从而实现 io 敏感型与 io 密集型服务的反亲和调度等；</li>
+<li>针对同一个 workload 生成 per pod per config 的配置，例如为特定的业务容器设置 debug 开关、特权模式、日志路径等；</li>
+<li>集群里面每引入一个组件，可能就会同时引入一个甚至多个 admission webhook，久而久之，集群里面会存在众多的 admission webhook，实现方式、关注的资源都不同，管理起来比较复杂；</li>
+<li>虽然使用一些工具例如 kube-builder、controller-runtime 等可以快速的创建 admission webhook 的框架，但开发整个功能也需要一定的开发工作量，往往需要开发的业务逻辑比较简单，基本是根据一些规则进行一些决策；</li>
+<li>admission webhook 里的业务逻辑的改动需要升级 wehook 来实现，变更就有可能引入线上稳定性风险；</li>
+</ul>
+<p>可以大致归为三类：集群资源管理、admission webhok 自身管理、业务资源定制。基于以上的需求场景，一个通用的可编程的 webhook 规则引擎的想法诞生了。</p>
+<h2 id="项目介绍">项目介绍</h2>
+<p><a href="https://github.com/k-cloud-labs/kinitiras" target="_blank" rel="noopener noreffer">Kinitiras</a> 为希腊语，意思为发动机、引擎，贴合 rule engine 的概念。项目通过抽象出来三种策略来实现集群资源的 mutate 和 validate 的逻辑，支持通过 CUE 配置业务逻辑，从而支持了动态编程能力，可以在不变更程序的前提下通过对策略的操作实现所需的能力。</p>
+<h2 id="能力介绍">能力介绍</h2>
+<h3 id="mutate">Mutate</h3>
+<p>内置了 <code>OverridePolicy</code> 和 <code>ClusterOverridePolicy</code> 来支持 Mutate 能力，前者是 Namespace 级别生效，即只能修改同 Namespace 下的资源对象，后者是 Cluster 级别生效，可修改资源对象不受 Namespace 限制。策略内置一些筛选条件来对目标资源对象进行筛选，对于同一个资源对象，可以有多条策略与之匹配，其生效顺序针对不同类型策略优先使用 <code>ClusterOverridePolicy</code>，同一种类型的策略则按照字母顺序依次生效。</p>
+<p>例：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ClusterOverridePolicy</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">policy.kcloudlabs.io/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">add-anno-cop-cue</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">resourceSelectors</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w">      </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Pod</span><span class="w">
+</span><span class="w">      </span><span class="nt">labelSelector</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">kinitiras.kcloudlabs.io/webhook</span><span class="p">:</span><span class="w"> </span><span class="l">enabled</span><span class="w">
+</span><span class="w">  </span><span class="nt">overrideRules</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">targetOperations</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="l">CREATE</span><span class="w">
+</span><span class="w">      </span><span class="nt">overriders</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">cue</span><span class="p">:</span><span class="w"> </span><span class="p">|-</span><span class="sd">
+</span><span class="sd">          object: _ @tag(object)
+</span><span class="sd">          patches: [
+</span><span class="sd">            if object.metadata.annotations == _|_ {
+</span><span class="sd">              {
+</span><span class="sd">                op: &#34;add&#34;
+</span><span class="sd">                path: &#34;/metadata/annotations&#34;
+</span><span class="sd">                value: {}
+</span><span class="sd">              }
+</span><span class="sd">            },
+</span><span class="sd">            {
+</span><span class="sd">              op: &#34;add&#34;
+</span><span class="sd">              path: &#34;/metadata/annotations/added-by&#34;
+</span><span class="sd">              value: &#34;cue&#34;
+</span><span class="sd">            }
+</span><span class="sd">          ]</span><span class="w">          
+</span><span class="w"></span><span class="nn">---</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">OverridePolicy</span><span class="w">
+</span><span class="w"></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">policy.kcloudlabs.io/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">add-anno-op-plaintext</span><span class="w">
+</span><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">resourceSelectors</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w">      </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Pod</span><span class="w">
+</span><span class="w">      </span><span class="nt">labelSelector</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span><span class="nt">kinitiras.kcloudlabs.io/webhook</span><span class="p">:</span><span class="w"> </span><span class="l">enabled</span><span class="w">
+</span><span class="w">  </span><span class="nt">overrideRules</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">targetOperations</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="l">CREATE</span><span class="w">
+</span><span class="w">      </span><span class="nt">overriders</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">plaintext</span><span class="p">:</span><span class="w">
+</span><span class="w">          </span>- <span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l">/metadata/annotations/added-by</span><span class="w">
+</span><span class="w">            </span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="l">add</span><span class="w">
+</span><span class="w">            </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l">op</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>上述例子中定义了两种类型的策略，通过 <code>resourceSelector</code> 进行目标资源对象的筛选，对于筛选出来的资源对象，将会继续使用 <code>overrideRules</code> 里面定义的规则进行判断，如果规则的 <code>targetOperations</code> 中包含本次操作类型，则将使用规则内的 ``overriders<code>生成最终对象，对比原始对象和最终对象生成 json-patch 所需的 patches 数组返回给</code>kube-apiserver<code>.  支持两种类的 </code>overriders`：plaintext、cue，前者适用于一些简单场景，后者适用于需要根据传入数据进行额外逻辑处理才能得到预期结果的场景，能力相对前者会更强。</p>
+<p>cue 脚本约定了输入输出参数，必须包含这些参数脚本才能成功执行。输入参数只有一个：object，即要操作的资源对象，输出参数为 patches 数组，定义如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">object: _ @tag(object)
+
+patch: {
+	op: string
+	path: string
+	value: string
+}
+// for mutating result
+patches: [...patch] 
+</code></pre></td></tr></table>
+</div>
+</div><p>具体数据结构如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// ResourceSelector the resources will be selected.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">ResourceSelector</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// APIVersion represents the API version of the target resources.
+</span><span class="c1"></span>	<span class="c1">// +required
+</span><span class="c1"></span>	<span class="nx">APIVersion</span> <span class="kt">string</span> <span class="s">`json:&#34;apiVersion&#34;`</span>
+
+	<span class="c1">// Kind represents the Kind of the target resources.
+</span><span class="c1"></span>	<span class="c1">// +required
+</span><span class="c1"></span>	<span class="nx">Kind</span> <span class="kt">string</span> <span class="s">`json:&#34;kind&#34;`</span>
+
+	<span class="c1">// Namespace of the target resource.
+</span><span class="c1"></span>	<span class="c1">// Default is empty, which means inherit from the parent object scope.
+</span><span class="c1"></span>	<span class="c1">// +optional
+</span><span class="c1"></span>	<span class="nx">Namespace</span> <span class="kt">string</span> <span class="s">`json:&#34;namespace,omitempty&#34;`</span>
+
+	<span class="c1">// Name of the target resource.
+</span><span class="c1"></span>	<span class="c1">// Default is empty, which means selecting all resources.
+</span><span class="c1"></span>	<span class="c1">// +optional
+</span><span class="c1"></span>	<span class="nx">Name</span> <span class="kt">string</span> <span class="s">`json:&#34;name,omitempty&#34;`</span>
+
+	<span class="c1">// A label query over a set of resources.
+</span><span class="c1"></span>	<span class="c1">// If name is not empty, labelSelector will be ignored.
+</span><span class="c1"></span>	<span class="c1">// +optional
+</span><span class="c1"></span>	<span class="nx">LabelSelector</span> <span class="o">*</span><span class="nx">metav1</span><span class="p">.</span><span class="nx">LabelSelector</span> <span class="s">`json:&#34;labelSelector,omitempty&#34;`</span>
+<span class="p">}</span>
+
+<span class="c1">// Overriders offers various alternatives to represent the override rules.
+</span><span class="c1">//
+</span><span class="c1">// If more than one alternatives exist, they will be applied with following order:
+</span><span class="c1">// - Cue
+</span><span class="c1">// - Plaintext
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Overriders</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// Plaintext represents override rules defined with plaintext overriders.
+</span><span class="c1"></span>	<span class="c1">// +optional
+</span><span class="c1"></span>	<span class="nx">Plaintext</span> <span class="p">[]</span><span class="nx">PlaintextOverrider</span> <span class="s">`json:&#34;plaintext,omitempty&#34;`</span>
+
+	<span class="c1">// Cue represents override rules defined with cue code.
+</span><span class="c1"></span>	<span class="c1">// +optional
+</span><span class="c1"></span>	<span class="nx">Cue</span> <span class="kt">string</span> <span class="s">`json:&#34;cue,omitempty&#34;`</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>上述例子的效果是对于任意 Namespace 的 Pod，只要其携带 <code>kinitiras.kcloudlabs.io/webhook: enabled</code> Label，则会修改其 annotation 为 added-by: cue，针对 default 下的 Pod，只要其携带 <code>kinitiras.kcloudlabs.io/webhook: enabled</code> Label，则会修改其 annotation 为 added-by: op。如果两个策略同时 apply 到集群中，同时在 default 下创建一个 Pod 并携带上述 Label，则最终创建的 Pod annotation 将会是 added-by: op，因为 <code>OverridePolicy</code> 后执行，覆盖了 <code>ClusterOverridePolicy</code> 的修改。</p>
+<h3 id="validate">Validate</h3>
+<p>内置了 <code>ClusterValidatePolicy</code>， 集群级别生效。针对同一个资源对象，同样可能存在多条匹配的策略，顺序在这里不重要，需要全部策略都通过之后才算整体校验通过，任意一个策略校验失败后将会拒绝请求。</p>
+<p>例：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">policy.kcloudlabs.io/v1alpha1</span><span class="w">
+</span><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ClusterValidatePolicy</span><span class="w">
+</span><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">test-delete-ns</span><span class="w">
+</span><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">validateRules</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">cue</span><span class="p">:</span><span class="w"> </span><span class="p">|-</span><span class="sd">
+</span><span class="sd">        object: _ @tag(object)
+</span><span class="sd">        reject: object.metadata.labels != null &amp;&amp; object.metadata.labels[&#34;kinitiras.kcloudlabs.io/webhook&#34;] == &#34;enabled&#34;
+</span><span class="sd">        validate: {
+</span><span class="sd">          if reject{
+</span><span class="sd">                  reason: &#34;operation rejected&#34;
+</span><span class="sd">          }
+</span><span class="sd">          if !reject{
+</span><span class="sd">                  reason: &#34;&#34;
+</span><span class="sd">          }
+</span><span class="sd">          valid: !reject
+</span><span class="sd">        }</span><span class="w">        
+</span><span class="w">      </span><span class="nt">targetOperations</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span>- <span class="l">DELETE</span><span class="w">
+</span><span class="w">  </span><span class="nt">resourceSelectors</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- <span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">v1</span><span class="w">
+</span><span class="w">      </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Namespace</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>通过 <code>resourceSelector</code> 进行目标资源对象的筛选，对于筛选出来的资源对象，将会继续使用 <code>validateRules</code> 里面定义的规则进行判断，如果规则的 <code>targetOperations</code> 中包含本次操作类型，则将使用 <code>cue</code> 脚本进行校验，检验结果返回给 <code>kube-apiserver</code>。与 Mutate 不同的是，Validate 只支持 cue 脚本校验。cue 脚本约定了输入输出参数，必须包含这些参数脚本才能成功执行。输入参数有两个：object、oldObject，其中后者只有在校验 <code>UPDATE</code> 操作时才需要，输出参数为 validate 结果，定义如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">object: _ @tag(object)
+oldObject: _ @tag(oldObject)
+
+// for validating result
+validate: { 
+	reason?: string
+	valid: bool
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>上述例子的效果为阻止删除带有 <code>kinitiras.kcloudlabs.io/webhook: enabled</code> 标签的 namespace。</p>
+<h2 id="部署">部署</h2>
+<h3 id="部署-crd-资源">部署 CRD 资源</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">kubectl apply -f https://raw.githubusercontent.com/k-cloud-labs/pkg/main/charts/_crds/bases/policy.kcloudlabs.io_overridepolicies.yaml
+kubectl apply -f https://raw.githubusercontent.com/k-cloud-labs/pkg/main/charts/_crds/bases/policy.kcloudlabs.io_clusteroverridepolicies.yaml
+kubectl apply -f https://raw.githubusercontent.com/k-cloud-labs/pkg/main/charts/_crds/bases/policy.kcloudlabs.io_clustervalidatepolicies.yaml
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="部署应用程序">部署应用程序</h3>
+<p>在部署之前，需要先根据实际需求修改 <code>webhook-configuration.yaml</code> 文件，尽量缩小目标资源对象的范围，减少不必要的请求。调整完所有 yaml 文件之后，只需要执行 apply 即可，如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">kubectl apply -f deploy/
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="例子">例子</h3>
+<p>在 examples 文件夹下内置了上述出现过的三个策略，可以 apply 到集群进行尝试。</p>
+<h2 id="小结">小结</h2>
+<p>上面对项目由来，能力及使用方式进行了简单介绍，核心还是利用了 admission webhook 来实现。可能有的小伙伴对 admission webhook 的稳定性、性能比较谨慎，鉴于此，这里提供了另外一个项目 <a href="https://github.com/k-cloud-labs/pidalio" target="_blank" rel="noopener noreffer">pidalio</a>，通过扩展 <code>client-go Transport</code> 来实现，在客户端生效，使用简单，代码层面只需要引用对用的包，并为 <code>rest.Config</code> 设置自定义的 <code>Transport</code> 即可。如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kn">import</span><span class="p">(</span>
+	<span class="s">&#34;github.com/k-cloud-labs/pidalio&#34;</span>
+<span class="p">)</span>
+
+<span class="nx">config</span><span class="p">.</span><span class="nf">Wrap</span><span class="p">(</span><span class="nx">pidalio</span><span class="p">.</span><span class="nf">NewPolicyTransport</span><span class="p">(</span><span class="nx">config</span><span class="p">,</span> <span class="nx">stopCh</span><span class="p">).</span><span class="nx">Wrap</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>但 pidalio 存在一个限制，即只支持 Mutate 操作，且必须使用 client-go 访问 <code>kube-apiserver</code>。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2022-05-12</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/kinitiras/" data-title="admission webhook 花式玩法 - kinitiras" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/kinitiras/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/kinitiras/" data-title="admission webhook 花式玩法 - kinitiras" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/kinitiras/" data-title="admission webhook 花式玩法 - kinitiras"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/kinitiras/" data-title="admission webhook 花式玩法 - kinitiras"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/kinitiras/" data-title="admission webhook 花式玩法 - kinitiras" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/kinitiras/" data-title="admission webhook 花式玩法 - kinitiras" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/kinitiras/" data-title="admission webhook 花式玩法 - kinitiras"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/docker-for-mac-1/" class="prev" rel="prev" title="docker for mac - 1"><i class="fas fa-angle-left fa-fw"></i>docker for mac - 1</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2022</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>
