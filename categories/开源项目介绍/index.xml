@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/categories/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E4%BB%8B%E7%BB%8D/</link>
         <description>开源项目介绍 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 29 Apr 2021 22:08:12 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E4%BB%8B%E7%BB%8D/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 12 May 2022 10:21:43 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E4%BB%8B%E7%BB%8D/" rel="self" type="application/rss+xml" /><item>
+    <title>admission webhook 花式玩法 - kinitiras</title>
+    <link>https://www.likakuli.com/posts/kinitiras/</link>
+    <pubDate>Thu, 12 May 2022 10:21:43 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kinitiras/</guid>
+    <description><![CDATA[项目由来 使用 kubernetes 的同学可能或多或少会有以下的实际业务或者需求场景： 为确保安全性，需要对某些资源进行删除保护，例如不允许删除 namespace、]]></description>
+</item><item>
     <title>CRUD工程师的福音</title>
     <link>https://www.likakuli.com/posts/crud/</link>
     <pubDate>Thu, 29 Apr 2021 22:08:12 &#43;0800</pubDate>
