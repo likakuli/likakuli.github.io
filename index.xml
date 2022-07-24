@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 12 May 2022 10:21:43 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 18 Jul 2022 20:35:09 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>admission webhook 花式玩法 - kinitiras 发送 http(s) 请求</title>
+    <link>https://www.likakuli.com/posts/kinitiras-cue-http/</link>
+    <pubDate>Mon, 18 Jul 2022 20:35:09 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kinitiras-cue-http/</guid>
+    <description><![CDATA[本篇由来 在使用 Admission Webhook 的时候，很可能会涉及到发送 http 请求以获取某些数据。在 v0.1.1 版本中对此进行了支持，本文主要来介绍如何在 kinitiras 中发送 http 请求，如果对 kinitiras 还不]]></description>
+</item><item>
     <title>admission webhook 花式玩法 - kinitiras</title>
     <link>https://www.likakuli.com/posts/kinitiras/</link>
     <pubDate>Thu, 12 May 2022 10:21:43 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/gpu-metrics-not-display/</guid>
     <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
-</item><item>
-    <title>通用Restful API项目模板</title>
-    <link>https://www.likakuli.com/posts/generic-project-template/</link>
-    <pubDate>Tue, 11 May 2021 15:47:58 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/generic-project-template/</guid>
-    <description><![CDATA[通用Restful API项目模板 欢迎使用，这是一个用Go编写的简单通用的Restful API项目，遵循SOLID原则。 部分灵感来自于 service-pattern-go 依赖 Gin]]></description>
 </item></channel>
 </rss>
