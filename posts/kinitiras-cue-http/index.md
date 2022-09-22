@@ -42,4 +42,6 @@ validate:{
 
 上面这段 CUE 配置的含义是传入一个 k8s 资源对象，访问 http://127.0.0.1:8090/api/v1/token?val=test-token 获取 token 信息，最终返回 validate 结果，如果传入的 k8s 对象的名字是 ut-cue-success-with-parameter 并且 http 返回结果中的 token 是 test-token 的话，校验成功。
 
+CUE http 相关处理参考 kubevela 相关能力的实现，涉及到的部分包在当前 CUE 中属于 internal，无法在外部直接引用，故部分内容直接在 builtin 目录下重新写了一遍。
+
 
