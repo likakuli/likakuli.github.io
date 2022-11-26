@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 18 Jul 2022 20:35:09 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 26 Nov 2022 13:30:00 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>思想随笔2 - 一起读毛选</title>
+    <link>https://www.likakuli.com/posts/thoughtfulessay2/</link>
+    <pubDate>Sat, 26 Nov 2022 13:30:00 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/thoughtfulessay2/</guid>
+    <description><![CDATA[第一卷 - 关心群众生活，注意工作方法 这是毛泽东在一九三四年一月二十二日至二月一日在江西瑞金召开的第二次全国工农兵代表大会上所作的结论的一部分。]]></description>
+</item><item>
     <title>admission webhook 花式玩法 - kinitiras 发送 http(s) 请求</title>
     <link>https://www.likakuli.com/posts/kinitiras-cue-http/</link>
     <pubDate>Mon, 18 Jul 2022 20:35:09 &#43;0800</pubDate>
@@ -66,13 +73,6 @@
     <pubDate>Sun, 30 May 2021 14:23:24 &#43;0800</pubDate>
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/gpu-metrics-not-display2/</guid>
-    <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
-</item><item>
-    <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
-    <link>https://www.likakuli.com/posts/gpu-metrics-not-display/</link>
-    <pubDate>Sun, 30 May 2021 14:23:23 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/gpu-metrics-not-display/</guid>
     <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
 </item></channel>
 </rss>
