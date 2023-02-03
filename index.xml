@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 26 Nov 2022 13:30:00 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Fri, 03 Feb 2023 15:09:26 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>Kinitiras - 可编程 webhook 规则引擎详解</title>
+    <link>https://www.likakuli.com/posts/kinitiras-all/</link>
+    <pubDate>Fri, 03 Feb 2023 15:09:26 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kinitiras-all/</guid>
+    <description><![CDATA[1.背景 Definition 准入 Webhook 是一种用于接收准入请求并对其进行处理的 HTTP 回调机制。 可以定义两种类型的准入 webhook，即 验证性质的准入 Webhook 和 修改性质的准入 W]]></description>
+</item><item>
     <title>思想随笔2 - 一起读毛选</title>
     <link>https://www.likakuli.com/posts/thoughtfulessay2/</link>
     <pubDate>Sat, 26 Nov 2022 13:30:00 &#43;0800</pubDate>
@@ -68,13 +75,6 @@
     <pubDate>Sun, 30 May 2021 14:23:25 &#43;0800</pubDate>
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/gpu-metrics-not-display3/</guid>
-    <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
-</item><item>
-    <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
-    <link>https://www.likakuli.com/posts/gpu-metrics-not-display2/</link>
-    <pubDate>Sun, 30 May 2021 14:23:24 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/gpu-metrics-not-display2/</guid>
     <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
 </item></channel>
 </rss>

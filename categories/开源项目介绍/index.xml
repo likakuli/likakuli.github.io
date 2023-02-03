@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/categories/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E4%BB%8B%E7%BB%8D/</link>
         <description>开源项目介绍 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 18 Jul 2022 20:35:09 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E4%BB%8B%E7%BB%8D/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Fri, 03 Feb 2023 15:09:26 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E4%BB%8B%E7%BB%8D/" rel="self" type="application/rss+xml" /><item>
+    <title>Kinitiras - 可编程 webhook 规则引擎详解</title>
+    <link>https://www.likakuli.com/posts/kinitiras-all/</link>
+    <pubDate>Fri, 03 Feb 2023 15:09:26 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/kinitiras-all/</guid>
+    <description><![CDATA[1.背景 Definition 准入 Webhook 是一种用于接收准入请求并对其进行处理的 HTTP 回调机制。 可以定义两种类型的准入 webhook，即 验证性质的准入 Webhook 和 修改性质的准入 W]]></description>
+</item><item>
     <title>admission webhook 花式玩法 - kinitiras 发送 http(s) 请求</title>
     <link>https://www.likakuli.com/posts/kinitiras-cue-http/</link>
     <pubDate>Mon, 18 Jul 2022 20:35:09 &#43;0800</pubDate>
