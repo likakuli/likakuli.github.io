@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Fri, 03 Feb 2023 15:09:26 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 12 Feb 2023 13:12:38 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>调度器压测工具介绍</title>
+    <link>https://www.likakuli.com/posts/scheduler-stress-test/</link>
+    <pubDate>Sun, 12 Feb 2023 13:12:38 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/scheduler-stress-test/</guid>
+    <description><![CDATA[背景 源于一次线上 P0 故障，一个生产集群被误操作删除（不只是业务被删，是集群也被删了），集群规模较大，在集群恢复后 Pod 进行了重新、调度的过程，整个]]></description>
+</item><item>
     <title>Kinitiras - 可编程 webhook 规则引擎详解</title>
     <link>https://www.likakuli.com/posts/kinitiras-all/</link>
     <pubDate>Fri, 03 Feb 2023 15:09:26 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kubernetes-interpodaffinity/</guid>
     <description><![CDATA[从事Kubernetes相关工作的同学对Kube-scheduler一定不会感到陌生，有的甚至还可能遇到过里面的一些问题，本篇主要介绍其中的]]></description>
-</item><item>
-    <title>容器开启特权模式后无法通过cadvisor获取GPU metrics指标</title>
-    <link>https://www.likakuli.com/posts/gpu-metrics-not-display3/</link>
-    <pubDate>Sun, 30 May 2021 14:23:25 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/gpu-metrics-not-display3/</guid>
-    <description><![CDATA[问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信]]></description>
 </item></channel>
 </rss>
