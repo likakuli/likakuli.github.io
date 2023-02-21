@@ -207,3 +207,7 @@ nodes selected to be scaled down:
 
 帮助我们基于集群历史某一时刻的状态来进行相关模拟操作，以及分析资源碎片情况等，欢迎体验并提出您的宝贵意见，谢谢！
 
+
+
+我的博客即将同步至腾讯云开发者社区，邀请大家一同入驻：https://cloud.tencent.com/developer/support-plan?invite_code=ue85q0jbdgn2
+
