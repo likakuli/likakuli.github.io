@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/</link>
         <description>问题排查 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 16 Oct 2021 16:06:50 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 23 Aug 2023 18:13:30 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/" rel="self" type="application/rss+xml" /><item>
+    <title>high QPS for configmap GET requests in kube-apiserver - 1</title>
+    <link>https://www.likakuli.com/posts/cachebasedmanager1/</link>
+    <pubDate>Wed, 23 Aug 2023 18:13:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/cachebasedmanager1/</guid>
+    <description><![CDATA[背景 线上 k8s 集群 kube-apiserver 的 ConfigMap Get 操作 QPS 较高，且同时间段 Etcd 中 ConfigMap 资源的 Get 操作 QPS 也较高，看日志多数请求的发起方是 kubelet。对应 k8s v1.22.13 版本代码，同时在 v1.28.0 测]]></description>
+</item><item>
     <title>那些年，我们一起追的Bug</title>
     <link>https://www.likakuli.com/posts/kubernetes-cpu-manager/</link>
     <pubDate>Sat, 16 Oct 2021 16:06:50 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/docker-pod-terminating/</guid>
     <description><![CDATA[转载自组内同事stupig 1. 背景 近期，弹性云线上集群发生了几起特殊的容器漂移失败事件，其特殊之处在于容器处于Pod Terminating状态]]></description>
-</item><item>
-    <title>docker hang问题排查</title>
-    <link>https://www.likakuli.com/posts/docker-hang/</link>
-    <pubDate>Mon, 26 Oct 2020 21:52:54 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/docker-hang/</guid>
-    <description><![CDATA[转载自组内同事 1. 背景 最近升级了一版kubelet，修复因kubelet删除Pod慢导致平台删除集群超时的问题。在灰度redis隔离集群的时候]]></description>
 </item></channel>
 </rss>

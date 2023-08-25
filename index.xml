@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 20 Feb 2023 23:17:31 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 23 Aug 2023 18:13:30 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>high QPS for configmap GET requests in kube-apiserver - 1</title>
+    <link>https://www.likakuli.com/posts/cachebasedmanager1/</link>
+    <pubDate>Wed, 23 Aug 2023 18:13:30 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/cachebasedmanager1/</guid>
+    <description><![CDATA[背景 线上 k8s 集群 kube-apiserver 的 ConfigMap Get 操作 QPS 较高，且同时间段 Etcd 中 ConfigMap 资源的 Get 操作 QPS 也较高，看日志多数请求的发起方是 kubelet。对应 k8s v1.22.13 版本代码，同时在 v1.28.0 测]]></description>
+</item><item>
     <title>k8s 集群容量分析工具 - kluster-capacity</title>
     <link>https://www.likakuli.com/posts/kluster-capacity/</link>
     <pubDate>Mon, 20 Feb 2023 23:17:31 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/thoughtfulessay/</guid>
     <description><![CDATA[机缘巧合 去年一个偶然的机会在抖音上刷到了&quot;姜胡说&quot;，里面不乏一些有趣且发人深思的内容，在其中一期中胡子提到了几本书，其中]]></description>
-</item><item>
-    <title>Kubenetes NUMA拓扑感知功能介绍</title>
-    <link>https://www.likakuli.com/posts/kubernetes-topology-manager/</link>
-    <pubDate>Fri, 18 Jun 2021 18:59:04 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-topology-manager/</guid>
-    <description><![CDATA[由来 最近的工作内容中涉及到了 NUMA 感知相关的功能，之前没有特意去看过 kubelet 相关部分的实现，也是趁此机会把落下的补补。在看代码的过程中，NUMA 感知部]]></description>
 </item></channel>
 </rss>
