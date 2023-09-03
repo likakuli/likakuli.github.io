@@ -10,7 +10,7 @@
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/cachebasedmanager1/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2023-08-23T18:13:30+08:00" />
-<meta property="article:modified_time" content="2023-08-25T15:42:10+08:00" />
+<meta property="article:modified_time" content="2023-09-03T21:28:59+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -20,7 +20,7 @@
 <meta name="application-name" content="LoveIt">
 <meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/cachebasedmanager1/" /><link rel="prev" href="https://www.likakuli.com/posts/kluster-capacity/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/cachebasedmanager1/" /><link rel="prev" href="https://www.likakuli.com/posts/kluster-capacity/" /><link rel="next" href="https://www.likakuli.com/posts/cachebasedmanager2/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
     {
         "@context": "http://schema.org",
         "@type": "BlogPosting",
@@ -29,8 +29,8 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/cachebasedmanager1\/"
-        },"genre": "posts","keywords": "kubernetes","wordcount":  3172 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/cachebasedmanager1\/","datePublished": "2023-08-23T18:13:30+08:00","dateModified": "2023-08-25T15:42:10+08:00","publisher": {
+        },"genre": "posts","keywords": "kubernetes","wordcount":  3197 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/cachebasedmanager1\/","datePublished": "2023-08-23T18:13:30+08:00","dateModified": "2023-09-03T21:28:59+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -111,7 +111,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">high QPS for configmap GET requests in kube-apiserver - 1</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-08-23">2023-08-23</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3172 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-08-23">2023-08-23</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3197 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/cachebasedmanager1/" class="leancloud_visitors" data-flag-title="high QPS for configmap GET requests in kube-apiserver - 1">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
@@ -165,6 +165,7 @@
 <li>为什么 QPS 高？为什么没有走 kube-apiserver 缓存？</li>
 <li>问题如何解决？</li>
 </ol>
+<p>本篇主要介绍 ConfigMap Get 请求的整个调用链路</p>
 <h1 id="追踪溯源">追踪溯源</h1>
 <p>在找到具体原因之前，大概有个排查方向，因为日志中显示的 ConfigMap 都是挂载到 Pod 中作为 Volume 使用的，问题的根源大概率与此有关，因此先从这个方向来。</p>
 <p>采取自下而上方式沿着函数调用链路看代码，找源头，首先需要找到最后调用 ConfigMap Get 的地方，如果熟悉 client-go 的话，很容易在 /pkg/kubelet 目录下根据关键字 <code>ConfigMaps(</code> 搜索到结果，在 /pkg/kubelet/configmap/configmap_manager.go 文件中，里面有三种类型的 manager，分别对用不同类型的参数设置，因为 kubelet 配置的 <code>configMapAndSecretChangeDetectionStrategy: Cache</code>，因此看 <code>NewCachingConfigMapManager</code> 即可，最终返回 <code>cacheBasedManager</code> 就是管理 ConfigMap 的。</p>
@@ -521,7 +522,7 @@
 <li>遍历每个卷，看 Pod 是否存在于 <code>actualStateOfWorld</code> 中保存的已经挂载了卷的 Pod 列表中</li>
 <li>如果 2 返回不存在（尚未挂载），或者需要重新挂载，则会调用 <code>operationExecutor.MountVolume</code> 进行挂载</li>
 </ol>
-<p>之后就会一步步触发最终 <code>GetObject</code> 去获取要挂载的 <code>ConfigMap</code> ，继续往上找 <code>mountAttachVolumes</code> 调用方，如下</p>
+<p>之后就会一步步触发最终 <code>GetObject</code> 去获取要挂载的 <code>ConfigMap</code>，继续往上找 <code>mountAttachVolumes</code> 调用方，如下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -712,7 +713,7 @@
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2023-08-25</span>
+                <span>更新于 2023-09-03</span>
             </div>
             <div class="post-info-license"></div>
         </div>
@@ -731,7 +732,8 @@
         </section>
     </div>
 
-    <div class="post-nav"><a href="/posts/kluster-capacity/" class="prev" rel="prev" title="k8s 集群容量分析工具 - kluster-capacity"><i class="fas fa-angle-left fa-fw"></i>k8s 集群容量分析工具 - kluster-capacity</a></div>
+    <div class="post-nav"><a href="/posts/kluster-capacity/" class="prev" rel="prev" title="k8s 集群容量分析工具 - kluster-capacity"><i class="fas fa-angle-left fa-fw"></i>k8s 集群容量分析工具 - kluster-capacity</a>
+            <a href="/posts/cachebasedmanager2/" class="next" rel="next" title="high QPS for configmap GET requests in kube-apiserver - 2">high QPS for configmap GET requests in kube-apiserver - 2<i class="fas fa-angle-right fa-fw"></i></a></div>
 </div>
 <div id="comments"><div id="valine" class="comment"></div><noscript>
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.

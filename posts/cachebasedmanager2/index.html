@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>high QPS for configmap GET requests in kube-apiserver - 2 - kaku&#39;s blog</title><meta name="Description" content="high QPS for configmap GET requests in kube-apiserver - 2"><meta property="og:title" content="high QPS for configmap GET requests in kube-apiserver - 2" />
+<meta property="og:description" content="high QPS for configmap GET requests in kube-apiserver - 2" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/cachebasedmanager2/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-08-25T16:02:05+08:00" />
+<meta property="article:modified_time" content="2023-09-03T21:28:59+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="high QPS for configmap GET requests in kube-apiserver - 2"/>
+<meta name="twitter:description" content="high QPS for configmap GET requests in kube-apiserver - 2"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/cachebasedmanager2/" /><link rel="prev" href="https://www.likakuli.com/posts/cachebasedmanager1/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "high QPS for configmap GET requests in kube-apiserver - 2",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/cachebasedmanager2\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  3127 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/cachebasedmanager2\/","datePublished": "2023-08-25T16:02:05+08:00","dateModified": "2023-09-03T21:28:59+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": "high QPS for configmap GET requests in kube-apiserver - 2"
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">high QPS for configmap GET requests in kube-apiserver - 2</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-08-25">2023-08-25</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3127 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/cachebasedmanager2/" class="leancloud_visitors" data-flag-title="high QPS for configmap GET requests in kube-apiserver - 2">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#背景">背景</a></li>
+    <li><a href="#由来">由来</a></li>
+    <li><a href="#回顾">回顾</a></li>
+    <li><a href="#为什么-qps-高">为什么 QPS 高？</a>
+      <ul>
+        <li><a href="#qps-估算">QPS 估算</a></li>
+      </ul>
+    </li>
+    <li><a href="#为什么没有走-apiserver-缓存">为什么没有走 apiserver 缓存？</a>
+      <ul>
+        <li><a href="#有没有走本地缓存">有没有走本地缓存？</a></li>
+        <li><a href="#为什么没有走-apiserver-缓存-1">为什么没有走 apiserver 缓存？</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="背景">背景</h1>
+<p>线上 k8s 集群 kube-apiserver 的 ConfigMap Get 操作 QPS 较高，且同时间段 Etcd 中 ConfigMap 资源的 Get 操作 QPS 也较高，看日志多数请求的发起方是 kubelet。对应 k8s v1.22.13 版本代码，同时在 v1.28.0 测试现象相同。kube-apiserver 日志大致如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">2023-08-23T08:55:54.331196195Z stderr F I0823 08:55:54.330840       <span class="m">1</span> httplog.go:132<span class="o">]</span> <span class="s2">&#34;HTTP&#34;</span> <span class="nv">verb</span><span class="o">=</span><span class="s2">&#34;GET&#34;</span> <span class="nv">URI</span><span class="o">=</span><span class="s2">&#34;/api/v1/namespaces/default/configmaps/nginx-cfgmap&#34;</span> <span class="nv">latency</span><span class="o">=</span><span class="s2">&#34;1.926865ms&#34;</span> <span class="nv">userAgent</span><span class="o">=</span><span class="s2">&#34;kubelet/v1.28.0 (linux/amd64) kubernetes/855e7c4&#34;</span> audit-ID<span class="o">=</span><span class="s2">&#34;36cfcbe3-d76a-4a4d-b251-47cc2df060cb&#34;</span> <span class="nv">srcIP</span><span class="o">=</span><span class="s2">&#34;192.168.228.2:59052&#34;</span> <span class="nv">apf_pl</span><span class="o">=</span><span class="s2">&#34;system&#34;</span> <span class="nv">apf_fs</span><span class="o">=</span><span class="s2">&#34;system-nodes&#34;</span> <span class="nv">apf_iseats</span><span class="o">=</span><span class="m">1</span> <span class="nv">apf_fseats</span><span class="o">=</span><span class="m">0</span> <span class="nv">apf_additionalLatency</span><span class="o">=</span><span class="s2">&#34;0s&#34;</span> <span class="nv">apf_execution_time</span><span class="o">=</span><span class="s2">&#34;1.269527ms&#34;</span> <span class="nv">resp</span><span class="o">=</span><span class="m">200</span>
+2023-08-23T08:57:09.333913507Z stderr F I0823 08:57:09.333470       <span class="m">1</span> httplog.go:132<span class="o">]</span> <span class="s2">&#34;HTTP&#34;</span> <span class="nv">verb</span><span class="o">=</span><span class="s2">&#34;GET&#34;</span> <span class="nv">URI</span><span class="o">=</span><span class="s2">&#34;/api/v1/namespaces/default/configmaps/nginx-cfgmap&#34;</span> <span class="nv">latency</span><span class="o">=</span><span class="s2">&#34;1.810334ms&#34;</span> <span class="nv">userAgent</span><span class="o">=</span><span class="s2">&#34;kubelet/v1.28.0 (linux/amd64) kubernetes/855e7c4&#34;</span> audit-ID<span class="o">=</span><span class="s2">&#34;563bd337-df29-4342-afd0-9ca6e0632f0f&#34;</span> <span class="nv">srcIP</span><span class="o">=</span><span class="s2">&#34;192.168.228.2:59052&#34;</span> <span class="nv">apf_pl</span><span class="o">=</span><span class="s2">&#34;system&#34;</span> <span class="nv">apf_fs</span><span class="o">=</span><span class="s2">&#34;system-nodes&#34;</span> <span class="nv">apf_iseats</span><span class="o">=</span><span class="m">1</span> <span class="nv">apf_fseats</span><span class="o">=</span><span class="m">0</span> <span class="nv">apf_additionalLatency</span><span class="o">=</span><span class="s2">&#34;0s&#34;</span> <span class="nv">apf_execution_time</span><span class="o">=</span><span class="s2">&#34;1.177012ms&#34;</span> <span class="nv">resp</span><span class="o">=</span><span class="m">200</span>
+2023-08-23T08:58:14.338971779Z stderr F I0823 08:58:14.338630       <span class="m">1</span> httplog.go:132<span class="o">]</span> <span class="s2">&#34;HTTP&#34;</span> <span class="nv">verb</span><span class="o">=</span><span class="s2">&#34;GET&#34;</span> <span class="nv">URI</span><span class="o">=</span><span class="s2">&#34;/api/v1/namespaces/default/configmaps/nginx-cfgmap&#34;</span> <span class="nv">latency</span><span class="o">=</span><span class="s2">&#34;1.563356ms&#34;</span> <span class="nv">userAgent</span><span class="o">=</span><span class="s2">&#34;kubelet/v1.28.0 (linux/amd64) kubernetes/855e7c4&#34;</span> audit-ID<span class="o">=</span><span class="s2">&#34;45350dc7-7a4b-43f1-8972-3b8053578234&#34;</span> <span class="nv">srcIP</span><span class="o">=</span><span class="s2">&#34;192.168.228.2:59052&#34;</span> <span class="nv">apf_pl</span><span class="o">=</span><span class="s2">&#34;system&#34;</span> <span class="nv">apf_fs</span><span class="o">=</span><span class="s2">&#34;system-nodes&#34;</span> <span class="nv">apf_iseats</span><span class="o">=</span><span class="m">1</span> <span class="nv">apf_fseats</span><span class="o">=</span><span class="m">0</span> <span class="nv">apf_additionalLatency</span><span class="o">=</span><span class="s2">&#34;0s&#34;</span> <span class="nv">apf_execution_time</span><span class="o">=</span><span class="s2">&#34;929.214µs&#34;</span> <span class="nv">resp</span><span class="o">=</span><span class="m">200</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="由来">由来</h1>
+<p>定位此问题的过程中花了一定的时间，同时也纠正了一些有关 kubelet 内 Pod 处理的错误理解。本篇旨在描述上述现象产生的原因及潜在问题，同时也希望能帮助大家更进一步的理解 kubelet 对 Pod 的处理逻辑。</p>
+<p>由于涉及到的逻辑较多，因此将拆分成三篇来写：</p>
+<ol>
+<li>ConfigMap Get 请求的来源？</li>
+<li>为什么 QPS 高？为什么没有走 kube-apiserver 缓存？</li>
+<li>问题如何解决？</li>
+</ol>
+<p>本篇主要介绍 QPS 为什么高，为什么请求会穿透到 Etcd。</p>
+<h1 id="回顾">回顾</h1>
+<p>在第一篇中已经介绍了 ConfigMap Get 请求的逻辑：</p>
+<p>每有 Pod 需要 Sync 时，会触发 <code>syncPod</code>，在 <code>syncPod</code> 时会调用 <code>configMapManager.RegisterPod</code> 标记缓存无效，reconciler goroutine 每 100ms 执行一次 <code>mountAttachVolumes</code> 去挂载 Pod 所有的 Volume，发现被标记失效就会重新去 apiserver 获取。</p>
+<p>至于具体哪些 Pod 需要去挂载哪些 Volume，有另外两个数据结构存储相关信息：<code>DesiredStateOfWorld</code>，<code>ActualStateOfWorld</code>。</p>
+<h1 id="为什么-qps-高">为什么 QPS 高？</h1>
+<h2 id="qps-估算">QPS 估算</h2>
+<p>可以粗略计算每台机器上的 kubelet 对 ConfigMap Get 的贡献，我们可以先统一前提，就是没有外部 Pod 的增删改请求，也没有 Container Runtime 侧的变化，单纯是靠 syncCh 来触发的 syncPod，有如下数据：</p>
+<ul>
+<li>sync tiker 的周期是 1s；</li>
+<li>reconciler 的周期为 100ms；</li>
+<li><code>--sync--frequency</code> 默认配置是 1m；</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/kubelet/pod_workers.go
+</span><span class="c1"></span>
+<span class="c1">// completeWork requeues on error or the next sync interval and then immediately executes any pending
+</span><span class="c1">// work.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">podWorkers</span><span class="p">)</span> <span class="nf">completeWork</span><span class="p">(</span><span class="nx">pod</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span> <span class="nx">phaseTransition</span> <span class="kt">bool</span><span class="p">,</span> <span class="nx">syncErr</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// Requeue the last update if the last sync returned error.
+</span><span class="c1"></span>	<span class="k">switch</span> <span class="p">{</span>
+	<span class="o">...</span>
+	<span class="k">case</span> <span class="nx">syncErr</span> <span class="o">==</span> <span class="kc">nil</span><span class="p">:</span>
+		<span class="c1">// No error; requeue at the regular resync interval.
+</span><span class="c1"></span>		<span class="nx">p</span><span class="p">.</span><span class="nx">workQueue</span><span class="p">.</span><span class="nf">Enqueue</span><span class="p">(</span><span class="nx">pod</span><span class="p">.</span><span class="nx">UID</span><span class="p">,</span> <span class="nx">wait</span><span class="p">.</span><span class="nf">Jitter</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">resyncInterval</span><span class="p">,</span> <span class="nx">workerResyncIntervalJitterFactor</span><span class="p">))</span>
+	<span class="o">...</span>
+	<span class="p">}</span>
+	<span class="nx">p</span><span class="p">.</span><span class="nf">completeWorkQueueNext</span><span class="p">(</span><span class="nx">pod</span><span class="p">.</span><span class="nx">UID</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>虽然 reconciler 周期 100ms，但只有在缓存标记为失效或者过期时才会去 apiserver 拿，并且我们看到的日志都是直接穿透到 Etcd 的，也就是说针对我们的情况，都是由缓存被标记为失效引起的。</p>
+<p><code>resyncInterval</code> 对应的是参数 <code>--sync-frequency</code>。k8s 里面经常是在配置里面设置一个同步的间隔，而实际的间隔往往是一个介于配置的间隔和此间隔额外加上一个随机值之间的随机值，这里也是同样的，实际每次 Enqueue 的时间是当前时间加上介于 1m 与 1m30s 之间的一个随机值。虽然 sync ticker 周期是 1s，也只是每次尝试去看队列里面有没有需要同步的 Pod，他的判断依据就是拿当前时间与 Pod Enqueue 时计算的时间作比较，如果已近过了 Enqueue 带的时间，就会触发 <code>syncPod</code>。</p>
+<p>如果节点上只有一个 Pod 挂载了一个 ConfigMap，那么理论上他贡献的 QPS 介于 1/90 到 1/60 之间。这么一看的话，QPS 也不算高，假如一个有 90 个实例的 deployment 挂载一个 ConfigMap，如果<strong>每个 deployment 的所有实例都分布在不同的机器上</strong>，那么他对  QPS 的贡献介于 1 和 90 之间，如果有 100 个这样的 deployment，并且<strong>他们挂载的 ConfigMap 各不相同</strong>，那么整体的 QPS 的贡献介于 100 和 9000 之间。也就是说 9000 个 Pod 可能的贡献介于 100 和 9000之间，这个上下限差距很大。</p>
+<h1 id="为什么没有走-apiserver-缓存">为什么没有走 apiserver 缓存？</h1>
+<p>分别就本地缓存和 apiserver 缓存来分析</p>
+<h2 id="有没有走本地缓存">有没有走本地缓存？</h2>
+<p>不知道你有没有这个疑问，<strong>既然每次 <code>syncPod</code> 都会设置缓存失效，那本地缓存还有什么用</strong>？</p>
+<p>确实从当前的实现结果看，本地貌似缓存没有用，但实际还是有一些作用，某些情况下是可以降低 apiserver QPS 的。考虑如下情况</p>
+<ul>
+<li>同一个 deployment 的不同实例在同一台宿主上；</li>
+<li>不同的 deployment 挂载了相同的 ConfigMap；</li>
+</ul>
+<p>会导致出现挂载相同 ConfigMap 的 Pod 出现在同一台机器上，而我们知道 <code>syncPod</code> 是有多个 goroutine 并行执行的，以 Pod 为粒度，而 ConfigMap 的缓存的 Key 的是其 namespace，name 组成的结构，也就以是 ConfigMap 为粒度，且最终 reconciler 执行 Get 的操作是串行的，就可能会出现相同的 CM 被标记失效，但获取的时候由于串行执行，前面一个已经获取过了，后面的就不会再走到去 apiserver 获取 CM 的逻辑，而是直接利用缓存中的 CM 返回。</p>
+<p>因此，<strong>在当前的机制和实现结果下，QPS 高的主要原因在于使用 CM 作为 Pod Volume 的数量过多导致</strong>，且 Pod 调度的越分散，CM 重合度越低，QPS 会越高。</p>
+<h2 id="为什么没有走-apiserver-缓存-1">为什么没有走 apiserver 缓存？</h2>
+<p>按上面的分析，默认每 1m 到 1m30s s 触发一次 <code>syncPod</code>，而缓存过期时间为 1m（来自 node annotation <code>node.alpha.kubernetes.io/ttl</code>，会随着集群规模变化，控制逻辑在 kube-controller-manager 里面，node 上如果没有这个设置的话，会采用默认的最小值，即 1m），理论上就应该出现由于缓存过期导致的再次去 apiserver 获取时直接从 apiserver cache 里面拿的请求，即会出现带着 resourceversion=0 的请求，但实际没有，哪里的问题呢？</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="GetObject.png"
+        data-srcset="/posts/cachebasedmanager2/GetObject.png, GetObject.png 1.5x, /posts/cachebasedmanager2/GetObject.png 2x"
+        data-sizes="auto"
+        alt="/posts/cachebasedmanager2/GetObject.png"
+        title="image-20230824154157569" /></p>
+<p>这里就涉及到 <code>remountRequired</code> 了，可以看到在 <code>MountVolume</code> 成功后会设置这个参数为 false，代表不再需要挂载了已经，如果没有其他地方改这个参数的话，理论上挂载成功后就不会再请求 apiserver 了，与实际情况不符，那就是还会有其他地方去改这个值，设置为 true，代码如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/kubelet/volumemanager/populator/desired_state_of_world_populator.go
+</span><span class="c1"></span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">asw</span> <span class="o">*</span><span class="nx">actualStateOfWorld</span><span class="p">)</span> <span class="nf">MarkRemountRequired</span><span class="p">(</span>
+	<span class="nx">podName</span> <span class="nx">volumetypes</span><span class="p">.</span><span class="nx">UniquePodName</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">asw</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">asw</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="k">for</span> <span class="nx">volumeName</span><span class="p">,</span> <span class="nx">volumeObj</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">asw</span><span class="p">.</span><span class="nx">attachedVolumes</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">podObj</span><span class="p">,</span> <span class="nx">podExists</span> <span class="o">:=</span> <span class="nx">volumeObj</span><span class="p">.</span><span class="nx">mountedPods</span><span class="p">[</span><span class="nx">podName</span><span class="p">];</span> <span class="nx">podExists</span> <span class="p">{</span>
+			<span class="nx">volumePlugin</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span>
+				<span class="nx">asw</span><span class="p">.</span><span class="nx">volumePluginMgr</span><span class="p">.</span><span class="nf">FindPluginBySpec</span><span class="p">(</span><span class="nx">podObj</span><span class="p">.</span><span class="nx">volumeSpec</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">||</span> <span class="nx">volumePlugin</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="c1">// Log and continue processing
+</span><span class="c1"></span>				<span class="nx">klog</span><span class="p">.</span><span class="nf">ErrorS</span><span class="p">(</span><span class="kc">nil</span><span class="p">,</span> <span class="s">&#34;MarkRemountRequired failed to FindPluginBySpec for volume&#34;</span><span class="p">,</span> <span class="s">&#34;uniquePodName&#34;</span><span class="p">,</span> <span class="nx">podObj</span><span class="p">.</span><span class="nx">podName</span><span class="p">,</span> <span class="s">&#34;podUID&#34;</span><span class="p">,</span> <span class="nx">podObj</span><span class="p">.</span><span class="nx">podUID</span><span class="p">,</span> <span class="s">&#34;volumeName&#34;</span><span class="p">,</span> <span class="nx">volumeName</span><span class="p">,</span> <span class="s">&#34;volumeSpecName&#34;</span><span class="p">,</span> <span class="nx">podObj</span><span class="p">.</span><span class="nx">volumeSpec</span><span class="p">.</span><span class="nf">Name</span><span class="p">())</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+
+			<span class="k">if</span> <span class="nx">volumePlugin</span><span class="p">.</span><span class="nf">RequiresRemount</span><span class="p">(</span><span class="nx">podObj</span><span class="p">.</span><span class="nx">volumeSpec</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">podObj</span><span class="p">.</span><span class="nx">remountRequired</span> <span class="p">=</span> <span class="kc">true</span>
+				<span class="nx">asw</span><span class="p">.</span><span class="nx">attachedVolumes</span><span class="p">[</span><span class="nx">volumeName</span><span class="p">].</span><span class="nx">mountedPods</span><span class="p">[</span><span class="nx">podName</span><span class="p">]</span> <span class="p">=</span> <span class="nx">podObj</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>继续沿着其调用链路往上找，会发现另外一个类似上篇中 reconciler 的一个 goroutine 在定时的执行以下方法，就在这个方法里面会触发最终 <code>MarkRemountRequired</code> 的调用。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// pkg/kubelet/volumemanager/populator/desired_state_of_world_populator.go
+</span><span class="c1"></span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">dswp</span> <span class="o">*</span><span class="nx">desiredStateOfWorldPopulator</span><span class="p">)</span> <span class="nf">Run</span><span class="p">(</span><span class="nx">sourcesReady</span> <span class="nx">config</span><span class="p">.</span><span class="nx">SourcesReady</span><span class="p">,</span> <span class="nx">stopCh</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span> <span class="p">{</span>
+	<span class="c1">// Wait for the completion of a loop that started after sources are all ready, then set hasAddedPods accordingly
+</span><span class="c1"></span>	<span class="nx">klog</span><span class="p">.</span><span class="nf">InfoS</span><span class="p">(</span><span class="s">&#34;Desired state populator starts to run&#34;</span><span class="p">)</span>
+	<span class="nx">wait</span><span class="p">.</span><span class="nf">PollUntil</span><span class="p">(</span><span class="nx">dswp</span><span class="p">.</span><span class="nx">loopSleepDuration</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">(</span><span class="kt">bool</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">done</span> <span class="o">:=</span> <span class="nx">sourcesReady</span><span class="p">.</span><span class="nf">AllReady</span><span class="p">()</span>
+		<span class="nx">dswp</span><span class="p">.</span><span class="nf">populatorLoop</span><span class="p">()</span>
+		<span class="k">return</span> <span class="nx">done</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="p">},</span> <span class="nx">stopCh</span><span class="p">)</span>
+	<span class="nx">dswp</span><span class="p">.</span><span class="nx">hasAddedPodsLock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="nx">dswp</span><span class="p">.</span><span class="nx">hasAddedPods</span> <span class="p">=</span> <span class="kc">true</span>
+	<span class="nx">dswp</span><span class="p">.</span><span class="nx">hasAddedPodsLock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="nx">wait</span><span class="p">.</span><span class="nf">Until</span><span class="p">(</span><span class="nx">dswp</span><span class="p">.</span><span class="nx">populatorLoop</span><span class="p">,</span> <span class="nx">dswp</span><span class="p">.</span><span class="nx">loopSleepDuration</span><span class="p">,</span> <span class="nx">stopCh</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">dswp</span> <span class="o">*</span><span class="nx">desiredStateOfWorldPopulator</span><span class="p">)</span> <span class="nf">populatorLoop</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">dswp</span><span class="p">.</span><span class="nf">findAndAddNewPods</span><span class="p">()</span>
+  
+  <span class="o">...</span>
+<span class="p">}</span>
+
+<span class="c1">// Iterate through all pods and add to desired state of world if they don&#39;t
+</span><span class="c1">// exist but should
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">dswp</span> <span class="o">*</span><span class="nx">desiredStateOfWorldPopulator</span><span class="p">)</span> <span class="nf">findAndAddNewPods</span><span class="p">()</span> <span class="p">{</span>
+	<span class="o">...</span>
+  
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">pod</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">dswp</span><span class="p">.</span><span class="nx">podManager</span><span class="p">.</span><span class="nf">GetPods</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">dswp</span><span class="p">.</span><span class="nx">podStateProvider</span><span class="p">.</span><span class="nf">ShouldPodContainersBeTerminating</span><span class="p">(</span><span class="nx">pod</span><span class="p">.</span><span class="nx">UID</span><span class="p">)</span> <span class="p">{</span>
+			<span class="c1">// Do not (re)add volumes for pods that can&#39;t also be starting containers
+</span><span class="c1"></span>			<span class="k">continue</span>
+		<span class="p">}</span>
+		<span class="nx">dswp</span><span class="p">.</span><span class="nf">processPodVolumes</span><span class="p">(</span><span class="nx">pod</span><span class="p">,</span> <span class="nx">mountedVolumesForPod</span><span class="p">,</span> <span class="nx">processedVolumesForFSResize</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// processPodVolumes processes the volumes in the given pod and adds them to the
+</span><span class="c1">// desired state of the world.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">dswp</span> <span class="o">*</span><span class="nx">desiredStateOfWorldPopulator</span><span class="p">)</span> <span class="nf">processPodVolumes</span><span class="p">(</span>
+	<span class="nx">pod</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span>
+	<span class="nx">mountedVolumesForPod</span> <span class="kd">map</span><span class="p">[</span><span class="nx">volumetypes</span><span class="p">.</span><span class="nx">UniquePodName</span><span class="p">]</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">cache</span><span class="p">.</span><span class="nx">MountedVolume</span><span class="p">,</span>
+	<span class="nx">processedVolumesForFSResize</span> <span class="nx">sets</span><span class="p">.</span><span class="nx">String</span><span class="p">)</span> <span class="p">{</span>
+	<span class="o">...</span>
+
+	<span class="nx">uniquePodName</span> <span class="o">:=</span> <span class="nx">util</span><span class="p">.</span><span class="nf">GetUniquePodName</span><span class="p">(</span><span class="nx">pod</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="nx">dswp</span><span class="p">.</span><span class="nf">podPreviouslyProcessed</span><span class="p">(</span><span class="nx">uniquePodName</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="nx">allVolumesAdded</span> <span class="o">:=</span> <span class="kc">true</span>
+
+	<span class="o">...</span>
+
+	<span class="c1">// some of the volume additions may have failed, should not mark this pod as fully processed
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">allVolumesAdded</span> <span class="p">{</span>
+		<span class="nx">dswp</span><span class="p">.</span><span class="nf">markPodProcessed</span><span class="p">(</span><span class="nx">uniquePodName</span><span class="p">)</span>
+		<span class="c1">// New pod has been synced. Re-mount all volumes that need it
+</span><span class="c1"></span>		<span class="c1">// (e.g. DownwardAPI)
+</span><span class="c1"></span>		<span class="nx">dswp</span><span class="p">.</span><span class="nx">actualStateOfWorld</span><span class="p">.</span><span class="nf">MarkRemountRequired</span><span class="p">(</span><span class="nx">uniquePodName</span><span class="p">)</span>
+		<span class="o">...</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">dswp</span><span class="p">.</span><span class="nf">podHasBeenSeenOnce</span><span class="p">(</span><span class="nx">uniquePodName</span><span class="p">)</span> <span class="p">{</span>
+		<span class="o">...</span>
+	<span class="p">}</span>
+
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">dswp</span> <span class="o">*</span><span class="nx">desiredStateOfWorldPopulator</span><span class="p">)</span> <span class="nf">podPreviouslyProcessed</span><span class="p">(</span>
+	<span class="nx">podName</span> <span class="nx">volumetypes</span><span class="p">.</span><span class="nx">UniquePodName</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="nx">dswp</span><span class="p">.</span><span class="nx">pods</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">dswp</span><span class="p">.</span><span class="nx">pods</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span>
+
+	<span class="k">return</span> <span class="nx">dswp</span><span class="p">.</span><span class="nx">pods</span><span class="p">.</span><span class="nx">processedPods</span><span class="p">[</span><span class="nx">podName</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>loopSleepDuration</code> 写死的 100ms，即 100ms 执行一次 <code>populatorLoop</code>。简化为如下图</p>
+<p><img src="populator.png" alt="image-20230902201934075" style="zoom:20%;" /></p>
+<p>是否需要设置 <code>remountRequired</code> 关键还是要看 <code>dswp.podPreviouslyProcessed</code>，继续看在哪里会对此进行操作</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">dswp</span> <span class="o">*</span><span class="nx">desiredStateOfWorldPopulator</span><span class="p">)</span> <span class="nf">markPodProcessingFailed</span><span class="p">(</span>
+	<span class="nx">podName</span> <span class="nx">volumetypes</span><span class="p">.</span><span class="nx">UniquePodName</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">dswp</span><span class="p">.</span><span class="nx">pods</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="nx">dswp</span><span class="p">.</span><span class="nx">pods</span><span class="p">.</span><span class="nx">processedPods</span><span class="p">[</span><span class="nx">podName</span><span class="p">]</span> <span class="p">=</span> <span class="kc">false</span>
+	<span class="nx">dswp</span><span class="p">.</span><span class="nx">pods</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">dswp</span> <span class="o">*</span><span class="nx">desiredStateOfWorldPopulator</span><span class="p">)</span> <span class="nf">ReprocessPod</span><span class="p">(</span>
+	<span class="nx">podName</span> <span class="nx">volumetypes</span><span class="p">.</span><span class="nx">UniquePodName</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">dswp</span><span class="p">.</span><span class="nf">markPodProcessingFailed</span><span class="p">(</span><span class="nx">podName</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">vm</span> <span class="o">*</span><span class="nx">volumeManager</span><span class="p">)</span> <span class="nf">WaitForAttachAndMount</span><span class="p">(</span><span class="nx">pod</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="o">...</span>
+
+	<span class="c1">// Some pods expect to have Setup called over and over again to update.
+</span><span class="c1"></span>	<span class="c1">// Remount plugins for which this is true. (Atomically updating volumes,
+</span><span class="c1"></span>	<span class="c1">// like Downward API, depend on this to update the contents of the volume).
+</span><span class="c1"></span>	<span class="nx">vm</span><span class="p">.</span><span class="nx">desiredStateOfWorldPopulator</span><span class="p">.</span><span class="nf">ReprocessPod</span><span class="p">(</span><span class="nx">uniquePodName</span><span class="p">)</span>
+
+	<span class="o">...</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">kl</span> <span class="o">*</span><span class="nx">Kubelet</span><span class="p">)</span> <span class="nf">syncPod</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">updateType</span> <span class="nx">kubetypes</span><span class="p">.</span><span class="nx">SyncPodType</span><span class="p">,</span> <span class="nx">pod</span><span class="p">,</span> <span class="nx">mirrorPod</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span> <span class="nx">podStatus</span> <span class="o">*</span><span class="nx">kubecontainer</span><span class="p">.</span><span class="nx">PodStatus</span><span class="p">)</span> <span class="p">(</span><span class="nx">isTerminal</span> <span class="kt">bool</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+  <span class="o">...</span>
+  
+  <span class="c1">// Volume manager will not mount volumes for terminating pods
+</span><span class="c1"></span>	<span class="c1">// TODO: once context cancellation is added this check can be removed
+</span><span class="c1"></span>	<span class="k">if</span> <span class="p">!</span><span class="nx">kl</span><span class="p">.</span><span class="nx">podWorkers</span><span class="p">.</span><span class="nf">IsPodTerminationRequested</span><span class="p">(</span><span class="nx">pod</span><span class="p">.</span><span class="nx">UID</span><span class="p">)</span> <span class="p">{</span>
+		<span class="c1">// Wait for volumes to attach/mount
+</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">kl</span><span class="p">.</span><span class="nx">volumeManager</span><span class="p">.</span><span class="nf">WaitForAttachAndMount</span><span class="p">(</span><span class="nx">pod</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">kl</span><span class="p">.</span><span class="nx">recorder</span><span class="p">.</span><span class="nf">Eventf</span><span class="p">(</span><span class="nx">pod</span><span class="p">,</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">EventTypeWarning</span><span class="p">,</span> <span class="nx">events</span><span class="p">.</span><span class="nx">FailedMountVolume</span><span class="p">,</span> <span class="s">&#34;Unable to attach or mount volumes: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+			<span class="nx">klog</span><span class="p">.</span><span class="nf">ErrorS</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&#34;Unable to attach or mount volumes for pod; skipping pod&#34;</span><span class="p">,</span> <span class="s">&#34;pod&#34;</span><span class="p">,</span> <span class="nx">klog</span><span class="p">.</span><span class="nf">KObj</span><span class="p">(</span><span class="nx">pod</span><span class="p">))</span>
+			<span class="k">return</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+  
+  <span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>惊不惊喜，意不意外，最终还是在 <code>syncPod</code> 里面。所以没有走 apiserver 的缓存的原因在于每次挂载之后，虽然 reconciler 每 100ms 执行一次，但由于设置了 remountRequired 为 false，所以不会触发 Get 的逻辑，也就是根本不需要再去获取 CM，直到下次 <code>syncPod</code> 时又重新标记缓存无效，这时候就和第一次挂载一样，需要去 apiserver 且去 etcd 中获取了。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="syncPod.png"
+        data-srcset="/posts/cachebasedmanager2/syncPod.png, syncPod.png 1.5x, /posts/cachebasedmanager2/syncPod.png 2x"
+        data-sizes="auto"
+        alt="/posts/cachebasedmanager2/syncPod.png"
+        title="image-20230903204739636" /></p>
+<p>这就可以解释为什么没有走 apiserver 缓存的请求了，因为最根本的触发是在 syncPod，而每次 syncPod 都会先标记缓存失效，最终的效果就是每次都会作为全新创建的 Pod 一样去挂载。</p>
+<h1 id="总结">总结</h1>
+<p>至此已经解释了 QPS 高的原因，以及为什么代码中虽然有设置 resourceversion=0，但却没有出现走 aiserver 缓存的请求日志的原因。总结如下：</p>
+<ol>
+<li>QPS 高，一个原因是使用 ConfigMap 作为 Volume 挂载的 Pod 较多；</li>
+<li>没有走 apiserver 缓存，是因为每次都会作为新的处理直接去 etcd 获取导致；</li>
+</ol>
+<p>如果你还是没有完全明白，也没有关系，因为这个过程涉及到多个异步的 gouroutine，确实稍微复杂。我们会在最后一篇分析如何解决这个问题时，详细分析整个流程，找到解决问题的办法，敬请期待最后一篇，在此之前也可以联系第一篇以及代码自己去分析去体会。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2023-09-03</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/cachebasedmanager2/" data-title="high QPS for configmap GET requests in kube-apiserver - 2" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/cachebasedmanager2/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/cachebasedmanager2/" data-title="high QPS for configmap GET requests in kube-apiserver - 2" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/cachebasedmanager2/" data-title="high QPS for configmap GET requests in kube-apiserver - 2"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/cachebasedmanager2/" data-title="high QPS for configmap GET requests in kube-apiserver - 2"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/cachebasedmanager2/" data-title="high QPS for configmap GET requests in kube-apiserver - 2" data-description="high QPS for configmap GET requests in kube-apiserver - 2"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/cachebasedmanager2/" data-title="high QPS for configmap GET requests in kube-apiserver - 2" data-description="high QPS for configmap GET requests in kube-apiserver - 2"><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/cachebasedmanager2/" data-title="high QPS for configmap GET requests in kube-apiserver - 2"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/cachebasedmanager1/" class="prev" rel="prev" title="high QPS for configmap GET requests in kube-apiserver - 1"><i class="fas fa-angle-left fa-fw"></i>high QPS for configmap GET requests in kube-apiserver - 1</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

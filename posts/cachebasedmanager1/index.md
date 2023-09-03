@@ -21,6 +21,8 @@
 2. 为什么 QPS 高？为什么没有走 kube-apiserver 缓存？
 3. 问题如何解决？
 
+本篇主要介绍 ConfigMap Get 请求的整个调用链路
+
 # 追踪溯源
 
 在找到具体原因之前，大概有个排查方向，因为日志中显示的 ConfigMap 都是挂载到 Pod 中作为 Volume 使用的，问题的根源大概率与此有关，因此先从这个方向来。
@@ -221,7 +223,7 @@ func (rc *reconciler) mountAttachVolumes() {
 2. 遍历每个卷，看 Pod 是否存在于 `actualStateOfWorld` 中保存的已经挂载了卷的 Pod 列表中
 3. 如果 2 返回不存在（尚未挂载），或者需要重新挂载，则会调用 `operationExecutor.MountVolume` 进行挂载
 
-之后就会一步步触发最终 `GetObject` 去获取要挂载的 `ConfigMap` ，继续往上找 `mountAttachVolumes` 调用方，如下
+之后就会一步步触发最终 `GetObject` 去获取要挂载的 `ConfigMap`，继续往上找 `mountAttachVolumes` 调用方，如下
 
 ```go
 // pkg/kubelet/volumemanager/reconciler/reconciler.go
