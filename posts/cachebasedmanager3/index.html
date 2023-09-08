@@ -9,8 +9,8 @@
 <meta property="og:description" content="high QPS for configmap GET requests in kube-apiserver - 3" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/cachebasedmanager3/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2023-08-25T16:02:05+08:00" />
-<meta property="article:modified_time" content="2023-09-08T18:32:38+08:00" />
+<meta property="article:published_time" content="2023-08-26T16:02:05+08:00" />
+<meta property="article:modified_time" content="2023-09-08T18:35:09+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -20,7 +20,7 @@
 <meta name="application-name" content="LoveIt">
 <meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/cachebasedmanager3/" /><link rel="prev" href="https://www.likakuli.com/posts/cachebasedmanager1/" /><link rel="next" href="https://www.likakuli.com/posts/cachebasedmanager2/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/cachebasedmanager3/" /><link rel="prev" href="https://www.likakuli.com/posts/cachebasedmanager2/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
     {
         "@context": "http://schema.org",
         "@type": "BlogPosting",
@@ -30,7 +30,7 @@
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/cachebasedmanager3\/"
         },"genre": "posts","keywords": "kubernetes","wordcount":  2433 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/cachebasedmanager3\/","datePublished": "2023-08-25T16:02:05+08:00","dateModified": "2023-09-08T18:32:38+08:00","publisher": {
+        "url": "https:\/\/www.likakuli.com\/posts\/cachebasedmanager3\/","datePublished": "2023-08-26T16:02:05+08:00","dateModified": "2023-09-08T18:35:09+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -111,7 +111,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">high QPS for configmap GET requests in kube-apiserver - 3</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-08-25">2023-08-25</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 2433 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-08-26">2023-08-26</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 2433 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 5 分钟&nbsp;<span id="/posts/cachebasedmanager3/" class="leancloud_visitors" data-flag-title="high QPS for configmap GET requests in kube-apiserver - 3">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
@@ -245,8 +245,7 @@
         </section>
     </div>
 
-    <div class="post-nav"><a href="/posts/cachebasedmanager1/" class="prev" rel="prev" title="high QPS for configmap GET requests in kube-apiserver - 1"><i class="fas fa-angle-left fa-fw"></i>high QPS for configmap GET requests in kube-apiserver - 1</a>
-            <a href="/posts/cachebasedmanager2/" class="next" rel="next" title="high QPS for configmap GET requests in kube-apiserver - 2">high QPS for configmap GET requests in kube-apiserver - 2<i class="fas fa-angle-right fa-fw"></i></a></div>
+    <div class="post-nav"><a href="/posts/cachebasedmanager2/" class="prev" rel="prev" title="high QPS for configmap GET requests in kube-apiserver - 2"><i class="fas fa-angle-left fa-fw"></i>high QPS for configmap GET requests in kube-apiserver - 2</a></div>
 </div>
 <div id="comments"><div id="valine" class="comment"></div><noscript>
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
