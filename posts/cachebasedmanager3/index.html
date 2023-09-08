@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>high QPS for configmap GET requests in kube-apiserver - 3 - kaku&#39;s blog</title><meta name="Description" content="high QPS for configmap GET requests in kube-apiserver - 3"><meta property="og:title" content="high QPS for configmap GET requests in kube-apiserver - 3" />
+<meta property="og:description" content="high QPS for configmap GET requests in kube-apiserver - 3" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/cachebasedmanager3/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-08-25T16:02:05+08:00" />
+<meta property="article:modified_time" content="2023-09-08T18:32:38+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="high QPS for configmap GET requests in kube-apiserver - 3"/>
+<meta name="twitter:description" content="high QPS for configmap GET requests in kube-apiserver - 3"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/cachebasedmanager3/" /><link rel="prev" href="https://www.likakuli.com/posts/cachebasedmanager1/" /><link rel="next" href="https://www.likakuli.com/posts/cachebasedmanager2/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "high QPS for configmap GET requests in kube-apiserver - 3",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/cachebasedmanager3\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  2433 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/cachebasedmanager3\/","datePublished": "2023-08-25T16:02:05+08:00","dateModified": "2023-09-08T18:32:38+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": "high QPS for configmap GET requests in kube-apiserver - 3"
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">high QPS for configmap GET requests in kube-apiserver - 3</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-08-25">2023-08-25</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 2433 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 5 分钟&nbsp;<span id="/posts/cachebasedmanager3/" class="leancloud_visitors" data-flag-title="high QPS for configmap GET requests in kube-apiserver - 3">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#背景">背景</a></li>
+    <li><a href="#由来">由来</a></li>
+    <li><a href="#回顾">回顾</a></li>
+    <li><a href="#分析">分析</a></li>
+    <li><a href="#效果">效果</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="背景">背景</h1>
+<p>线上 k8s 集群 kube-apiserver 的 ConfigMap Get 操作 QPS 较高，且同时间段 Etcd 中 ConfigMap 资源的 Get 操作 QPS 也较高，看日志多数请求的发起方是 kubelet。对应 k8s v1.22.13 版本代码，同时在 v1.28.0 测试现象相同。kube-apiserver 日志大致如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell">2023-08-23T08:55:54.331196195Z stderr F I0823 08:55:54.330840       <span class="m">1</span> httplog.go:132<span class="o">]</span> <span class="s2">&#34;HTTP&#34;</span> <span class="nv">verb</span><span class="o">=</span><span class="s2">&#34;GET&#34;</span> <span class="nv">URI</span><span class="o">=</span><span class="s2">&#34;/api/v1/namespaces/default/configmaps/nginx-cfgmap&#34;</span> <span class="nv">latency</span><span class="o">=</span><span class="s2">&#34;1.926865ms&#34;</span> <span class="nv">userAgent</span><span class="o">=</span><span class="s2">&#34;kubelet/v1.28.0 (linux/amd64) kubernetes/855e7c4&#34;</span> audit-ID<span class="o">=</span><span class="s2">&#34;36cfcbe3-d76a-4a4d-b251-47cc2df060cb&#34;</span> <span class="nv">srcIP</span><span class="o">=</span><span class="s2">&#34;192.168.228.2:59052&#34;</span> <span class="nv">apf_pl</span><span class="o">=</span><span class="s2">&#34;system&#34;</span> <span class="nv">apf_fs</span><span class="o">=</span><span class="s2">&#34;system-nodes&#34;</span> <span class="nv">apf_iseats</span><span class="o">=</span><span class="m">1</span> <span class="nv">apf_fseats</span><span class="o">=</span><span class="m">0</span> <span class="nv">apf_additionalLatency</span><span class="o">=</span><span class="s2">&#34;0s&#34;</span> <span class="nv">apf_execution_time</span><span class="o">=</span><span class="s2">&#34;1.269527ms&#34;</span> <span class="nv">resp</span><span class="o">=</span><span class="m">200</span>
+2023-08-23T08:57:09.333913507Z stderr F I0823 08:57:09.333470       <span class="m">1</span> httplog.go:132<span class="o">]</span> <span class="s2">&#34;HTTP&#34;</span> <span class="nv">verb</span><span class="o">=</span><span class="s2">&#34;GET&#34;</span> <span class="nv">URI</span><span class="o">=</span><span class="s2">&#34;/api/v1/namespaces/default/configmaps/nginx-cfgmap&#34;</span> <span class="nv">latency</span><span class="o">=</span><span class="s2">&#34;1.810334ms&#34;</span> <span class="nv">userAgent</span><span class="o">=</span><span class="s2">&#34;kubelet/v1.28.0 (linux/amd64) kubernetes/855e7c4&#34;</span> audit-ID<span class="o">=</span><span class="s2">&#34;563bd337-df29-4342-afd0-9ca6e0632f0f&#34;</span> <span class="nv">srcIP</span><span class="o">=</span><span class="s2">&#34;192.168.228.2:59052&#34;</span> <span class="nv">apf_pl</span><span class="o">=</span><span class="s2">&#34;system&#34;</span> <span class="nv">apf_fs</span><span class="o">=</span><span class="s2">&#34;system-nodes&#34;</span> <span class="nv">apf_iseats</span><span class="o">=</span><span class="m">1</span> <span class="nv">apf_fseats</span><span class="o">=</span><span class="m">0</span> <span class="nv">apf_additionalLatency</span><span class="o">=</span><span class="s2">&#34;0s&#34;</span> <span class="nv">apf_execution_time</span><span class="o">=</span><span class="s2">&#34;1.177012ms&#34;</span> <span class="nv">resp</span><span class="o">=</span><span class="m">200</span>
+2023-08-23T08:58:14.338971779Z stderr F I0823 08:58:14.338630       <span class="m">1</span> httplog.go:132<span class="o">]</span> <span class="s2">&#34;HTTP&#34;</span> <span class="nv">verb</span><span class="o">=</span><span class="s2">&#34;GET&#34;</span> <span class="nv">URI</span><span class="o">=</span><span class="s2">&#34;/api/v1/namespaces/default/configmaps/nginx-cfgmap&#34;</span> <span class="nv">latency</span><span class="o">=</span><span class="s2">&#34;1.563356ms&#34;</span> <span class="nv">userAgent</span><span class="o">=</span><span class="s2">&#34;kubelet/v1.28.0 (linux/amd64) kubernetes/855e7c4&#34;</span> audit-ID<span class="o">=</span><span class="s2">&#34;45350dc7-7a4b-43f1-8972-3b8053578234&#34;</span> <span class="nv">srcIP</span><span class="o">=</span><span class="s2">&#34;192.168.228.2:59052&#34;</span> <span class="nv">apf_pl</span><span class="o">=</span><span class="s2">&#34;system&#34;</span> <span class="nv">apf_fs</span><span class="o">=</span><span class="s2">&#34;system-nodes&#34;</span> <span class="nv">apf_iseats</span><span class="o">=</span><span class="m">1</span> <span class="nv">apf_fseats</span><span class="o">=</span><span class="m">0</span> <span class="nv">apf_additionalLatency</span><span class="o">=</span><span class="s2">&#34;0s&#34;</span> <span class="nv">apf_execution_time</span><span class="o">=</span><span class="s2">&#34;929.214µs&#34;</span> <span class="nv">resp</span><span class="o">=</span><span class="m">200</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="由来">由来</h1>
+<p>定位此问题的过程中花了一定的时间，同时也纠正了一些有关 kubelet 内 Pod 处理的错误理解。本篇旨在描述上述现象产生的原因及潜在问题，同时也希望能帮助大家更进一步的理解 kubelet 对 Pod 的处理逻辑。</p>
+<p>由于涉及到的逻辑较多，因此将拆分成三篇来写：</p>
+<ol>
+<li>ConfigMap Get 请求的来源？</li>
+<li>为什么 QPS 高？为什么没有走 kube-apiserver 缓存？</li>
+<li>问题如何解决？</li>
+</ol>
+<p>本篇主要介绍问题如何解决。</p>
+<h1 id="回顾">回顾</h1>
+<p>前两篇内容总结对应这个图，分三块：syncPod、dswp（disiredStateOfWorldPolulator）、volumemanager。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="allinone.png"
+        data-srcset="/posts/cachebasedmanager3/allinone.png, allinone.png 1.5x, /posts/cachebasedmanager3/allinone.png 2x"
+        data-sizes="auto"
+        alt="/posts/cachebasedmanager3/allinone.png"
+        title="image-20230824154157569" /></p>
+<p>接下来描述一下整个流程：</p>
+<ol>
+<li>kubelet 主 goroutine 启动定时器（图左上）每 1s 尝试从 queue 里面获取需要同步的 pod，启动一个专用 goroutine （图左下1）负责 dswp populatorLoop 每 100ms 一次的定时执行，启动一个专用 goroutine （图左下2）负责 volumemanager reconciler 每 100ms 一次的定时执行，所述三者完全并行；</li>
+<li>新 pod 创建后 kubelet 为其分配自己专用的 podworker goroutine，podworker 启动后进入无限循环直到 pod 被删后 kubelet 才会去清理这个 worker，worker 收到有新 pod 需要创建的请求后会去执行 <code>syncPod</code> （图右上）操作，这里主要关注三个动作：
+<ol>
+<li>RegisterPod：他会最终标记本地 ConfigMap 缓存无效，记为 t1 时刻；</li>
+<li>WaitForAttachAndMount：他会把 pod 从 dsp 的 processedPods 数据中踢出，记为 t2 时刻；</li>
+</ol>
+</li>
+<li><code>syncPod</code> 执行完之后会执行 <code>completeWork</code> （图深黄色部分），会重新把 pod 入队列，并基于 <code>--sync-frequncy</code> 设置一个有效时间，时间到了之后才能被 1 从 queue 里面获取到；</li>
+<li>dswp populatorLoop 触发后会判断 pod 是否处理过，处理过直接 return，没有处理过则把 pod 和 volume 信息添加到 dsw（disiredStateOfWorld） 的 volumesToMount 中，并设置 remountRequired 为 true；</li>
+<li>volumemanager reconcile 触发后先判断是否未挂载或者需要重新挂载，需要的话会获取要挂载的 ConfigMap 信息，缓存无效则直接去 apiserver 最终请求 etcd 最新数据，有效但超时则去 apiserver 获取但不走 etcd 直接返回 apiserver 缓存结果，未超时则直接返回自己本地缓存的数据不再请求 apiserver，最后用获取到的信息进行 mount 操作，成功后设置 remountRequired 为 false；</li>
+<li>1 中的定时器在一段时间（3 中 enqueue 入队列计算的时间）后再次走到 pod worker 走一遍 2，3 的逻辑，同时也会触发 4，5 的再次执行；</li>
+</ol>
+<h1 id="分析">分析</h1>
+<p>有一个问题是比较明显的：从日志看最终都是穿透到 etcd 去了。为什么这里要区分开针对第一次请求要去 etcd 获取，而真多后续因缓存过期导致的请求就可以直接从 apiserver cache 返回了？注释里面写了特意这么设计，也即是说设计如此。本人最初想法是不要区别对待两种请求，都直接从 apiserver cache 返回即可，因为另一种 watchBasedManager 是基于 watch 实现的，reflector 在第一次执行时就是直接从 apiserver 缓存获取数据而不会走到 etcd。这样的话就可以保持两者一致的行为：本地缓存失效后始终从 apiserver 返回，不再穿透到 etcd。但经过与社区讨论，他们觉得还是要保持当前实现，即第一次还是要从 apiserver 获取并穿透到 etcd，目的是获取最新的数据。</p>
+<p>虽然统一不走 etcd 的方案被驳回，但确实方案基本只是降低了 etcd 请求，并没有缓解 apiserver 的请求，因为每次都还是会标记缓存失效再去请求 aspiserver 的。</p>
+<p>社区也给出了另外一种解法，即不要在 <code>AddReference</code> 时每次都标记缓存失效，而是只有在第一次时标记缓存无效。这明显是要比之前的方案好，因为这样不止能降低 etcd 的请求，还能降低 apiserver 的请求，更大限度的利用本地缓存。</p>
+<p>针对规模较小的集群，效果 apiserver qps 优化并不明显，针对大规模集群的话则比较明显。因为 kube-controller-manager 会根据节点数量通过为每个节点设置 annotation：<code>node.alpha.kubernetes.io/ttl</code> 来控制每个节点本地缓存有效期，规则如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">ttlBoundaries</span> <span class="p">=</span> <span class="p">[]</span><span class="nx">ttlBoundary</span><span class="p">{</span>
+		<span class="p">{</span><span class="nx">sizeMin</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">sizeMax</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="nx">ttlSeconds</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+		<span class="p">{</span><span class="nx">sizeMin</span><span class="p">:</span> <span class="mi">90</span><span class="p">,</span> <span class="nx">sizeMax</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="nx">ttlSeconds</span><span class="p">:</span> <span class="mi">15</span><span class="p">},</span>
+		<span class="p">{</span><span class="nx">sizeMin</span><span class="p">:</span> <span class="mi">450</span><span class="p">,</span> <span class="nx">sizeMax</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="nx">ttlSeconds</span><span class="p">:</span> <span class="mi">30</span><span class="p">},</span>
+		<span class="p">{</span><span class="nx">sizeMin</span><span class="p">:</span> <span class="mi">900</span><span class="p">,</span> <span class="nx">sizeMax</span><span class="p">:</span> <span class="mi">2000</span><span class="p">,</span> <span class="nx">ttlSeconds</span><span class="p">:</span> <span class="mi">60</span><span class="p">},</span>
+		<span class="p">{</span><span class="nx">sizeMin</span><span class="p">:</span> <span class="mi">1800</span><span class="p">,</span> <span class="nx">sizeMax</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span> <span class="nx">ttlSeconds</span><span class="p">:</span> <span class="mi">300</span><span class="p">},</span>
+		<span class="p">{</span><span class="nx">sizeMin</span><span class="p">:</span> <span class="mi">9000</span><span class="p">,</span> <span class="nx">sizeMax</span><span class="p">:</span> <span class="nx">math</span><span class="p">.</span><span class="nx">MaxInt32</span><span class="p">,</span> <span class="nx">ttlSeconds</span><span class="p">:</span> <span class="mi">600</span><span class="p">},</span>
+	<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>size 对应节点数量，ttlSeconds 代表 ttl 时长，0 代表使用默认值，默认值在 kubelet 里面配置的 1min。</p>
+<h1 id="效果">效果</h1>
+<p>上述修改方案会带来一个原理上的改变，改之前可以通过 <code>--sync-frequency</code> 控制同步周期，进而实现重新获取 ConfigMap 的效果，即这个参数可控制 ConfigMap 修改后在容器内看到变化所需要的时间长短，最长不会超过 1.5 * <code>--sync-frequency</code> 的时间。</p>
+<p>修改后这个参数就不再具备此作用，何时可以生效完全依赖上述所讲 ttl，只有过期后才会重新去 apiserver 获取。而 ttl 又受集群规模影响，小于 100 台的集群，1m 失效，也就是每分钟获取一次，大于 9000 机器的集群，每 10min 获取一次，由此可见集群规模越大，修改后的效果越明显。拿 5000 节点集群距离，之前需要每 1 ~ 1.5min 获取一次，修改后需要 5m 获取一次，QPS 降低为原来 1/5。这还只是针对 apiserver 来说，针对 etcd 来说的话，qps 直接降成常数 1，因为之后第一次需要访问 etcd，综合评估下来效果显著。</p>
+<h1 id="总结">总结</h1>
+<p>经过这个系列的三篇内容，我们详细梳理了 ConfigMap 作为 Volume 挂载的整个逻辑和流程，找到了问题，也进行了优化。理清问题本身（结果）固然重要，定位问题的思路和态度（过程）也很重要，比如需要有一颗刨根问题的心，也需要有耐心，沉住气，保持对技术的敏感，比如为什么代码逻辑里面有设置 resourceversion=0，但还是没有走缓存这种细小问题，如果一晃而过，可能也就不会有最终问题的高效优雅的解决。问题的解决大部分的精力都是在分析分体当中，而最终代码的改动可能只占一小部分的精力，当然这里说的是针对解决问题的场景，而针对实现新功能的场景，可能就又不一样了。</p>
+<p>如果对具体修改感兴趣的话，可以参考 <a href="https://github.com/kubernetes/kubernetes/pull/120255" target="_blank" rel="noopener noreffer">https://github.com/kubernetes/kubernetes/pull/120255</a>，可以看到相较于整体的分析来看，代码的改动很少，但精髓应该还是分析问题的过程，培养分析和解决问题的能力要比知道问题最终的解决途径更值得学习。授人以鱼不如授人以渔，提升自己。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2023-09-08</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/cachebasedmanager3/" data-title="high QPS for configmap GET requests in kube-apiserver - 3" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/cachebasedmanager3/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/cachebasedmanager3/" data-title="high QPS for configmap GET requests in kube-apiserver - 3" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/cachebasedmanager3/" data-title="high QPS for configmap GET requests in kube-apiserver - 3"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/cachebasedmanager3/" data-title="high QPS for configmap GET requests in kube-apiserver - 3"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/cachebasedmanager3/" data-title="high QPS for configmap GET requests in kube-apiserver - 3" data-description="high QPS for configmap GET requests in kube-apiserver - 3"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/cachebasedmanager3/" data-title="high QPS for configmap GET requests in kube-apiserver - 3" data-description="high QPS for configmap GET requests in kube-apiserver - 3"><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/cachebasedmanager3/" data-title="high QPS for configmap GET requests in kube-apiserver - 3"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/cachebasedmanager1/" class="prev" rel="prev" title="high QPS for configmap GET requests in kube-apiserver - 1"><i class="fas fa-angle-left fa-fw"></i>high QPS for configmap GET requests in kube-apiserver - 1</a>
+            <a href="/posts/cachebasedmanager2/" class="next" rel="next" title="high QPS for configmap GET requests in kube-apiserver - 2">high QPS for configmap GET requests in kube-apiserver - 2<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>
