@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Kubernetes 陈年老 bug - 绑核 - kaku&#39;s blog</title><meta name="Description" content="kubernetes 陈年老 bug 之绑核"><meta property="og:title" content="Kubernetes 陈年老 bug - 绑核" />
+<meta property="og:description" content="kubernetes 陈年老 bug 之绑核" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/cpusetbug1/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-09-14T20:03:59+08:00" />
+<meta property="article:modified_time" content="2023-09-15T18:19:41+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="Kubernetes 陈年老 bug - 绑核"/>
+<meta name="twitter:description" content="kubernetes 陈年老 bug 之绑核"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/cpusetbug1/" /><link rel="prev" href="https://www.likakuli.com/posts/cachebasedmanager3/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Kubernetes 陈年老 bug - 绑核",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/cpusetbug1\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  4971 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/cpusetbug1\/","datePublished": "2023-09-14T20:03:59+08:00","dateModified": "2023-09-15T18:19:41+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": "kubernetes 陈年老 bug 之绑核"
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Kubernetes 陈年老 bug - 绑核</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-09-14">2023-09-14</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 4971 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 10 分钟&nbsp;<span id="/posts/cpusetbug1/" class="leancloud_visitors" data-flag-title="Kubernetes 陈年老 bug - 绑核">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#背景">背景</a></li>
+    <li><a href="#测验">测验</a></li>
+    <li><a href="#答案">答案</a></li>
+    <li><a href="#分析">分析</a>
+      <ul>
+        <li><a href="#共享资源池">共享资源池</a></li>
+        <li><a href="#资源释放">资源释放</a>
+          <ul>
+            <li><a href="#issue">ISSUE</a></li>
+            <li><a href="#pr">PR</a></li>
+            <li><a href="#原因">原因</a></li>
+            <li><a href="#引入过程">引入过程</a>
+              <ul>
+                <li><a href="#直接引入">直接引入</a></li>
+                <li><a href="#间接引入">间接引入</a></li>
+              </ul>
+            </li>
+            <li><a href="#修复">修复</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#引申">引申</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="背景">背景</h1>
+<p>最近遇到一个线上问题，使用了 lxcfs 的容器，跑在 cgroup v2 的机器上时，在容器内使用 top 或者 htop 看到的核数和 cpu 使用率有问题。虽然根本问题在 lxcfs 的实现，但问题最终的触发与 cpuset 和 cpu.max 的设置有关。这里并不会去介绍这个问题本身，而是由问题引发的思考，<strong>我们真的了解 k8s 里面的绑核行为吗，你以为你以为的就是你以为的吗？</strong></p>
+<h1 id="测验">测验</h1>
+<p>接下来你可以尝试回答如下几个问题，并且通过实际的在 k8s 集群中进行操作来验证。为了方便描述，我们假设有一台最新的 <strong>v1.28</strong> 的 worker 节点有 12c，其分别为 system 以及 kubelet 各预留了 1c，那么他实际可用的核数将会是 10c，也就是 allocatable cpu 是 10c，并且其 cpuManagerPilicy 为 staitic 模式，cpuManagerReconcilePeriod 使用默认值 10s。</p>
+<ul>
+<li>问题一：在没有分配任何 Pod 时，cpu_manager_state 默认的 defaultCPU 是多少核？</li>
+<li>问题二：调度一个 Burstable Podb，其 cpu request 4c，cpu limit 8c，那么 Podb 的 cpuset 有几个核？</li>
+<li>问题三：基于问题二，再调度一个 Guaranteed Podg1，使用 6c，那么 Podb 的 cpuset 有几个核？</li>
+<li>问题四：删除 Podg1，那么 Podb 的 cpuset 有几个核？</li>
+<li>问题五：重复问题三的步骤，创建 Podg2，继续看 Podb 有几个核？</li>
+</ul>
+<h1 id="答案">答案</h1>
+<p>前两个问题答案都是 12c，后三个问题答案都是 6c。这个结果应该和绝大部分人以为的结果不一样，如果不相信的话，可以自行验证。涉及到一些考古信息，方便大家了解整个过程，当然最后总结部分也有按时间线提炼，可以直接跳到那里看。如果想都搞清楚搞明白的话，可能还真得需要一些时间才行。</p>
+<h1 id="分析">分析</h1>
+<p>这里主要介绍两点，一个算是 feature：共享资源池，一个算是 bug：资源释放。估计大家会好奇问题四，而这也是这里要重点讲的。</p>
+<h2 id="共享资源池">共享资源池</h2>
+<p>第一点在于 defaultCPU 的设置，官网文档很明确的写了 <a href="https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/cpu-management-policies/" target="_blank" rel="noopener noreffer">https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/cpu-management-policies/</a></p>
+<blockquote>
+<p>此策略管理一个 CPU 共享池，该共享池最初包含节点上所有的 CPU 资源。 可独占性 CPU 资源数量等于节点的 CPU 总量减去通过 kubelet <code>--kube-reserved</code> 或 <code>--system-reserved</code> 参数保留的 CPU 资源。 从 1.17 版本开始，可以通过 kubelet <code>--reserved-cpus</code> 参数显式地指定 CPU 预留列表。 由 <code>--reserved-cpus</code> 指定的显式 CPU 列表优先于由 <code>--kube-reserved</code> 和 <code>--system-reserved</code> 指定的 CPU 预留。 通过这些参数预留的 CPU 是以整数方式，按物理核心 ID 升序从初始共享池获取的。 共享池是 <code>BestEffort</code> 和 <code>Burstable</code> Pod 运行的 CPU 集合。 <code>Guaranteed</code> Pod 中的容器，如果声明了非整数值的 CPU <code>requests</code>，也将运行在共享池的 CPU 上。 只有 <code>Guaranteed</code> Pod 中，指定了整数型 CPU <code>requests</code> 的容器，才会被分配独占 CPU 资源。</p>
+</blockquote>
+<p>也就是说预留资源属于共享资源池资源，可以被非 Guaranteed Pod 共享。这可以解释前两个问题。</p>
+<h2 id="资源释放">资源释放</h2>
+<p>对于问题四，为什么删除了 Podg1 后，Podb 的 cpuset 还是只有 6c？此时去看 cpu_state_manager 文件内容的话，可以看到 defaultCPU 只有 6c，而且 Podg1 的信息仍然还存在。既然删了之后没释放，可用的只有 6c 了，那继续问题五的步骤，岂不是 cpu 会被用完，导致没有剩余的 cpu 给 Podb 用了？但结果 Podb 仍然还有 6c 可用，此时再去看 cpu_manager_state 文件内容，defaultCPU 仍然是 6c，但已经分配的内容变了，换了个 PodID，但实际也是只有一个 Pod 分配了 6c，而不是两个。是不是很神奇，看起来泄露了一个，等新的 Podg2 调度上去之后，之前未删除的记录反而消失了。</p>
+<p>之前曾经整理过一篇有关绑核的 bug，但那是针对较低版本的 k8s 的，可以看这篇：https://www.likakuli.com/posts/kubernetes-cpu-manager/。</p>
+<blockquote>
+<h3 id="issue">ISSUE</h3>
+<p>感兴趣的可以翻翻历史 ISSUE，此问题从 1.8 开始有大量相关的 ISSUE，下面列几个比较典型的</p>
+<p><a href="https://github.com/kubernetes/kubernetes/issues/63018" target="_blank" rel="noopener noreffer">Internal PreStartContainer hook failed: not enough cpus available to satisfy request #63018</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/issues/79159" target="_blank" rel="noopener noreffer">cpumanager: AddContainer error: not enough cpus available to satisfy request #79159</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/issues/83476" target="_blank" rel="noopener noreffer">TopologyManager: Guarantee Aligned resources for Multiple Containers #83476</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/issues/90303" target="_blank" rel="noopener noreffer">Container cpuset lost, apparently due to race between PostStopContainer() and new container creation #90303</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/issues/103952" target="_blank" rel="noopener noreffer">The CPU manager does not work correctly for the guaranteed pod with multiple containers #103952</a></p>
+<h3 id="pr">PR</h3>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/52363" target="_blank" rel="noopener noreffer">Make CPU manager release CPUs when Pod enters completed phase #52363</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/67430" target="_blank" rel="noopener noreffer">cpumanager: rollback state if updateContainerCPUSet failed #67430</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/68619" target="_blank" rel="noopener noreffer">clean containers in reconcileState of cpuManager #68619</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/84462" target="_blank" rel="noopener noreffer">Update CPUManager stored state semantics #84462</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/90377" target="_blank" rel="noopener noreffer">Fix exclusive CPU allocations being deleted at container restart #90377</a></p>
+<p><a href="https://github.com/kubernetes/kubernetes/pull/103979" target="_blank" rel="noopener noreffer">Do not clear state of pods pending admission for CPU/Memory/Device manager #103979</a></p>
+</blockquote>
+<p>灵魂拷问：就一个绑核，有那么难吗，这么多问题。接下来分析下问题的原因，怎么引入的，怎么修复。</p>
+<h3 id="原因">原因</h3>
+<p>先说结论，v1.22 对 kubelet 进行了比较大的重构，这个过程中引入了很多的问题，绑核这只是其中的一个问题。此问题在 2021 年 v1.22 引入，至今（2023.9 v1.28）仍然存在。根本原因在如下代码处：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">manager</span><span class="p">)</span> <span class="nf">removeStaleState</span><span class="p">()</span> <span class="p">{</span>
+	<span class="c1">// Only once all sources are ready do we attempt to remove any stale state.
+</span><span class="c1"></span>	<span class="c1">// This ensures that the call to `m.activePods()` below will succeed with
+</span><span class="c1"></span>	<span class="c1">// the actual active pods list.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="p">!</span><span class="nx">m</span><span class="p">.</span><span class="nx">sourcesReady</span><span class="p">.</span><span class="nf">AllReady</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// We grab the lock to ensure that no new containers will grab CPUs while
+</span><span class="c1"></span>	<span class="c1">// executing the code below. Without this lock, its possible that we end up
+</span><span class="c1"></span>	<span class="c1">// removing state that is newly added by an asynchronous call to
+</span><span class="c1"></span>	<span class="c1">// AddContainer() during the execution of this code.
+</span><span class="c1"></span>	<span class="nx">m</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">m</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+	<span class="c1">// Get the list of active pods.
+</span><span class="c1"></span>	<span class="nx">activeAndAdmittedPods</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">activePods</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">m</span><span class="p">.</span><span class="nx">pendingAdmissionPod</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">activeAndAdmittedPods</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">activeAndAdmittedPods</span><span class="p">,</span> <span class="nx">m</span><span class="p">.</span><span class="nx">pendingAdmissionPod</span><span class="p">)</span>
+	<span class="p">}</span>
+
+  <span class="err">#</span> <span class="nx">垃圾清理</span>
+	<span class="o">...</span> 
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>首先调用 <code>activePods</code> 获取尚未 Completed 的 Pod，然后在把处于 admission 阶段的 Pod 也当做 active 的，那么剩下的就是需要清楚的了，pendingAdmissionPod 在执行到 admit 时会去将其设置为当前的 Pod，但是并没有一个把他置空的地方，即使 Pod 被删除了，这个资源还是有值的，是最后一个执行的 Pod，直到下一个 Pod 去 admit 时，才会更新为新 Pod 的值。这个过程就对应了上述问题三四五的结论，Podg1 虽然删了，但是 pendingAdmissionPod 还是 Podg1，kubelet 并不去清理之前为他分配的绑核记录，直到问题五再次调度一个 Podg2 过来的时候，这时候 pendingAdmissionPod 被设置为 Podg2，在执行到 <code>removeStaleState</code> 时会认为 Podg1 是需要删除的，进而释放其之前所占用的资源。</p>
+<p>也比较好理解，<strong>总结就是有个变量记录了处于 admission 阶段的 Pod，但是在 Pod 被删除后并没有去重置，导致在 kubelet 看来这个已经被删除的 Pod 还在运行中，还需要为其保留之前的 cpuset 的信息</strong>。</p>
+<h3 id="引入过程">引入过程</h3>
+<h4 id="直接引入">直接引入</h4>
+<p>看起来好理解，好修复，但为什么需要一个单独的字段去保留处于 admission 阶段的 Pod？还是得考古一番。</p>
+<p>pendingAdmissionPod 是 <a href="https://github.com/kubernetes/kubernetes/pull/103979" target="_blank" rel="noopener noreffer">Do not clear state of pods pending admission for CPU/Memory/Device manager #103979</a> 引入的，为了修复 <a href="https://github.com/kubernetes/kubernetes/issues/103952" target="_blank" rel="noopener noreffer">The CPU manager does not work correctly for the guaranteed pod with multiple containers #103952</a> 问题，简单描述下问题现象就是一个 Guaranteed Pod 里面有两个 Container，都需要在 admit 时分配 cpuset，第一个已经分配好，而等到第二个 Container 分配的时候，第一个已分配的绑核信息被回收了居然&hellip;，导致最终的异常分配（两个容器只有一条绑核信息）。</p>
+<p><strong>这个问题在之前的版本中是不存在，也就是说是在 v1.22 重构后才有的，于是大家首先想到的就是这是重构导致的问题，但重构的作者并不这么认为，而且他最终还说服了这个 pr 的作者</strong>。</p>
+<p>简单总结就是，重构之前的 <code>activePods</code> 是会返回处于 admission 状态的 Pod 的，但是重构之后的不再返回这个阶段的 Pod，重构的作者认为处于 admission 阶段的 Pod 尚未为其分配 podworker，不算 active 的，而且给出了详细的解释，言辞凿凿。</p>
+<p><a href="https://github.com/kubernetes/kubernetes/issues/103952#issuecomment-887859214" target="_blank" rel="noopener noreffer">https://github.com/kubernetes/kubernetes/issues/103952#issuecomment-887859214</a>
+<a href="https://github.com/kubernetes/kubernetes/issues/103952#issuecomment-888387811" target="_blank" rel="noopener noreffer">https://github.com/kubernetes/kubernetes/issues/103952#issuecomment-888387811</a></p>
+<p>他还给出了应对方案就是引入额外字段记录处于 admission 阶段的 Pod，然后就有了这个 pr，确实这个 pr 解决了对应 issue 的问题，但同时也引入了当前的问题。</p>
+<h4 id="间接引入">间接引入</h4>
+<p>当前实现里面，触发回收绑核资源的只有一个地方，即 <code>reconcileState</code>，一个定时执行的 worker，每次执行时都会尝试清理废弃的绑核信息。那为什么不直接在 Pod 删除时进行回收或者 Container 删除时进行回收呢？</p>
+<p>这也是因为 <a href="https://github.com/kubernetes/kubernetes/pull/90377" target="_blank" rel="noopener noreffer">Fix exclusive CPU allocations being deleted at container restart #90377</a> 这个 pr，用来修复 <a href="https://github.com/kubernetes/kubernetes/issues/90303" target="_blank" rel="noopener noreffer">Container cpuset lost, apparently due to race between PostStopContainer() and new container creation #90303</a> 这个问题。</p>
+<p>简单总结就是，在很早之前，确实是会在 container 删除时去清理其绑核信息的，但这个操作是在 <code>PostStopContainer</code> 中做的，这就会有个并发的问题，即老的 Container 删除，新的 Container 要去创建，同时还要去清理老的 Container 的绑核信息，创建新的 Container 和清理老的 Container 的绑核信息是并行执行的，如果先执行了清理，再执行创建，那么是没问题的，但反过来的话，由于新的 Container 已经创建并且分配了绑核信息，结果又被清理逻辑给清理了，导致丢失绑核信息。</p>
+<p>那为什么清理老的 Container 的绑核信息的是会把新的 Container 的绑核信息清理掉呢，这是一个更早的问题。涉及到 cpu_manager_state 文件格式的改变。在最初，其保存的结构为 <code>CPUManagerCheckpointV1</code> 当前为 <code>CPUManagerCheckpointV2</code>，这是通过 <a href="https://github.com/kubernetes/kubernetes/pull/84462" target="_blank" rel="noopener noreffer">Update CPUManager stored state semantics #84462</a> 引入的，是为了修复 <a href="https://github.com/kubernetes/kubernetes/issues/63018" target="_blank" rel="noopener noreffer">Internal PreStartContainer hook failed: not enough cpus available to satisfy request #63018</a>，<a href="https://github.com/kubernetes/kubernetes/issues/79159" target="_blank" rel="noopener noreffer">cpumanager: AddContainer error: not enough cpus available to satisfy request #79159</a></p>
+<p>这两个问题的。</p>
+<p>简单总结就是在 v1 版本中 checkpoint 单纯以 Container 为维度以 ContainerID 为 key 记录绑核信息，没有 Pod 的概念，这会导致一个，在容器创建成功，但是启动失败（例如节点 io 高，load 高等问题）时，记录中会存在多条信息，但其中只有一条是有用的，这就到导致资源泄露，虽然外部看起来还有空闲的 cpu，但无法被其他 Pod 使用。于是在 v2 中修改了结构，改成了一个两层的 map，外层以 PodID 为 key，内层以 ContainerName 为 key，这样就可以规避同一个 Pod 同一个 Container Name 有多个 Container 的问题。但也正是因为最终以 ContainerName 为 Key，导致在清理时，遇到先创建后清理的情况，由于是同一个 Pod 同一个 ContainerName，刚分配的绑核信息就会被清理掉。</p>
+<h3 id="修复">修复</h3>
+<p>问题四在 2021 年就已经被确认是一个 bug: <a href="https://github.com/kubernetes/kubernetes/issues/107074" target="_blank" rel="noopener noreffer">Exclusive CPUs not removed from deleted Pod and put back in the defaultCPUSet. #107074</a>，也有一个 pr: <a href="https://github.com/kubernetes/kubernetes/pull/107732" target="_blank" rel="noopener noreffer">kubelet: fix exclusive CPUs not removed from deleted Pod #107732</a> 来修复这个问题，但最后却 close 了，并没有合入 master。</p>
+<p>为什么没有合呢，一个原因是被要求添加单元测试，但是提 pr 的作者迟迟没有添加，最后他自己关了这个 pr。看实现，确实是可以解决这个 bug 的，但是不是最优的方式呢？还得继续考古去。</p>
+<p>上面提到问题的直接引入是为了解决重构引起的 <code>activePods</code> 返回结果的差异导致的问题，而就在修复问题的 pr 被合并之后，重构 kubelet 的作者在此 pr 后面回复如下</p>
+<blockquote>
+<p>Note that I have a PR I&rsquo;ll open soon that correctly accounts for all admitted and still running pods from the pod worker (I.e. any force deleted pod may still be terminating, so GetActivePods is incorrect today). When that lands it will fix the problem mentioned in the review threads where GetActivePods() is currently not broad enough.</p>
+</blockquote>
+<p>也就是说他有一个新的 pr 来纠正 <code>activePods</code> 返回结果和重构前不一致的问题。在此之前还言辞凿凿的说这不是问题，返回结果中就不应该包含处于 admission 阶段的 Pod，啪啪打脸。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="image-20230915173937480.png"
+        data-srcset="/posts/cpusetbug1/image-20230915173937480.png, image-20230915173937480.png 1.5x, /posts/cpusetbug1/image-20230915173937480.png 2x"
+        data-sizes="auto"
+        alt="/posts/cpusetbug1/image-20230915173937480.png"
+        title="image-20230915173937480" /></p>
+<p>他后来提的这个 pr: <a href="https://github.com/kubernetes/kubernetes/pull/104577" target="_blank" rel="noopener noreffer">kubelet: Admission must exclude completed pods and avoid races #104577</a> 也已经合了，确实是解决了 <code>activePods</code> 返回值和重构前不一致的问题，进而解决了单个 Guaranteed Pod 多个 Container 时，已分的绑核信息随着后续 Container 准入时被回收的问题，也就是说有了这个 pr，那么之前那个修复了老问题引入了当前问题的 pr 就不再需要了，但是社区并没有去处理&hellip;，造成的结果就是直到现在了问题依然存在。</p>
+<p>综合上述考古和分析，最直接的方案是直接 revert 引入此问题的 pr 即可。https://github.com/kubernetes/kubernetes/pull/120661</p>
+<p>如果你心细的话，可能在介绍间接引入那一节会注意到我们只解释了为什么没有在删除 Container 时去释放资源，但并没有解释为什么不在删除 Pod 去清理资源。这里其实我个人认为是可以实现的，只需要在 <code>PostStopContainer</code> 时去传入 Pod 信息，并根据 Pod 状态决定是否要进行绑核资源释放即可。这样就可以既实现 Pod 删除时的资源释放，也避免新创建的 Container 绑核信息被误删，同样可以解决这个问题。</p>
+<h1 id="总结">总结</h1>
+<p>按照时间线来做个总结：</p>
+<ol>
+<li>cpu_manager 实现早期其 checkpoint 以 ContainerID 为 key，导致在 Container 创建成功，但启动失败时，由于 kubelet 的重试，导致同一个 ContainerName （pod yaml）在宿主上存在多个实际的 Container，checkpoint 会存在同一个 Container 的多条记录，造成 cpu 资源泄露。<a href="https://github.com/kubernetes/kubernetes/pull/84462" target="_blank" rel="noopener noreffer">Update CPUManager stored state semantics #84462</a> 升级 checkpoint v1 到 v2 ，数据结构改成两个 map，外层 PodUID，内层 ContainerName（yaml 内）解决了上述问题，同时也引入了新的问题：在删除 Container 后由于清理绑核信息和创建新的 Container 是并行的，会导致刚创建的 Container 的绑核信息被误删除；</li>
+<li><a href="https://github.com/kubernetes/kubernetes/pull/90377" target="_blank" rel="noopener noreffer">Fix exclusive CPU allocations being deleted at container restart #90377</a> 修复了 1 引入的问题，删除了 <code>PostStopContainer</code> 中对已删除的 Container 绑核信息的回收的逻辑，导致 Pod 删除和 Container 删除时不再进行绑核信息的回收，而是完全通过另外一个单独的 worker 定时的触发 <code>reconcileState</code> 进行清理；</li>
+<li>v1.22 对 kubelet 进行了重构，重构完之后 <code>activePods</code> 方法返回的结果不再包含处于 admission 阶段的 Pod，导致在 <code>reconcileState</code> 时会认为处于 admission 阶段的 Pod 的绑核信息是需要回收的，从而引入一个 Guaranteed Pod 存在多个 Container 时，在后续 Container admit 分配绑核信息时有可能会因为 2 中提到的 worker 的清理机制把这个 Pod 已分配的绑核信息给清理了；</li>
+<li>重构 kubelet 的作者认为 <code>activePods</code> 就是不应该返回处于 admission 阶段的 Pod，于是另外一个作者提了这个 pr <a href="https://github.com/kubernetes/kubernetes/pull/103979" target="_blank" rel="noopener noreffer">Do not clear state of pods pending admission for CPU/Memory/Device manager #103979</a> 修复了 3 引入的问题，添加了 pendingAdmissionPod 字段，在每次 admit 时为其复制，但并没有清理这个属性的地方，导致了最开始问题四的出现；</li>
+<li>v1.22 重构 kubelet 的作者修改了实现 <a href="https://github.com/kubernetes/kubernetes/pull/104577" target="_blank" rel="noopener noreffer">kubelet: Admission must exclude completed pods and avoid races #104577</a>，让 <code>activePods</code> 返回了和重构之前一样的结果，即包含处于 admission 阶段的 Pod，同样修复了 3 中的问题，而且是没有副作用的，但并没有对 3 进行回滚；</li>
+</ol>
+<p>中间也有人提了 pr 去修复这个问题，但因为 pr 里面没有对应的单测，一段时间后没有合就直接关闭了。最终结果就是直到现在 v1.28，问题四依然存在于 v1.22 之后的所有版本中&hellip;</p>
+<h1 id="引申">引申</h1>
+<p>按目前的实现看，绑核的服务是不是就一定不会受到其他服务的影响呢？</p>
+<p>提示：按照最开始问题一，二的顺序思考，首先已经给 Podb 分配了全部的 12c，又为 Podg 分配了 6c，这中间是否存在一段时间，Podb 和 Podg 的 cpuset 中存在相同的核呢？是先回收一部分 Podb 使用的核之后再分配给 Podg 使用？还是直接分配给 Podg 一些核再从 Podb 的 cpuset 里面扣除？关键在搞清楚非 Guaranteed Pod 的 cpuset 信息是何时，又是如何更新的。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2023-09-15</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/cpusetbug1/" data-title="Kubernetes 陈年老 bug - 绑核" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/cpusetbug1/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/cpusetbug1/" data-title="Kubernetes 陈年老 bug - 绑核" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/cpusetbug1/" data-title="Kubernetes 陈年老 bug - 绑核"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/cpusetbug1/" data-title="Kubernetes 陈年老 bug - 绑核"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/cpusetbug1/" data-title="Kubernetes 陈年老 bug - 绑核" data-description="kubernetes 陈年老 bug 之绑核"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/cpusetbug1/" data-title="Kubernetes 陈年老 bug - 绑核" data-description="kubernetes 陈年老 bug 之绑核"><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/cpusetbug1/" data-title="Kubernetes 陈年老 bug - 绑核"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/cachebasedmanager3/" class="prev" rel="prev" title="high QPS for configmap GET requests in kube-apiserver - 3"><i class="fas fa-angle-left fa-fw"></i>high QPS for configmap GET requests in kube-apiserver - 3</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>
