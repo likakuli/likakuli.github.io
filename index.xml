@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 14 Sep 2023 20:03:59 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 25 Sep 2023 22:15:51 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>kubernetes 月光宝盒 - 时间倒流</title>
+    <link>https://www.likakuli.com/posts/backclock/</link>
+    <pubDate>Mon, 25 Sep 2023 22:15:51 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/backclock/</guid>
+    <description><![CDATA[背景 碰到一个&quot;诡异&quot;的线上问题，已经定位到原因，虽然不是什么大问题，但感觉还是挺有意思的。在远古时期（k8s 1.7）中也]]></description>
+</item><item>
     <title>Kubernetes 陈年老 bug - 绑核</title>
     <link>https://www.likakuli.com/posts/cpusetbug1/</link>
     <pubDate>Thu, 14 Sep 2023 20:03:59 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kinitiras-cue-http/</guid>
     <description><![CDATA[本篇由来 在使用 Admission Webhook 的时候，很可能会涉及到发送 http 请求以获取某些数据。在 v0.1.1 版本中对此进行了支持，本文主要来介绍如何在 kinitiras 中发送 http 请求，如果对 kinitiras 还不]]></description>
-</item><item>
-    <title>admission webhook 花式玩法 - kinitiras</title>
-    <link>https://www.likakuli.com/posts/kinitiras/</link>
-    <pubDate>Thu, 12 May 2022 10:21:43 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kinitiras/</guid>
-    <description><![CDATA[项目由来 使用 kubernetes 的同学可能或多或少会有以下的实际业务或者需求场景： 为确保安全性，需要对某些资源进行删除保护，例如不允许删除 namespace、]]></description>
 </item></channel>
 </rss>

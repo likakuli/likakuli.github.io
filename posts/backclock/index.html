@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>kubernetes 月光宝盒 - 时间倒流 - kaku&#39;s blog</title><meta name="Description" content="kubernetes 时间倒流"><meta property="og:title" content="kubernetes 月光宝盒 - 时间倒流" />
+<meta property="og:description" content="kubernetes 时间倒流" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/backclock/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-09-25T22:15:51+08:00" />
+<meta property="article:modified_time" content="2023-09-25T22:15:51+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="kubernetes 月光宝盒 - 时间倒流"/>
+<meta name="twitter:description" content="kubernetes 时间倒流"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/backclock/" /><link rel="prev" href="https://www.likakuli.com/posts/cpusetbug1/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "kubernetes 月光宝盒 - 时间倒流",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/backclock\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  3389 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/backclock\/","datePublished": "2023-09-25T22:15:51+08:00","dateModified": "2023-09-25T22:15:51+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": "kubernetes 时间倒流"
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">kubernetes 月光宝盒 - 时间倒流</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-09-25">2023-09-25</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3389 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/backclock/" class="leancloud_visitors" data-flag-title="kubernetes 月光宝盒 - 时间倒流">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#背景">背景</a></li>
+    <li><a href="#时间回溯">时间回溯</a>
+      <ul>
+        <li><a href="#现象">现象</a></li>
+        <li><a href="#feature-or-bug">Feature Or Bug?</a></li>
+      </ul>
+    </li>
+    <li><a href="#事件回溯">事件回溯</a>
+      <ul>
+        <li><a href="#现象-1">现象</a></li>
+        <li><a href="#原因">原因</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="背景">背景</h1>
+<p>碰到一个&quot;诡异&quot;的线上问题，已经定位到原因，虽然不是什么大问题，但感觉还是挺有意思的。在远古时期（k8s 1.7）中也有一个类似回溯的现象，不过从现象看远古那次是事件回溯，现在是时间回溯。接下来分别看下两个 case 和其背后的逻辑。</p>
+<h1 id="时间回溯">时间回溯</h1>
+<h2 id="现象">现象</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">- lastProbeTime: null
+  lastTransitionTime: t1
+  status: <span class="s2">&#34;True&#34;</span>
+  type: Ready
+</code></pre></td></tr></table>
+</div>
+</div><p>上面是 Pod spec.status.conditions 中的 PodReady Condition，表示在 t1 时刻，Pod 变成 Ready 状态。</p>
+<ol>
+<li>t1 时刻 watch 到 Pod Ready，lastTransitionTime 为 t1’；</li>
+<li>t2 时刻 watch 到 Pod NotReady，lastTransitionTime 为 t2‘；</li>
+<li>t3 时刻 watch 到 Pod Ready，lastTransitionTime 为 t3’；</li>
+</ol>
+<p>常理来说 t3‘  &gt; t2‘ &gt; t1’，但诡异的是 t3’ == t1‘，也就是说在 t3 时刻看到的效果就是 Pod 在 t1‘ 时刻就已经 Ready 了，这与实际（t2‘ 到 t3’ 中间这段时间 Pod NotReady）不符。</p>
+<p>经过查看 kubelet 代码发现具体处理逻辑在如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">manager</span><span class="p">)</span> <span class="nf">updateStatusInternal</span><span class="p">(</span><span class="nx">pod</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">Pod</span><span class="p">,</span> <span class="nx">status</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodStatus</span><span class="p">,</span> <span class="nx">forceUpdate</span><span class="p">,</span> <span class="nx">podIsFinished</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">oldStatus</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodStatus</span>
+	<span class="nx">cachedStatus</span><span class="p">,</span> <span class="nx">isCached</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">podStatuses</span><span class="p">[</span><span class="nx">pod</span><span class="p">.</span><span class="nx">UID</span><span class="p">]</span>
+	<span class="k">if</span> <span class="nx">isCached</span> <span class="p">{</span>
+		<span class="nx">oldStatus</span> <span class="p">=</span> <span class="nx">cachedStatus</span><span class="p">.</span><span class="nx">status</span>
+		<span class="c1">// TODO(#116484): Also assign terminal phase to static pods.
+</span><span class="c1"></span>		<span class="k">if</span> <span class="p">!</span><span class="nx">kubetypes</span><span class="p">.</span><span class="nf">IsStaticPod</span><span class="p">(</span><span class="nx">pod</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="nx">cachedStatus</span><span class="p">.</span><span class="nx">podIsFinished</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">podIsFinished</span> <span class="p">{</span>
+				<span class="nx">klog</span><span class="p">.</span><span class="nf">InfoS</span><span class="p">(</span><span class="s">&#34;Got unexpected podIsFinished=false, while podIsFinished=true in status cache, programmer error.&#34;</span><span class="p">,</span> <span class="s">&#34;pod&#34;</span><span class="p">,</span> <span class="nx">klog</span><span class="p">.</span><span class="nf">KObj</span><span class="p">(</span><span class="nx">pod</span><span class="p">))</span>
+				<span class="nx">podIsFinished</span> <span class="p">=</span> <span class="kc">true</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">mirrorPod</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">podManager</span><span class="p">.</span><span class="nf">GetMirrorPodByPod</span><span class="p">(</span><span class="nx">pod</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+		<span class="nx">oldStatus</span> <span class="p">=</span> <span class="nx">mirrorPod</span><span class="p">.</span><span class="nx">Status</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">oldStatus</span> <span class="p">=</span> <span class="nx">pod</span><span class="p">.</span><span class="nx">Status</span>
+	<span class="p">}</span>
+
+	<span class="o">...</span>
+
+	<span class="c1">// Set ReadyCondition.LastTransitionTime.
+</span><span class="c1"></span>	<span class="nf">updateLastTransitionTime</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">status</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">oldStatus</span><span class="p">,</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodReady</span><span class="p">)</span>
+
+  <span class="o">...</span>
+<span class="p">}</span>
+
+<span class="c1">// updateLastTransitionTime updates the LastTransitionTime of a pod condition.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">updateLastTransitionTime</span><span class="p">(</span><span class="nx">status</span><span class="p">,</span> <span class="nx">oldStatus</span> <span class="o">*</span><span class="nx">v1</span><span class="p">.</span><span class="nx">PodStatus</span><span class="p">,</span> <span class="nx">conditionType</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodConditionType</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">_</span><span class="p">,</span> <span class="nx">condition</span> <span class="o">:=</span> <span class="nx">podutil</span><span class="p">.</span><span class="nf">GetPodCondition</span><span class="p">(</span><span class="nx">status</span><span class="p">,</span> <span class="nx">conditionType</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">condition</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="c1">// Need to set LastTransitionTime.
+</span><span class="c1"></span>	<span class="nx">lastTransitionTime</span> <span class="o">:=</span> <span class="nx">metav1</span><span class="p">.</span><span class="nf">Now</span><span class="p">()</span>
+	<span class="nx">_</span><span class="p">,</span> <span class="nx">oldCondition</span> <span class="o">:=</span> <span class="nx">podutil</span><span class="p">.</span><span class="nf">GetPodCondition</span><span class="p">(</span><span class="nx">oldStatus</span><span class="p">,</span> <span class="nx">conditionType</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">oldCondition</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">condition</span><span class="p">.</span><span class="nx">Status</span> <span class="o">==</span> <span class="nx">oldCondition</span><span class="p">.</span><span class="nx">Status</span> <span class="p">{</span>
+		<span class="nx">lastTransitionTime</span> <span class="p">=</span> <span class="nx">oldCondition</span><span class="p">.</span><span class="nx">LastTransitionTime</span>
+	<span class="p">}</span>
+	<span class="nx">condition</span><span class="p">.</span><span class="nx">LastTransitionTime</span> <span class="p">=</span> <span class="nx">lastTransitionTime</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>kubelet 内部维护了从 container runtime 获取到的 status 信息以及探活信息保存在 <code>podStatuses</code> 结构中，<code>updateStatusInternal</code> 每次执行到之后会先从此结构中获取，对应上面场景是会获取到的， <code>oldStatus</code> 就是缓存中的值。<strong>注意 <code>podStatuses</code> 的内容和 k8s pod spec 内容无关，也就是说上面场景即使在 t2’ 时刻 Pod NotReady 了，但在 <code>podStatuses</code> 中仍然是在 t1‘ Pod Ready 的内容</strong>。所以在 t3 时刻 Pod Ready 后，在调用 <code>updateLastTransitionTime</code> 时对比了 <code>status</code> 和 <code>oldStatus</code> 的 Status 值（都是 true）发现一致，则最终 condition.LastTransitionTime 会被设置为 oldCondition.LastTransitionTime 即 t1’。</p>
+<h2 id="feature-or-bug">Feature Or Bug?</h2>
+<p>不管是 feature 还是 bug，目前对于我们来说这个问题只是看起来时间回溯了，并没有实际的影响。就此问题也咨询了社区，参考 <a href="https://github.com/kubernetes/kubernetes/issues/119514" target="_blank" rel="noopener noreffer">issue: 119514</a>。在 kubelet 里面有一段注释：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// needsReconcile compares the given status with the status in the pod manager (which
+</span><span class="c1">// in fact comes from apiserver), returns whether the status needs to be reconciled with
+</span><span class="c1">// the apiserver. Now when pod status is inconsistent between apiserver and kubelet,
+</span><span class="c1">// kubelet should forcibly send an update to reconcile the inconsistence, because kubelet
+</span><span class="c1">// should be the source of truth of pod status.
+</span><span class="c1">// NOTE(random-liu): It&#39;s simpler to pass in mirror pod uid and get mirror pod by uid, but
+</span><span class="c1">// now the pod manager only supports getting mirror pod by static pod, so we have to pass
+</span><span class="c1">// static pod uid here.
+</span><span class="c1">// TODO(random-liu): Simplify the logic when mirror pod manager is added.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">manager</span><span class="p">)</span> <span class="nf">needsReconcile</span><span class="p">(</span><span class="nx">uid</span> <span class="nx">types</span><span class="p">.</span><span class="nx">UID</span><span class="p">,</span> <span class="nx">status</span> <span class="nx">v1</span><span class="p">.</span><span class="nx">PodStatus</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>关键一句：<strong>kubelet should be the source of truth of pod status.</strong> 也可以理解，因为毕竟 kubelet 才是真正干活的，只有他知道 container 的真实状态，但 Pod 的状态就并不一定是只有 kubelet 会更新了，这就是一个比较 trick 的地方。</p>
+<p>Pod Ready Condition 除了在 kubelet 中会设置外，在 kube-controller-manager 中也会设置，当 Node NotReady 一段时间后，其上所有 Pod 都会被 controller-manager 标记为 NotReady，同时更新 LastTransitionTime。</p>
+<p>所以这个现象也是很容易的复现，步骤如下：</p>
+<ol>
+<li>start a http proxy in a worker node to proxy kube-apiserver request</li>
+<li>set kubelet to use this proxy instead of directly use kube-apiserver</li>
+<li>schedule some pod to this node and wait pod running, record the LastTransitionTime of PodReady true condition as time1.</li>
+<li>stop the proxy and wait node not ready and pod ready condition changed to false which set by kube-controller-manager, record the LastTransitionTime of PodReady false condition as time2.</li>
+<li>then start the proxy again and wait pod ready, record the LastTransitionTime of PodReady true condition as time3.</li>
+<li>you will see time3 == time1 and time3 is before time2</li>
+</ol>
+<p>可以使用 socat 作为 http proxy 代理使用，轻松复现。</p>
+<p>Kube-controller-manager 为什么要去操作 Pod Ready 状态呢，因为 endpoint controller 对这个状态有依赖，只有 Pod Ready 后，Pod IP 才会被当做可用，也就是说这个状态直接影响使用 endpoint 来进行通信的场景，而 endpoint 几乎所有云原生网络相关组件都会用到。也就是说<strong>如果你也使用了 endpoint，在出现上述问题时，可能某些 Pod 在一段时间内没有流量，但在最后你去查问题的时候，看 Pod 状态发现他很早之前就是 Ready 状态的，这就容易误导人，如果真如 Condition LastTransitionTime 所述那应该在 t1 时刻开始 Pod 一直有流量，但实际确实在 t2 到 t3 时刻，Pod 并未接流</strong>。所以这到底算是 bug 还是 feature 呢？</p>
+<p>不管是 feature 还是 bug，这个问题是需要解决的，而解决办法最好是再额外加一个 Condition，Pod Ready Condition 只留给 kubelet 去操作，其他组件都是读，同时每个组件按需增加自己的 Condition，结合 Pod Ready Condition 去做一些逻辑处理，比如 node controller 在发现 Node NotReady 后添加 Custom Condition，然后 endpoint controller 结合 Pod Ready Condition 与 Custom Condition 状态判断 Pod 是否可以接流。</p>
+<p><em><strong>时间回溯虽然看起来奇怪，好在并没有实际影响。但接下来事件回溯就厉害了，他是真正的让其他组件感觉到了时间回到了过去，并且历史发生的事情又重来一遍。</strong></em></p>
+<h1 id="事件回溯">事件回溯</h1>
+<p>这个问题发生在 2017 年，某天早上起来，一篇名为 <a href="https://zhuanlan.zhihu.com/p/37217575" target="_blank" rel="noopener noreffer">《Kubernetes 惊天地泣鬼神之大Bug》</a>在知乎上，朋友圈，技术群里面疯狂转发，瞬间炸了锅。</p>
+<h2 id="现象-1">现象</h2>
+<blockquote>
+<p>问题的现象是，在某种情况下，一个或者多个 Kubernetes service 对应的 Kubernetes endpoints 消失几分钟至几十分钟，然后重新出现，然后又消失。</p>
+</blockquote>
+<p>这可就是实打实的影响集群里面正在运行的服务了，此问题在 v1.7 版本引入，在 v1.9 中修复，影响还是比较大的，当然我们当时并没有遇到这个问题，因为我们使用的还是 v1.6，所以使用新版本还是有风险的，哈哈。</p>
+<h2 id="原因">原因</h2>
+<blockquote>
+<p>Fixes a bug in the cache watcher where we were returning the &ldquo;current&rdquo; object from a watch event, not the historic event. This means that we broke behavior when introducing the watch cache. This may have API implications for filtering watch consumers - but on the other hand, it prevents clients filtering from seeing objects outside of their watch correctly, which can lead to other subtle bugs.</p>
+</blockquote>
+<p>问题是在 <a href="https://github.com/kubernetes/kubernetes/pull/46223" target="_blank" rel="noopener noreffer">pr: 46223</a> 引入的，当时是为了修复另外一个 bug 而引入的新的 bug。因为<strong>此问题和 cache watcher 的 watch 实现有关</strong>，所以先看下 kube-apiserver 有关 watch 的实现机制</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="watch.png"
+        data-srcset="/posts/backclock/watch.png, watch.png 1.5x, /posts/backclock/watch.png 2x"
+        data-sizes="auto"
+        alt="/posts/backclock/watch.png"
+        title="img" /></p>
+<p>图片来自：https://zhuanlan.zhihu.com/p/33335726</p>
+<p>先讲一下 store 和 storage 的区别，store 一般用来作为一个 service 对外提供服务，对外屏蔽存储细节，而 storage 是 store 内的一个结构，用来与底层存储交互，这是一个很常见的分层设计。</p>
+<p>以 Pod 为例，这里涉及到两层或者说两对 store 和 storage：</p>
+<ul>
+<li>外层 store（上图并未给出） 用来和 restful api 交互，即通过 k8s api 访问 Pod 的处理请求在 kube-apiserver 内部都会走到这个 store 上，其内部对应的 storage 为上图中所示的 PodStorage；</li>
+<li>内层的 store 为上图的 Pod.Store，最终对应 Cacher，而内层的 storage 才是直接与 Etcd 交互；</li>
+</ul>
+<p>核心组件：Cacher，watchCache，cacheWatcher，reflector。其中 watchCache 作为 reflector 的 store，Etcd 作为 listerWatcher 的 storage，store 和 listerWatcher 作为参数用来构造 reflector。数据流大致如下：</p>
+<ol>
+<li>cacher.startCaching 调用 reflector.ListAndWatch，进而触发 listerWatcher 的 list 和 watch，对应 Etcd list 之后再 watch，watch 时会创建 watchChan，从 Etcd 读到的结果会先进入到 watchChan 的 incomingEventChan 中，<strong>经过 transform 处理，对于 delete 类型的事件，处理时会直接 <code>prevValue</code> 的值，而其他类型事件则直接使用其 <code>value</code>，处理后的对象的 ResourceVersion 为 Etcd event 的 <code>ModRevision</code></strong>，之后进行数据过滤（例如带着 LabelSelector 的请求，也可以看到<em>筛选是在获取全量数据到 Etcd 后在 kube-apiserver 里面进行的</em>），再以符合条件的数据构建 watch.Event 对象，并后发送到 watchChan 的 resultChan 中，供 reflector 消费；</li>
+<li>reflector 会消费上述 resultChan 的数据，即 watch.Event 对象，并根据事件类型调用 store 的增删改方法，此处 store 即 watchCache，经过 watchCache.processEvent 处理，组装 watchCacheEvent 对象，并最终通过 eventHandler 将其发送到 cacher 的 incoming chan 中；</li>
+<li>cacher.dispatchEvents 消费 incoming chan 的数据，经过处理后发送给每个 cacheWatcher 的 input chan；</li>
+<li>外部调用 kube-apiserver watch 请求后，最终到 cacheWatcher 的 Watch 处理机中，消费 input chan，调用 watchCacheEvent 进行事件分发；</li>
+</ol>
+<p>Event 转换示意：<img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="event.png"
+        data-srcset="/posts/backclock/event.png, event.png 1.5x, /posts/backclock/event.png 2x"
+        data-sizes="auto"
+        alt="/posts/backclock/event.png"
+        title="image-20230926145535081" /></p>
+<p>终于介绍完了一些基础，最终导致事件回溯的原因就在最后的 <code>sendWatchCacheEvent</code> 中，针对 delete 请求，有问题的代码如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// NOTE: sendWatchCacheEvent is assumed to not modify &lt;event&gt; !!!
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">cacheWatcher</span><span class="p">)</span> <span class="nf">sendWatchCacheEvent</span><span class="p">(</span><span class="nx">event</span> <span class="o">*</span><span class="nx">watchCacheEvent</span><span class="p">)</span> <span class="p">{</span>
+	<span class="o">...</span>
+
+	<span class="kd">var</span> <span class="nx">watchEvent</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Event</span>
+	<span class="k">switch</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="nx">curObjPasses</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">oldObjPasses</span><span class="p">:</span>
+		<span class="o">...</span>
+	<span class="k">case</span> <span class="nx">curObjPasses</span> <span class="o">&amp;&amp;</span> <span class="nx">oldObjPasses</span><span class="p">:</span>
+		<span class="o">...</span>
+	<span class="k">case</span> <span class="p">!</span><span class="nx">curObjPasses</span> <span class="o">&amp;&amp;</span> <span class="nx">oldObjPasses</span><span class="p">:</span>
+		<span class="nx">object</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">copier</span><span class="p">.</span><span class="nf">Copy</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">PrevObject</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">utilruntime</span><span class="p">.</span><span class="nf">HandleError</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;unexpected copy error: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+		<span class="nx">watchEvent</span> <span class="p">=</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Event</span><span class="p">{</span><span class="nx">Type</span><span class="p">:</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Deleted</span><span class="p">,</span> <span class="nx">Object</span><span class="p">:</span> <span class="nx">object</span><span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其直接使用了 watchCacheEvent 的 PrevObject，而他的 ResourceVersion 是一个过去时的值，例如连续创建三个 Pod，再删除第一个 Pod，则此时返回的 watchEvent 的 Object 对象的 ResourceVersion 是第一个 Pod 创建后的 ResourceVersion，但实际情况是最新的 ResourceVersion 已经随着后两个 Pod 的创建而递增了。也就是此时<strong>客户端 watch 到一个 delete event 之后，客户端 informer 所使用的 reflector 内部维护的 resourceVersion 已经不对了，是一个历史值，如果此时发生一个问题（例如网络闪断）需要去重新 watch 时，会使用这个错误的 resourceVersion，也就是这个版本之后的所有符合条件的事件会再次接收并处理一遍，真正的回到过去，历史重演。</strong></p>
+<p>此问题在 v1.9 中修复，<a href="https://github.com/kubernetes/kubernetes/pull/58547" target="_blank" rel="noopener noreffer">pr: 58547</a>，修复后的逻辑如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// NOTE: sendWatchCacheEvent is assumed to not modify &lt;event&gt; !!!
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">cacheWatcher</span><span class="p">)</span> <span class="nf">sendWatchCacheEvent</span><span class="p">(</span><span class="nx">event</span> <span class="o">*</span><span class="nx">watchCacheEvent</span><span class="p">)</span> <span class="p">{</span>
+	<span class="o">...</span>
+
+	<span class="kd">var</span> <span class="nx">watchEvent</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Event</span>
+	<span class="k">switch</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="nx">curObjPasses</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">oldObjPasses</span><span class="p">:</span>
+		<span class="o">...</span>
+	<span class="k">case</span> <span class="nx">curObjPasses</span> <span class="o">&amp;&amp;</span> <span class="nx">oldObjPasses</span><span class="p">:</span>
+		<span class="o">...</span>
+	<span class="k">case</span> <span class="p">!</span><span class="nx">curObjPasses</span> <span class="o">&amp;&amp;</span> <span class="nx">oldObjPasses</span><span class="p">:</span>
+		<span class="c1">// return a delete event with the previous object content, but with the event&#39;s resource version
+</span><span class="c1"></span>		<span class="nx">oldObj</span> <span class="o">:=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">PrevObject</span><span class="p">.</span><span class="nf">DeepCopyObject</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">versioner</span><span class="p">.</span><span class="nf">UpdateObject</span><span class="p">(</span><span class="nx">oldObj</span><span class="p">,</span> <span class="nx">event</span><span class="p">.</span><span class="nx">ResourceVersion</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">utilruntime</span><span class="p">.</span><span class="nf">HandleError</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failure to version api object (%d) %#v: %v&#34;</span><span class="p">,</span> <span class="nx">event</span><span class="p">.</span><span class="nx">ResourceVersion</span><span class="p">,</span> <span class="nx">oldObj</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
+		<span class="p">}</span>
+		<span class="nx">watchEvent</span> <span class="p">=</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Event</span><span class="p">{</span><span class="nx">Type</span><span class="p">:</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Deleted</span><span class="p">,</span> <span class="nx">Object</span><span class="p">:</span> <span class="nx">oldObj</span><span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>仍然使用 watchCacheEvent 的 PrevObject，但会使用 watchCacheEvent 的 ResourceVersion 覆盖前者的 ResourceVersion。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2023-09-25</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/backclock/" data-title="kubernetes 月光宝盒 - 时间倒流" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/backclock/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/backclock/" data-title="kubernetes 月光宝盒 - 时间倒流" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/backclock/" data-title="kubernetes 月光宝盒 - 时间倒流"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/backclock/" data-title="kubernetes 月光宝盒 - 时间倒流"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/backclock/" data-title="kubernetes 月光宝盒 - 时间倒流" data-description="kubernetes 时间倒流"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/backclock/" data-title="kubernetes 月光宝盒 - 时间倒流" data-description="kubernetes 时间倒流"><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/backclock/" data-title="kubernetes 月光宝盒 - 时间倒流"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/cpusetbug1/" class="prev" rel="prev" title="Kubernetes 陈年老 bug - 绑核"><i class="fas fa-angle-left fa-fw"></i>Kubernetes 陈年老 bug - 绑核</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>
