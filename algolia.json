@@ -605,6 +605,27 @@
         "author": "Kaku Li"
     },
     {
+        "title": "你真的搞懂 Informer 了吗？",
+        "uri": "posts/informer1",
+        "content": "Informer    client go                                         Informer         Informer                         Informer                                                                                                                     Informer                                                      Informer           Informer vs SharedInformer     shared                 Resync Informer           HasSynced    true            NamespacedName    key                       ResourceEventHandler                                                           shared    Reflector          k8s                SharedInformer SharedInformer      Store             Queue              Resync          kube apiserver      Informer   Resync                   Informer HasSynced    true         event handler           SharedInformer     Queue Reflector Store           Pop             Indexer             processorListener             event handler                     ID       NamespacedName                                                                                        Informer               SharedInformer                     ResourceEventHandler       Informer ResourceEventHandler          Informer                     SharedInformer              ResourceEventHandler     SharedProcessor     SharedProcessor     SharedInformer    Shared                    Reflector Store                  Informer                         SharedInformer                           Resync      Reflector Store     DeltaFIFO   KnownObjects      Queue        x  HasSynced                       k8s                  chan     RingBuffer                                     client go                  dispatcher     Informer    HasSynced    true          ResourceEventHandler                  SharedInformer          7      7                              ResourceEventHandler                                    SharedInformer                                                 Pod                                                            PR 113985          v1 27              ResourceEventHandler    HasSynced                                  ResourceEventHandler   HasSynced     NamespacedName         SharedInformer    Pod1   Add       Pod1     Store    SharedInformer   Kubernetes API            ResourceVersion1     Pod1                 ResourceVersion2  Etcd       ResourceVersion2             SharedInformer            ResourceVersion1   ResourceVersion2           SharedInformer     Pod1 Delete                   Pod1                 Pod1 NamespacedName     Store                    Update                         Delete Add            UID                                                                   Update               UID          Update    Delete   Add                                                                                 Informer                              APIServer                           APIServer OOM             Watch                APIServer",
+        "objectID": "posts/informer1",
+        "date": "2023-10-013T20:13:59+08:00",
+        "lastmod": "2023-10-13T12:13:59.000Z",
+        "draft": false,
+        "keywords": [
+            "kubernetes",
+            "informer"
+        ],
+        "description": "",
+        "tags": [
+            "kubernetes"
+        ],
+        "categories": [
+            "源码分析"
+        ],
+        "author": "Kaku Li"
+    },
+    {
         "title": "Knative组件镜像制作",
         "uri": "posts/knative-build",
         "content": "knative 0 14 0          serverless                                                           knative                              github        Dockerfile               image    Dockerfile           shell            docker history   no trunc 8b13dd01e81b   tac   tr  s       cut  d      f 5    sed  s   bin sh  c   nop    g    sed  s   bin sh  c RUN g    sed  s       n    g    sed  s  s 0 9      0 9  s kMG B s    g    head  n  1 bazel build     ko publish knative dev net istio cmd webhook 463kB kodata contents   KODATAPATH ko publish knative dev net istio cmd webhook 52 9MB go build output   ko app webhook WTF         Dockerfile           google   google   bazel                            ko yaml                     google   ko               ko    diamante               k8s               google               load        push    k8s        local                                                                                           knative    0 14 0",
