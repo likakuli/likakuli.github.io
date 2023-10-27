@@ -4,13 +4,20 @@
         <link>https://www.likakuli.com/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</link>
         <description>源码分析 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 14 Oct 2023 00:13:59 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 24 Oct 2023 00:13:59 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="self" type="application/rss+xml" /><item>
+    <title>kube-apiserver 又 OOM 了？</title>
+    <link>https://www.likakuli.com/posts/cacher/</link>
+    <pubDate>Tue, 24 Oct 2023 00:13:59 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/cacher/</guid>
+    <description><![CDATA[代码版本：v1.26 由来 前一篇已经介绍了 Informer 的实现，Informer 对 kube-apiserver 发起了 list 和 watch 请求。我们知道大规模集群下，kube-apiserver 会]]></description>
+</item><item>
     <title>你真的搞懂 Informer 了吗？</title>
     <link>https://www.likakuli.com/posts/informer1/</link>
     <pubDate>Sat, 14 Oct 2023 00:13:59 &#43;0800</pubDate>
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/informer1/</guid>
-    <description><![CDATA[由来 Informer 作为 client-go 的核心，网上有众多的源码分析，原理解析相关文章，可以教给大家如何&quot;正确&quot;的使用 Informer。当然其前提是]]></description>
+    <description><![CDATA[代码版本 v.126 由来 Informer 作为 client-go 的核心，网上有众多的源码分析，原理解析相关文章，可以教给大家如何&quot;正确&quot;的使用 Informer。当]]></description>
 </item><item>
     <title>kubernetes 月光宝盒 - 时间倒流</title>
     <link>https://www.likakuli.com/posts/backclock/</link>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kubernetes-pod-create/</guid>
     <description><![CDATA[kubernetes 版本： v1.12 kubelet 工作原理 kubelet 的工作核心就是在围绕着不同的生产者生产出来的不同的有关 pod 的消息来调用相应的消费者（不同的子模块）完成不同的行为(创建和]]></description>
-</item><item>
-    <title>Kubelet与CNI交互源码</title>
-    <link>https://www.likakuli.com/posts/kubernetes-cni/</link>
-    <pubDate>Tue, 16 Jul 2019 13:53:02 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-cni/</guid>
-    <description><![CDATA[转载自：https://www.cnblogs.com/haoqingchuan/p/8668746.html，有修改 代码版本1.12.4 整]]></description>
 </item></channel>
 </rss>

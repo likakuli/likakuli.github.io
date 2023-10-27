@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>kube-apiserver 又 OOM 了？ - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="kube-apiserver 又 OOM 了？" />
+<meta property="og:description" content="代码版本：v1.26 由来 前一篇已经介绍了 Informer 的实现，Informer 对 kube-apiserver 发起了 list 和 watch 请求。我们知道大规模集群下，kube-apiserver 会" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/cacher/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-10-24T00:13:59+08:00" />
+<meta property="article:modified_time" content="2023-10-28T02:10:28+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="kube-apiserver 又 OOM 了？"/>
+<meta name="twitter:description" content="代码版本：v1.26 由来 前一篇已经介绍了 Informer 的实现，Informer 对 kube-apiserver 发起了 list 和 watch 请求。我们知道大规模集群下，kube-apiserver 会"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/cacher/" /><link rel="prev" href="https://www.likakuli.com/posts/informer1/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "kube-apiserver 又 OOM 了？",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/cacher\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  3333 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/cacher\/","datePublished": "2023-10-24T00:13:59+08:00","dateModified": "2023-10-28T02:10:28+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">kube-apiserver 又 OOM 了？</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-10-24">2023-10-24</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3333 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/cacher/" class="leancloud_visitors" data-flag-title="kube-apiserver 又 OOM 了？">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#由来">由来</a></li>
+    <li><a href="#原理">原理</a>
+      <ul>
+        <li><a href="#cacher-加载">Cacher 加载</a></li>
+        <li><a href="#cacher-数据流">Cacher 数据流</a></li>
+      </ul>
+    </li>
+    <li><a href="#历史问题">历史问题</a>
+      <ul>
+        <li><a href="#kube-apiserver-oom">kube-apiserver OOM</a>
+          <ul>
+            <li><a href="#内存消耗来源">内存消耗来源</a></li>
+            <li><a href="#常见场景">常见场景</a></li>
+          </ul>
+        </li>
+        <li><a href="#too-old-resource-version">too old resource version</a>
+          <ul>
+            <li><a href="#原理-1">原理</a></li>
+            <li><a href="#常见场景-1">常见场景</a></li>
+            <li><a href="#优化">优化</a></li>
+          </ul>
+        </li>
+        <li><a href="#stale-read">stale read</a>
+          <ul>
+            <li><a href="#场景">场景</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#思考">思考</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><blockquote>
+<p>代码版本：v1.26</p>
+</blockquote>
+<h1 id="由来">由来</h1>
+<p>前一篇已经介绍了 Informer 的实现，Informer 对 kube-apiserver 发起了 list 和 watch 请求。我们知道大规模集群下，kube-apiserver 会成为瓶颈，尤其在内存方面，相信很多人也遇到过 kube-apiserver OOM 等问题（碰巧的是最近线上连续出现两次 kube-apiserver OOM 的问题）。本篇主要讲 kube-apiserver 中 Informer 需要用到的两个接口 list 和 watch 的实现。</p>
+<p>网上搜索的话，可以找到大量相关的源码解析的文章，这里我并不会去过多涉及代码，主要还是以讲原理、流程为主，最后简单介绍下当前存在的问题，理论实践相结合。本篇主要讲当前实现，只有了解了当前实现，明白了为什么会有问题，才知道如何去解决问题，接下来的一篇会详细分析如何解决这些问题。</p>
+<h1 id="原理">原理</h1>
+<h2 id="cacher-加载">Cacher 加载</h2>
+<p>在之前一篇 <a href="https://mp.weixin.qq.com/s/B1OTBSIY7I-4TF0LaxtQUA" target="_blank" rel="noopener noreffer">kubernetes 月光宝盒 - 时间倒流</a>中我们已经介绍过 watch 的实现机制。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="start.png"
+        data-srcset="/posts/cacher/start.png, start.png 1.5x, /posts/cacher/start.png 2x"
+        data-sizes="auto"
+        alt="/posts/cacher/start.png"
+        title="start" /></p>
+<p>核心组件：Cacher，watchCache，cacheWatcher，reflector。其中 watchCache 作为 reflector 的 store，Etcd 作为 listerWatcher 的 storage，store 和 listerWatcher 作为参数用来构造 reflector。数据流大致如下：</p>
+<ol>
+<li>kube-apiserver 启动，针对每种资源类型，调用其对应 cacher 的 startCaching，进而调用 reflector.ListAndWatch，触发 listerWatcher 的 list 和 watch，对应 Etcd list 之后再 watch，watch 时会创建 watchChan，从 Etcd 读到的结果会先进入到 watchChan 的 incomingEventChan 中，经过 transform 处理后发送到 watchChan 的 resultChan 中，供 reflector 消费；</li>
+<li>reflector 会消费上述 resultChan 的数据，即 watch.Event 对象，并根据事件类型调用 store 的增删改方法，此处 store 即 watchCache，经过 watchCache.processEvent 处理，组装 watchCacheEvent 对象，<strong>更新 watchCache 的 cache（大小自适应的唤醒缓冲区，保留历史 event）和 store（全量数据）</strong>，并最终通过 eventHandler 将其发送到 cacher 的 incoming chan 中；</li>
+<li>cacher.dispatchEvents 消费 incoming chan 的数据，经过处理后发送给每个 cacheWatcher 的 input chan；</li>
+<li>外部调用 kube-apiserver watch 请求后会创建一个对应的 cacheWachter 对象，最终到 cacheWatcher 的 Watch 处理机中，消费 input chan，调用 watchCacheEvent 进行事件分发；</li>
+</ol>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="cacher.png"
+        data-srcset="/posts/cacher/cacher.png, cacher.png 1.5x, /posts/cacher/cacher.png 2x"
+        data-sizes="auto"
+        alt="/posts/cacher/cacher.png"
+        title="cacher" /></p>
+<h2 id="cacher-数据流">Cacher 数据流</h2>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="cacher.svg"
+        data-srcset="/posts/cacher/cacher.svg, cacher.svg 1.5x, /posts/cacher/cacher.svg 2x"
+        data-sizes="auto"
+        alt="/posts/cacher/cacher.svg"
+        title="cacher" /></p>
+<p>用来缓存数据的核心结构是 watchCache，其内部又两个关键结构：cache（cyclic buffer），store（thread safe store），分别用来存储历史的 watchCacheEvent 和真实的资源对象，其中 store 里面存储的是全量对象，而 cache 虽然是自适应大小的，但还是有最大容量限制的，所以他存储的 watchCacheEvent 所代表的对象集合并不一定能覆盖 store 的全部数据。</p>
+<h1 id="历史问题">历史问题</h1>
+<p>kube-apiserver 在优化自身内存使用方面做了很多优化了，不过至今仍然存在一些尚未完全解决的问题。</p>
+<h2 id="kube-apiserver-oom">kube-apiserver OOM</h2>
+<h3 id="内存消耗来源">内存消耗来源</h3>
+<p>kube-apiserver 的内存消耗，主要两个来源：</p>
+<ol>
+<li>一部分来自于他缓存了集群所有数据（Event 除外，此 Event 为 k8s 的资源类型），并且为每种资源缓存了历史 watchCacheEvent，以及一些内部的数据结构和 chan 等，这部分是不可避免的，虽然可以适当优化，但作用并不大；</li>
+<li>另一部分来自于客户端请求，尤其是 list 请求，kube-apiserver 需要在内存中进行数据深拷贝，序列化等操作，所需内存量和数据量、请求量正相关，随着数据量的增加，请求量的增加，所需要的内存也越大，而且这部分的内存通过 golang GC 是没有办法完全回收的，而 list 请求的主要来源就是 Informer；</li>
+</ol>
+<p>list 请求占用内存多的原因如下：</p>
+<ol>
+<li>默认情况下（没有指定 resourceversion 的情况下），直接从etcd获取数据可能需要大量内存，超过数据存储的完整响应大小数倍；</li>
+<li>请求明确指定 ResourceVersion 参数来从缓存中获取数据（例如，ResourceVersion=&ldquo;0&rdquo;），这实际上是大多数基于 client-go 的控制器因性能原因而使用的方法。内存使用量将比第一种情况低得多。但这并不是完美的，因为我们仍然需要空间来存储序列化对象并保存完整响应，直到发送。</li>
+</ol>
+<h3 id="常见场景">常见场景</h3>
+<p>有两个常见的容易引起 kube-apiserver OOM 的场景：</p>
+<ol>
+<li>一些 DaemonSet 之类的程序里面用到了 Informer，在进行变更，或者故障重启的时候，随着集群规模的增加，请求量也随之增加，对 kube-apiserver 内存的压力也增加，在没有任何防护措施（限流）的情况下，很容易造成 kube-apiserver 的 OOM，而且在 OOM 之后，异常连接转移到其他 master 节点，引起雪崩。理论上也属于一种容量问题，应对措施扩容（加 master 节点）、限流（服务端限流：APF、MaxInflightRequest等，及客户端限流）。</li>
+<li>某种类型资源的数据量很大，kube-apiserver 配置的 timeout 参数太小，不足以支持完成一次 list 请求的情况下，Informer 会一直不断地尝试进行 list 操作，这种情况多发生在控制面组件，因为他们往往需要获取全量数据。</li>
+</ol>
+<h2 id="too-old-resource-version">too old resource version</h2>
+<h3 id="原理-1">原理</h3>
+<p>严格说，这并不能算是一个问题，机制如此，理论上单机资源无限的情况下是可以避免这个现象的。为了方便描述，用 RV 代指 resourceversion。</p>
+<p>其本质是客户端在调用 watch api 时携带非 0 的 RV，服务端在走到 cacher 的 watch 实现逻辑时需要根据传入的 RV 去 cyclic buffer 中二分查找大于 RV 的所有 watchCacheEvent 作为初始 event 返回给客户端。当 cyclic buffer 的最小 RV 还要比传入的 RV 大时，也就是说服务端缓存的事件的最小 RV 都要比客户端传过来的大，意味着缓存的历史事件不全，可能是因为事件较多，缓存大小有限，较老的 watchCacheEvent 已经被覆盖了。</p>
+<h3 id="常见场景-1">常见场景</h3>
+<ol>
+<li>这种情况多发生在 kubelet 连接 apiserver 的场景下，或者说 watch 带了 labelselector 或 fieldselector 的情况下。因为每个 kubelet 只关心自己节点的 Pod，如果自身节点 Pod 一直没有变化，而其他节点上的 Pod 变化频繁，则可能 kubelet 本地 Informer 记录的 last RV 就会比 cyclic buffer 中的最小的 RV 还要小，这时如果发生重连（网络闪断，或者 Informer 自身 timeout 重连），则可以在 kube-apiserver 的日志中看到 &ldquo;too old resoure version&rdquo; 的字样。</li>
+<li>kube-apiserver 重启的场景，如果集群中部分类型资源变更频繁，部分变更不频繁，则对于去 watch 变更不频繁的资源类型的 Informer 来说起本地的 last RV 是要比最新的 RV 小甚至小很多的，在 kube-apiserver 发生重启时，他以本地这个很小的 RV 去 watch，还是有可能会触发这个问题；</li>
+</ol>
+<p>客户端 Informer 遇到这个报错的话会退出 ListAndWatch，重新开始执行 LIstAndWatch，进而造成 kube-apiserver 内存增加甚至 OOM。问题本质原因：RV 是全局的。场景的景本质区别在于场景 1 是在一种资源中做了筛选导致的，场景 2 是多种资源类型之间的 RV 差异较大导致的。</p>
+<h3 id="优化">优化</h3>
+<p>经过上述分析，造成这个问题的原因有两个：</p>
+<ol>
+<li>cyclic buffer 长度有限；</li>
+<li>客户端 Informer 持有的 last RV 过于陈旧；</li>
+</ol>
+<p>社区也已经在多个版本之前进行了优化来降低这个问题出现的概率。</p>
+<p>针对问题一，采用了自适应窗口大小，虽然还是会有问题，但相比之前写死一个值出现问题的概率要小，同时在不必要的时候缩小长度，避免内存资源的浪费。</p>
+<p>针对问题二，有两个优化，引入了 BOOKMARK 机制来优化同一种资源不同筛选条件导致的问题，BOOKMARK 是一种 event 类型，定期将最新的 RV 返回客户端；引入 ProgressNotify 解决多种资源类型 RV 差异较大，在 kube-apiserver 重启后，Informer resume 时导致的问题，本质是利用了 Etcd 的 clientv3 ProgressNotify 的机制，kube-apiserver 在 Watch Etcd 的时候携带了特定的 Options 开启此功能。ProgressNotify 参考 <a href="https://pkg.go.dev/github.com/coreos/etcd/clientv3#WithProgressNotify" target="_blank" rel="noopener noreffer">Etcd 官方文档</a>：</p>
+<blockquote>
+<p>WithProgressNotify makes watch server send periodic progress updates every 10 minutes when there is no incoming events. Progress updates have zero events in WatchResponse.</p>
+</blockquote>
+<p>详情可以参考如下 KEP <a href="https://github.com/kubernetes/enhancements/blob/master/keps/sig-api-machinery/956-watch-bookmark/README.md" target="_blank" rel="noopener noreffer">956-watch-bookmark</a> 和 <a href="https://github.com/kubernetes/enhancements/blob/c63ac8e05de716370d1e03e298d226dd12ffc3c2/keps/sig-api-machinery/1904-efficient-watch-resumption/README.md" target="_blank" rel="noopener noreffer">1904-efficient-watch-resumption</a></p>
+<h2 id="stale-read">stale read</h2>
+<p>这更是一个历史悠久的问题了，自从有了 watchCache 之后就有了这个问题，本质是将之前直接访问 Etcd 时的线性一致性读（Etcd 提供的能力），降级成了读 kube-apiserver cache 的顺序一致性。</p>
+<h3 id="场景">场景</h3>
+<ol>
+<li>T1: StatefulSet controller creates <code>pod-0</code> (uid 1) which is scheduled to <code>node-1</code></li>
+<li>T2: <code>pod-0</code> is deleted as part of a rolling upgrade</li>
+<li><code>node-1</code> sees that <code>pod-0</code> is deleted and cleans it up, then deletes the pod in the api</li>
+<li>The StatefulSet controller creates a second pod <code>pod-0</code> (uid 2) which is assigned to <code>node-2</code></li>
+<li><code>node-2</code> sees that <code>pod-0</code> has been scheduled to it and starts <code>pod-0</code></li>
+<li>The kubelet on <code>node-1</code> crashes and restarts, then performs an initial list of pods scheduled to it against an API server in an HA setup (more than one API server) that is partitioned from the master (watch cache is arbitrarily delayed). The watch cache returns a list of pods from before T2</li>
+<li><code>node-1</code> fills its local cache with a list of pods from before T2</li>
+<li><code>node-1</code> starts <code>pod-0</code> (uid 1) and <code>node-2</code> is already running <code>pod-0</code> (uid 2).</li>
+</ol>
+<p>详情可以参考 <a href="https://github.com/kubernetes/kubernetes/issues/59848" target="_blank" rel="noopener noreffer">issue 59848</a>。</p>
+<h1 id="思考">思考</h1>
+<p>我们经常看到各种源码分析，原理解析的文章，容易轻信其内容，但随着版本迭代，以及一些细节的处理，可能会导致我们理解不到位，或者并不能真正的掌握。例如是否在 list 请求时传 RV=0 就一定会走 kube-apiserver 的缓存？网上搜的话，应该都是说会走，但看代码你会发现并不是这样，例如当 kube-apiserver 重启后数据还没有完全加载好的时候，遇到 list 带了 RV=0 的请求会直接去访问 Etcd 获取数据。看似不起眼的细节，可能会影响我们处理问题的思路，比如 Etcd 负载较高要查原因，如果你知道这个细节的话，就会有意识的去看所有的 list 请求，而不只是那些 RV != 0 的请求。</p>
+<p>最后留一个思考，kube-apiserver 的内存压力主要来自 list 请求，那么我们是否可以不使用 list 请求而是使用一种流式处理来实现 list 的功能呢？这样是不是就可以把内存消耗限制在一个常数的空间复杂度范围内了？下一篇将会专门分析使用流式 api 解决 list 导致的内存暴涨的问题，敬请期待~</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2023-10-28</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/cacher/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/informer1/" class="prev" rel="prev" title="你真的搞懂 Informer 了吗？"><i class="fas fa-angle-left fa-fw"></i>你真的搞懂 Informer 了吗？</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

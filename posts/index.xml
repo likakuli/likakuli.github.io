@@ -4,13 +4,20 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 14 Oct 2023 00:13:59 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 24 Oct 2023 00:13:59 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>kube-apiserver 又 OOM 了？</title>
+    <link>https://www.likakuli.com/posts/cacher/</link>
+    <pubDate>Tue, 24 Oct 2023 00:13:59 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/cacher/</guid>
+    <description><![CDATA[代码版本：v1.26 由来 前一篇已经介绍了 Informer 的实现，Informer 对 kube-apiserver 发起了 list 和 watch 请求。我们知道大规模集群下，kube-apiserver 会]]></description>
+</item><item>
     <title>你真的搞懂 Informer 了吗？</title>
     <link>https://www.likakuli.com/posts/informer1/</link>
     <pubDate>Sat, 14 Oct 2023 00:13:59 &#43;0800</pubDate>
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/informer1/</guid>
-    <description><![CDATA[由来 Informer 作为 client-go 的核心，网上有众多的源码分析，原理解析相关文章，可以教给大家如何&quot;正确&quot;的使用 Informer。当然其前提是]]></description>
+    <description><![CDATA[代码版本 v.126 由来 Informer 作为 client-go 的核心，网上有众多的源码分析，原理解析相关文章，可以教给大家如何&quot;正确&quot;的使用 Informer。当]]></description>
 </item><item>
     <title>kubernetes 月光宝盒 - 时间倒流</title>
     <link>https://www.likakuli.com/posts/backclock/</link>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kinitiras-all/</guid>
     <description><![CDATA[1.背景 Definition 准入 Webhook 是一种用于接收准入请求并对其进行处理的 HTTP 回调机制。 可以定义两种类型的准入 webhook，即 验证性质的准入 Webhook 和 修改性质的准入 W]]></description>
-</item><item>
-    <title>思想随笔2 - 一起读毛选</title>
-    <link>https://www.likakuli.com/posts/thoughtfulessay2/</link>
-    <pubDate>Sat, 26 Nov 2022 13:30:00 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/thoughtfulessay2/</guid>
-    <description><![CDATA[第一卷 - 关心群众生活，注意工作方法 这是毛泽东在一九三四年一月二十二日至二月一日在江西瑞金召开的第二次全国工农兵代表大会上所作的结论的一部分。]]></description>
 </item></channel>
 </rss>
