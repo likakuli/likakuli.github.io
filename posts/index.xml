@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 24 Oct 2023 00:13:59 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 04 Nov 2023 00:23:51 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>Kubernetes 陈年老 bug - Stale Read</title>
+    <link>https://www.likakuli.com/posts/watchlist/</link>
+    <pubDate>Sat, 04 Nov 2023 00:23:51 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/watchlist/</guid>
+    <description><![CDATA[背景 前两篇已经介绍过 Informer 和 Cacher 的实现，也介绍了其中存在的一些问题，本篇主要针对 Stale read 问题展开，分析新版 Informer &amp; Kube-apiserver 中是如何解决这个问题的。 如果对 Informer 和 Kube-apiserver WatchCache]]></description>
+</item><item>
     <title>kube-apiserver 又 OOM 了？</title>
     <link>https://www.likakuli.com/posts/cacher/</link>
     <pubDate>Tue, 24 Oct 2023 00:13:59 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/scheduler-stress-test/</guid>
     <description><![CDATA[背景 源于一次线上 P0 故障，一个生产集群被误操作删除（不只是业务被删，是集群也被删了），集群规模较大，在集群恢复后 Pod 进行了重新、调度的过程，整个]]></description>
-</item><item>
-    <title>Kinitiras - 可编程 webhook 规则引擎详解</title>
-    <link>https://www.likakuli.com/posts/kinitiras-all/</link>
-    <pubDate>Fri, 03 Feb 2023 15:09:26 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kinitiras-all/</guid>
-    <description><![CDATA[1.背景 Definition 准入 Webhook 是一种用于接收准入请求并对其进行处理的 HTTP 回调机制。 可以定义两种类型的准入 webhook，即 验证性质的准入 Webhook 和 修改性质的准入 W]]></description>
 </item></channel>
 </rss>

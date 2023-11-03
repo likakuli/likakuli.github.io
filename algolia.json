@@ -1426,6 +1426,29 @@
         "author": "Kaku Li"
     },
     {
+        "title": "Kubernetes 陈年老 bug - Stale Read",
+        "uri": "posts/watchlist",
+        "content": "Informer   Cacher                          Stale read           Informer   Kube apiserver                  Informer   Kube apiserver WatchCache                                                 RV    Resourceversion         v1 26 9                     Etcd        List    Watch      query       RV           RV              RV                      RV    RV    0  RV      0            List       WatchCache Store               Etcd                                        RV                       3s                           Too large resource version            1s                         Stale Read       1  T1  StatefulSet controller creates pod 0  uid 1  scheduled node 1   2  T2  pod 0 deleted part rolling upgrade   3  node 1 sees pod 0 deleted cleans up  deletes pod api   4  StatefulSet controller creates second pod pod 0  uid 2  assigned node 2   5  node 2 sees pod 0 scheduled starts pod 0   6  kubelet node 1 crashes restarts  performs initial list pods scheduled against API server HA setup  more one API server  partitioned master  watch cache arbitrarily delayed   watch cache returns list pods T2   7  node 1 fills its local cache list pods T2   8  node 1 starts pod 0  uid 1  node 2 already running pod 0  uid 2              issue 59848         6          Informer List RV  0         kube apiserver                            kube apiserver     watchCache Store                                           List       RV  0            watchCache Store                   kube apiserver             Stale Read                                                             master          ConsistentListFromCache FeatureGate              Stale Read          v1 29             GetList implements storage Interface func  c  Cacher  GetList ctx context Context  key string  opts storage ListOptions  listObj runtime Object  error       listRV    0    utilfeature DefaultFeatureGate Enabled features ConsistentListFromCache    listRV  err   storage GetCurrentResourceVersionFromStorage ctx  c storage  c newListFunc  c resourcePrefix  c objectType String    err    nil   return err         objs  readResourceVersion  indexUsed  err    c listItems ctx  listRV  key  pred  recursive                   RV             Etcd          RV    listRV         listItems             Informer         List     RV  0     kube apiserver          Etcd                      RV           watchCache Store               0   RV        List                        Etcd        RV                 List RV  0                     kube apiserver                        Stale Read               Etcd Read           Etcd                              listRV    0                RV                   Etcd                                                  listRV              Stale Read                            Informer   List        kube apiserver",
+        "objectID": "posts/watchlist",
+        "date": "2023-11-03T16:23:51.000Z",
+        "lastmod": "2023-11-03T16:23:51.000Z",
+        "draft": false,
+        "keywords": [
+            "kubernetes",
+            "informer",
+            "watchlist",
+            "watch"
+        ],
+        "description": "",
+        "tags": [
+            "kubernetes"
+        ],
+        "categories": [
+            "源码分析"
+        ],
+        "author": "Kaku Li"
+    },
+    {
         "title": "组织项目介绍",
         "uri": "projects",
         "content": "k cloud labs     Kinitiras        Kubernetes admission webhook       Pidalio  Kinitiras        0         Kluster capacity                                 scheduler stress test",
