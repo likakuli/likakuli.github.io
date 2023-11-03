@@ -6,10 +6,10 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
             <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 04 Nov 2023 00:23:51 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
     <title>Kubernetes 陈年老 bug - Stale Read</title>
-    <link>https://www.likakuli.com/posts/watchlist/</link>
+    <link>https://www.likakuli.com/posts/staleread/</link>
     <pubDate>Sat, 04 Nov 2023 00:23:51 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://www.likakuli.com/posts/watchlist/</guid>
+    <guid>https://www.likakuli.com/posts/staleread/</guid>
     <description><![CDATA[背景 前两篇已经介绍过 Informer 和 Cacher 的实现，也介绍了其中存在的一些问题，本篇主要针对 Stale read 问题展开，分析新版 Informer &amp; Kube-apiserver 中是如何解决这个问题的。 如果对 Informer 和 Kube-apiserver WatchCache]]></description>
 </item><item>
     <title>kube-apiserver 又 OOM 了？</title>

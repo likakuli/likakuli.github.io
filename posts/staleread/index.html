@@ -5,32 +5,32 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noodp" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
-        <title>kube-apiserver 又 OOM 了？ - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="kube-apiserver 又 OOM 了？" />
-<meta property="og:description" content="代码版本：v1.26 由来 前一篇已经介绍了 Informer 的实现，Informer 对 kube-apiserver 发起了 list 和 watch 请求。我们知道大规模集群下，kube-apiserver 会" />
+        <title>Kubernetes 陈年老 bug - Stale Read - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Kubernetes 陈年老 bug - Stale Read" />
+<meta property="og:description" content="背景 前两篇已经介绍过 Informer 和 Cacher 的实现，也介绍了其中存在的一些问题，本篇主要针对 Stale read 问题展开，分析新版 Informer &amp; Kube-apiserver 中是如何解决这个问题的。 如果对 Informer 和 Kube-apiserver WatchCache" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://www.likakuli.com/posts/cacher/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2023-10-24T00:13:59+08:00" />
-<meta property="article:modified_time" content="2023-10-28T02:10:28+08:00" />
+<meta property="og:url" content="https://www.likakuli.com/posts/staleread/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-11-04T00:23:51+08:00" />
+<meta property="article:modified_time" content="2023-11-04T02:36:14+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
-<meta name="twitter:title" content="kube-apiserver 又 OOM 了？"/>
-<meta name="twitter:description" content="代码版本：v1.26 由来 前一篇已经介绍了 Informer 的实现，Informer 对 kube-apiserver 发起了 list 和 watch 请求。我们知道大规模集群下，kube-apiserver 会"/>
+<meta name="twitter:title" content="Kubernetes 陈年老 bug - Stale Read"/>
+<meta name="twitter:description" content="背景 前两篇已经介绍过 Informer 和 Cacher 的实现，也介绍了其中存在的一些问题，本篇主要针对 Stale read 问题展开，分析新版 Informer &amp; Kube-apiserver 中是如何解决这个问题的。 如果对 Informer 和 Kube-apiserver WatchCache"/>
 <meta name="application-name" content="LoveIt">
 <meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/cacher/" /><link rel="prev" href="https://www.likakuli.com/posts/informer1/" /><link rel="next" href="https://www.likakuli.com/posts/staleread/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/staleread/" /><link rel="prev" href="https://www.likakuli.com/posts/cacher/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
     {
         "@context": "http://schema.org",
         "@type": "BlogPosting",
-        "headline": "kube-apiserver 又 OOM 了？",
+        "headline": "Kubernetes 陈年老 bug - Stale Read",
         "inLanguage": "zh-CN",
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": "https:\/\/www.likakuli.com\/posts\/cacher\/"
-        },"genre": "posts","keywords": "kubernetes","wordcount":  3333 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/cacher\/","datePublished": "2023-10-24T00:13:59+08:00","dateModified": "2023-10-28T02:10:28+08:00","publisher": {
+            "@id": "https:\/\/www.likakuli.com\/posts\/staleread\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  1361 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/staleread\/","datePublished": "2023-11-04T00:23:51+08:00","dateModified": "2023-11-04T02:36:14+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -109,10 +109,10 @@
                 <div class="container"><div class="toc" id="toc-auto">
             <h2 class="toc-title">目录</h2>
             <div class="toc-content always-active" id="toc-content-auto"></div>
-        </div><article class="page single"><h1 class="single-title animated flipInX">kube-apiserver 又 OOM 了？</h1><div class="post-meta">
+        </div><article class="page single"><h1 class="single-title animated flipInX">Kubernetes 陈年老 bug - Stale Read</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-10-24">2023-10-24</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3333 字&nbsp;
-                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/cacher/" class="leancloud_visitors" data-flag-title="kube-apiserver 又 OOM 了？">
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-11-04">2023-11-04</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1361 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 3 分钟&nbsp;<span id="/posts/staleread/" class="leancloud_visitors" data-flag-title="Kubernetes 陈年老 bug - Stale Read">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
@@ -122,126 +122,33 @@
                 </div>
                 <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
   <ul>
-    <li><a href="#由来">由来</a></li>
-    <li><a href="#原理">原理</a>
+    <li><a href="#背景">背景</a></li>
+    <li><a href="#细节">细节</a></li>
+    <li><a href="#修复">修复</a>
       <ul>
-        <li><a href="#cacher-加载">Cacher 加载</a></li>
-        <li><a href="#cacher-数据流">Cacher 数据流</a></li>
+        <li><a href="#问题分析">问题分析</a></li>
+        <li><a href="#原理解析">原理解析</a></li>
       </ul>
     </li>
-    <li><a href="#历史问题">历史问题</a>
-      <ul>
-        <li><a href="#kube-apiserver-oom">kube-apiserver OOM</a>
-          <ul>
-            <li><a href="#内存消耗来源">内存消耗来源</a></li>
-            <li><a href="#常见场景">常见场景</a></li>
-          </ul>
-        </li>
-        <li><a href="#too-old-resource-version">too old resource version</a>
-          <ul>
-            <li><a href="#原理-1">原理</a></li>
-            <li><a href="#常见场景-1">常见场景</a></li>
-            <li><a href="#优化">优化</a></li>
-          </ul>
-        </li>
-        <li><a href="#stale-read">stale read</a>
-          <ul>
-            <li><a href="#场景">场景</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li><a href="#思考">思考</a></li>
   </ul>
 </nav></div>
-            </div><div class="content" id="content"><blockquote>
-<p>代码版本：v1.26</p>
-</blockquote>
-<h1 id="由来">由来</h1>
-<p>前一篇已经介绍了 Informer 的实现，Informer 对 kube-apiserver 发起了 list 和 watch 请求。我们知道大规模集群下，kube-apiserver 会成为瓶颈，尤其在内存方面，相信很多人也遇到过 kube-apiserver OOM 等问题（碰巧的是最近线上连续出现两次 kube-apiserver OOM 的问题）。本篇主要讲 kube-apiserver 中 Informer 需要用到的两个接口 list 和 watch 的实现。</p>
-<p>网上搜索的话，可以找到大量相关的源码解析的文章，这里我并不会去过多涉及代码，主要还是以讲原理、流程为主，最后简单介绍下当前存在的问题，理论实践相结合。本篇主要讲当前实现，只有了解了当前实现，明白了为什么会有问题，才知道如何去解决问题，接下来的一篇会详细分析如何解决这些问题。</p>
-<h1 id="原理">原理</h1>
-<h2 id="cacher-加载">Cacher 加载</h2>
-<p>在之前一篇 <a href="https://mp.weixin.qq.com/s/B1OTBSIY7I-4TF0LaxtQUA" target="_blank" rel="noopener noreffer">kubernetes 月光宝盒 - 时间倒流</a>中我们已经介绍过 watch 的实现机制。</p>
-<p><img
-        class="lazyload"
-        src="/svg/loading.min.svg"
-        data-src="start.png"
-        data-srcset="/posts/cacher/start.png, start.png 1.5x, /posts/cacher/start.png 2x"
-        data-sizes="auto"
-        alt="/posts/cacher/start.png"
-        title="start" /></p>
-<p>核心组件：Cacher，watchCache，cacheWatcher，reflector。其中 watchCache 作为 reflector 的 store，Etcd 作为 listerWatcher 的 storage，store 和 listerWatcher 作为参数用来构造 reflector。数据流大致如下：</p>
+            </div><div class="content" id="content"><h1 id="背景">背景</h1>
+<p>前两篇已经介绍过 Informer 和 Cacher 的实现，也介绍了其中存在的一些问题，本篇主要针对 Stale read 问题展开，分析新版 Informer &amp; Kube-apiserver 中是如何解决这个问题的。</p>
+<p>如果对 <a href="https://mp.weixin.qq.com/s/ciEzUs5qb9WZYMl6QC8sZA" target="_blank" rel="noopener noreffer">Informer</a> 和 <a href="https://mp.weixin.qq.com/s/FhNl1c2BdXJK-sDb0qzahw" target="_blank" rel="noopener noreffer">Kube-apiserver WatchCache</a> 还不熟悉的话，建议可以先看前两篇，或者其他有关内容讲解的文章。</p>
+<h1 id="细节">细节</h1>
+<p>为方面描述，下文统一使用 RV 代指 Resourceversion，本节逻辑均基于 v1.26.9 版本，且忽略分页查询，因为分页是直接走 Etcd 的。</p>
+<p>无论是 List 还是 Watch 请求，其 query 均支持传入 RV，服务端会根据请求的 RV 的不同做相应的处理，根据 RV 的值可以分为三种情况</p>
 <ol>
-<li>kube-apiserver 启动，针对每种资源类型，调用其对应 cacher 的 startCaching，进而调用 reflector.ListAndWatch，触发 listerWatcher 的 list 和 watch，对应 Etcd list 之后再 watch，watch 时会创建 watchChan，从 Etcd 读到的结果会先进入到 watchChan 的 incomingEventChan 中，经过 transform 处理后发送到 watchChan 的 resultChan 中，供 reflector 消费；</li>
-<li>reflector 会消费上述 resultChan 的数据，即 watch.Event 对象，并根据事件类型调用 store 的增删改方法，此处 store 即 watchCache，经过 watchCache.processEvent 处理，组装 watchCacheEvent 对象，<strong>更新 watchCache 的 cache（大小自适应的唤醒缓冲区，保留历史 event）和 store（全量数据）</strong>，并最终通过 eventHandler 将其发送到 cacher 的 incoming chan 中；</li>
-<li>cacher.dispatchEvents 消费 incoming chan 的数据，经过处理后发送给每个 cacheWatcher 的 input chan；</li>
-<li>外部调用 kube-apiserver watch 请求后会创建一个对应的 cacheWachter 对象，最终到 cacheWatcher 的 Watch 处理机中，消费 input chan，调用 watchCacheEvent 进行事件分发；</li>
+<li>未设置或者显示设置 RV=&quot;&quot;</li>
+<li>RV = &ldquo;0&rdquo;</li>
+<li>RV = &ldquo;非 0 值&rdquo;</li>
 </ol>
-<p><img
-        class="lazyload"
-        src="/svg/loading.min.svg"
-        data-src="cacher.png"
-        data-srcset="/posts/cacher/cacher.png, cacher.png 1.5x, /posts/cacher/cacher.png 2x"
-        data-sizes="auto"
-        alt="/posts/cacher/cacher.png"
-        title="cacher" /></p>
-<h2 id="cacher-数据流">Cacher 数据流</h2>
-<p><img
-        class="lazyload"
-        src="/svg/loading.min.svg"
-        data-src="cacher.svg"
-        data-srcset="/posts/cacher/cacher.svg, cacher.svg 1.5x, /posts/cacher/cacher.svg 2x"
-        data-sizes="auto"
-        alt="/posts/cacher/cacher.svg"
-        title="cacher" /></p>
-<p>用来缓存数据的核心结构是 watchCache，其内部又两个关键结构：cache（cyclic buffer），store（thread safe store），分别用来存储历史的 watchCacheEvent 和真实的资源对象，其中 store 里面存储的是全量对象，而 cache 虽然是自适应大小的，但还是有最大容量限制的，所以他存储的 watchCacheEvent 所代表的对象集合并不一定能覆盖 store 的全部数据。</p>
-<h1 id="历史问题">历史问题</h1>
-<p>kube-apiserver 在优化自身内存使用方面做了很多优化了，不过至今仍然存在一些尚未完全解决的问题。</p>
-<h2 id="kube-apiserver-oom">kube-apiserver OOM</h2>
-<h3 id="内存消耗来源">内存消耗来源</h3>
-<p>kube-apiserver 的内存消耗，主要两个来源：</p>
-<ol>
-<li>一部分来自于他缓存了集群所有数据（Event 除外，此 Event 为 k8s 的资源类型），并且为每种资源缓存了历史 watchCacheEvent，以及一些内部的数据结构和 chan 等，这部分是不可避免的，虽然可以适当优化，但作用并不大；</li>
-<li>另一部分来自于客户端请求，尤其是 list 请求，kube-apiserver 需要在内存中进行数据深拷贝，序列化等操作，所需内存量和数据量、请求量正相关，随着数据量的增加，请求量的增加，所需要的内存也越大，而且这部分的内存通过 golang GC 是没有办法完全回收的，而 list 请求的主要来源就是 Informer；</li>
-</ol>
-<p>list 请求占用内存多的原因如下：</p>
-<ol>
-<li>默认情况下（没有指定 resourceversion 的情况下），直接从etcd获取数据可能需要大量内存，超过数据存储的完整响应大小数倍；</li>
-<li>请求明确指定 ResourceVersion 参数来从缓存中获取数据（例如，ResourceVersion=&ldquo;0&rdquo;），这实际上是大多数基于 client-go 的控制器因性能原因而使用的方法。内存使用量将比第一种情况低得多。但这并不是完美的，因为我们仍然需要空间来存储序列化对象并保存完整响应，直到发送。</li>
-</ol>
-<h3 id="常见场景">常见场景</h3>
-<p>有两个常见的容易引起 kube-apiserver OOM 的场景：</p>
-<ol>
-<li>一些 DaemonSet 之类的程序里面用到了 Informer，在进行变更，或者故障重启的时候，随着集群规模的增加，请求量也随之增加，对 kube-apiserver 内存的压力也增加，在没有任何防护措施（限流）的情况下，很容易造成 kube-apiserver 的 OOM，而且在 OOM 之后，异常连接转移到其他 master 节点，引起雪崩。理论上也属于一种容量问题，应对措施扩容（加 master 节点）、限流（服务端限流：APF、MaxInflightRequest等，及客户端限流）。</li>
-<li>某种类型资源的数据量很大，kube-apiserver 配置的 timeout 参数太小，不足以支持完成一次 list 请求的情况下，Informer 会一直不断地尝试进行 list 操作，这种情况多发生在控制面组件，因为他们往往需要获取全量数据。</li>
-</ol>
-<h2 id="too-old-resource-version">too old resource version</h2>
-<h3 id="原理-1">原理</h3>
-<p>严格说，这并不能算是一个问题，机制如此，理论上单机资源无限的情况下是可以避免这个现象的。为了方便描述，用 RV 代指 resourceversion。</p>
-<p>其本质是客户端在调用 watch api 时携带非 0 的 RV，服务端在走到 cacher 的 watch 实现逻辑时需要根据传入的 RV 去 cyclic buffer 中二分查找大于 RV 的所有 watchCacheEvent 作为初始 event 返回给客户端。当 cyclic buffer 的最小 RV 还要比传入的 RV 大时，也就是说服务端缓存的事件的最小 RV 都要比客户端传过来的大，意味着缓存的历史事件不全，可能是因为事件较多，缓存大小有限，较老的 watchCacheEvent 已经被覆盖了。</p>
-<h3 id="常见场景-1">常见场景</h3>
-<ol>
-<li>这种情况多发生在 kubelet 连接 apiserver 的场景下，或者说 watch 带了 labelselector 或 fieldselector 的情况下。因为每个 kubelet 只关心自己节点的 Pod，如果自身节点 Pod 一直没有变化，而其他节点上的 Pod 变化频繁，则可能 kubelet 本地 Informer 记录的 last RV 就会比 cyclic buffer 中的最小的 RV 还要小，这时如果发生重连（网络闪断，或者 Informer 自身 timeout 重连），则可以在 kube-apiserver 的日志中看到 &ldquo;too old resoure version&rdquo; 的字样。</li>
-<li>kube-apiserver 重启的场景，如果集群中部分类型资源变更频繁，部分变更不频繁，则对于去 watch 变更不频繁的资源类型的 Informer 来说起本地的 last RV 是要比最新的 RV 小甚至小很多的，在 kube-apiserver 发生重启时，他以本地这个很小的 RV 去 watch，还是有可能会触发这个问题；</li>
-</ol>
-<p>客户端 Informer 遇到这个报错的话会退出 ListAndWatch，重新开始执行 LIstAndWatch，进而造成 kube-apiserver 内存增加甚至 OOM。问题本质原因：RV 是全局的。场景的景本质区别在于场景 1 是在一种资源中做了筛选导致的，场景 2 是多种资源类型之间的 RV 差异较大导致的。</p>
-<h3 id="优化">优化</h3>
-<p>经过上述分析，造成这个问题的原因有两个：</p>
-<ol>
-<li>cyclic buffer 长度有限；</li>
-<li>客户端 Informer 持有的 last RV 过于陈旧；</li>
-</ol>
-<p>社区也已经在多个版本之前进行了优化来降低这个问题出现的概率。</p>
-<p>针对问题一，采用了自适应窗口大小，虽然还是会有问题，但相比之前写死一个值出现问题的概率要小，同时在不必要的时候缩小长度，避免内存资源的浪费。</p>
-<p>针对问题二，有两个优化，引入了 BOOKMARK 机制来优化同一种资源不同筛选条件导致的问题，BOOKMARK 是一种 event 类型，定期将最新的 RV 返回客户端；引入 ProgressNotify 解决多种资源类型 RV 差异较大，在 kube-apiserver 重启后，Informer resume 时导致的问题，本质是利用了 Etcd 的 clientv3 ProgressNotify 的机制，kube-apiserver 在 Watch Etcd 的时候携带了特定的 Options 开启此功能。ProgressNotify 参考 <a href="https://pkg.go.dev/github.com/coreos/etcd/clientv3#WithProgressNotify" target="_blank" rel="noopener noreffer">Etcd 官方文档</a>：</p>
+<p>对于前两种情况，List 会直接返回 WatchCache Store 中的内容，即服务端缓存好的 Etcd 的全部相关数据。</p>
+<p>对于第三种情况，会等待服务端缓存数据的最大版本要超过传入的 RV 之后再返回缓存内的数据，如果等待了一段时间（3s）后缓存中的数据仍然没有达到指定版本，则会报错返回 &ldquo;Too large resource version&rdquo;，并告诉客户端可以在 1s 之后重试。</p>
+<h1 id="修复">修复</h1>
+<h2 id="问题分析">问题分析</h2>
+<p>回顾上一篇中提到的 Stale Read 的问题</p>
 <blockquote>
-<p>WithProgressNotify makes watch server send periodic progress updates every 10 minutes when there is no incoming events. Progress updates have zero events in WatchResponse.</p>
-</blockquote>
-<p>详情可以参考如下 KEP <a href="https://github.com/kubernetes/enhancements/blob/master/keps/sig-api-machinery/956-watch-bookmark/README.md" target="_blank" rel="noopener noreffer">956-watch-bookmark</a> 和 <a href="https://github.com/kubernetes/enhancements/blob/c63ac8e05de716370d1e03e298d226dd12ffc3c2/keps/sig-api-machinery/1904-efficient-watch-resumption/README.md" target="_blank" rel="noopener noreffer">1904-efficient-watch-resumption</a></p>
-<h2 id="stale-read">stale read</h2>
-<p>这更是一个历史悠久的问题了，自从有了 watchCache 之后就有了这个问题，本质是将之前直接访问 Etcd 时的线性一致性读（Etcd 提供的能力），降级成了读 kube-apiserver cache 的顺序一致性。</p>
-<h3 id="场景">场景</h3>
 <ol>
 <li>T1: StatefulSet controller creates <code>pod-0</code> (uid 1) which is scheduled to <code>node-1</code></li>
 <li>T2: <code>pod-0</code> is deleted as part of a rolling upgrade</li>
@@ -253,9 +160,55 @@
 <li><code>node-1</code> starts <code>pod-0</code> (uid 1) and <code>node-2</code> is already running <code>pod-0</code> (uid 2).</li>
 </ol>
 <p>详情可以参考 <a href="https://github.com/kubernetes/kubernetes/issues/59848" target="_blank" rel="noopener noreffer">issue 59848</a>。</p>
-<h1 id="思考">思考</h1>
-<p>我们经常看到各种源码分析，原理解析的文章，容易轻信其内容，但随着版本迭代，以及一些细节的处理，可能会导致我们理解不到位，或者并不能真正的掌握。例如是否在 list 请求时传 RV=0 就一定会走 kube-apiserver 的缓存？网上搜的话，应该都是说会走，但看代码你会发现并不是这样，例如当 kube-apiserver 重启后数据还没有完全加载好的时候，遇到 list 带了 RV=0 的请求会直接去访问 Etcd 获取数据。看似不起眼的细节，可能会影响我们处理问题的思路，比如 Etcd 负载较高要查原因，如果你知道这个细节的话，就会有意识的去看所有的 list 请求，而不只是那些 RV != 0 的请求。</p>
-<p>最后留一个思考，kube-apiserver 的内存压力主要来自 list 请求，那么我们是否可以不使用 list 请求而是使用一种流式处理来实现 list 的功能呢？这样是不是就可以把内存消耗限制在一个常数的空间复杂度范围内了？下一篇将会专门分析使用流式 api 解决 list 导致的内存暴涨的问题，敬请期待~</p>
+</blockquote>
+<p>问题发生在第 6 步，当客户端重启，Informer List RV=&ldquo;0&rdquo; 时如果连接的 kube-apiserver 不是断开之前的实例，就有可能会触发这个问题。因为每个 kube-apiserver 实例的 watchCache Store 存储的数据在某个瞬间可能是不一致的（网络，机器负载等原因），而从上面的细节分析来看 List 请求在遇到 RV=&ldquo;0&rdquo; 的时候是直接返回了 watchCache Store 内容，如果其内容是落后于断连之前的 kube-apiserver 实例的缓存的，就会导致 Stale Read 的问题，虽然最终数据会一致，但还是会出现暂时的时间回流，这对于有状态服务来说影响会比较大。</p>
+<h2 id="原理解析">原理解析</h2>
+<p>此问题已经在当前 master 版本中修复，通过 ConsistentListFromCache FeatureGate 控制，开关打开后可以解决 Stale Read 的问题，默认关闭（v1.29）。</p>
+<p>核心代码如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// GetList implements storage.Interface
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Cacher</span><span class="p">)</span> <span class="nf">GetList</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">key</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="nx">storage</span><span class="p">.</span><span class="nx">ListOptions</span><span class="p">,</span> <span class="nx">listObj</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">Object</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="o">...</span>
+  
+	<span class="k">if</span> <span class="nx">listRV</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">utilfeature</span><span class="p">.</span><span class="nx">DefaultFeatureGate</span><span class="p">.</span><span class="nf">Enabled</span><span class="p">(</span><span class="nx">features</span><span class="p">.</span><span class="nx">ConsistentListFromCache</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">listRV</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">storage</span><span class="p">.</span><span class="nf">GetCurrentResourceVersionFromStorage</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">storage</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">newListFunc</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">resourcePrefix</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">objectType</span><span class="p">.</span><span class="nf">String</span><span class="p">())</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">err</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+  
+  <span class="o">...</span>
+  
+  <span class="nx">objs</span><span class="p">,</span> <span class="nx">readResourceVersion</span><span class="p">,</span> <span class="nx">indexUsed</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">listItems</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">listRV</span><span class="p">,</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">pred</span><span class="p">,</span> <span class="nx">recursive</span><span class="p">)</span>
+
+	<span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>判断如果客户端传递的 RV 为前两种情况，则直接去 Etcd 中获取当前最新的 RV 作为 listRV 的值传递给最终 listItems 函数。也就是说最新版本 Informer 启动的时候虽然 List 传递了 RV=&ldquo;0&rdquo;，但在 kube-apiserver 处理时会访问一遍 Etcd 只获取最新版本号，相当于无论客户端传递的 RV 值如何，在服务端去 watchCache Store 获取数据时，始终是携带了非 0 的 RV。</p>
+<p>结合上面对 List 的分析，需要等后缓存中的数据达到指定版本（从 Etcd 获取到的最新 RV）后才返回，这样一来就可以保证在 List RV=&ldquo;0&rdquo; 正常返回数据的情况下，如论连接到那个 kube-apiserver 实例，其获取到的都是最新版本的数据，从而避免 Stale Read 的产生。其代价就是多了一次 Etcd Read 请求，虽然并不需要 Etcd 返回真实数据。</p>
+<p>这里有个细节要注意下，上面的处理只判断了 listRV == 0 的情况，<strong>如果客户端传递过来的 RV 为第三种情况，服务端就不会再去访问 Etcd 了，这时候可能访问不同实例返回的结果仍然会出现不同的结果，但是由于服务端保证了返回的数据一定是在 listRV 之后的，也就不会出现上面 Stale Read 的问题</strong>。</p>
+<p>篇幅有限，将会在下一篇中介绍社区是如何消除 Informer 中 List 请求从而降低 kube-apiserver 内存使用的，以及优化后的效果，敬请关注~</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -271,14 +224,14 @@
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2023-10-28</span>
+                <span>更新于 2023-11-04</span>
             </div>
             <div class="post-info-license"></div>
         </div>
         <div class="post-info-line">
             <div class="post-info-md"></div>
             <div class="post-info-share">
-                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/cacher/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/cacher/" data-title="kube-apiserver 又 OOM 了？"><i class="fab fa-evernote fa-fw"></i></a></span>
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/staleread/" data-title="Kubernetes 陈年老 bug - Stale Read" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/staleread/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/staleread/" data-title="Kubernetes 陈年老 bug - Stale Read" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/staleread/" data-title="Kubernetes 陈年老 bug - Stale Read"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/staleread/" data-title="Kubernetes 陈年老 bug - Stale Read"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/staleread/" data-title="Kubernetes 陈年老 bug - Stale Read" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/staleread/" data-title="Kubernetes 陈年老 bug - Stale Read" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/staleread/" data-title="Kubernetes 陈年老 bug - Stale Read"><i class="fab fa-evernote fa-fw"></i></a></span>
             </div>
         </div>
     </div>
@@ -290,8 +243,7 @@
         </section>
     </div>
 
-    <div class="post-nav"><a href="/posts/informer1/" class="prev" rel="prev" title="你真的搞懂 Informer 了吗？"><i class="fas fa-angle-left fa-fw"></i>你真的搞懂 Informer 了吗？</a>
-            <a href="/posts/staleread/" class="next" rel="next" title="Kubernetes 陈年老 bug - Stale Read">Kubernetes 陈年老 bug - Stale Read<i class="fas fa-angle-right fa-fw"></i></a></div>
+    <div class="post-nav"><a href="/posts/cacher/" class="prev" rel="prev" title="kube-apiserver 又 OOM 了？"><i class="fas fa-angle-left fa-fw"></i>kube-apiserver 又 OOM 了？</a></div>
 </div>
 <div id="comments"><div id="valine" class="comment"></div><noscript>
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
