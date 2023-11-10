@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/tags/kubernetes/</link>
         <description>kubernetes - 标签 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 04 Nov 2023 00:23:51 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/kubernetes/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 07 Nov 2023 22:10:18 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/kubernetes/" rel="self" type="application/rss+xml" /><item>
+    <title>从 ListWatch 到 WatchList</title>
+    <link>https://www.likakuli.com/posts/watchlist/</link>
+    <pubDate>Tue, 07 Nov 2023 22:10:18 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/watchlist/</guid>
+    <description><![CDATA[背景 前面我们已经对 kube-apiserver 内存消耗进行了阐述，文中最后提到了使用流式的请求来支持 List 的效果，从而实现对于单个请求来说，空间复杂度从 O(n) 转换成 O(1)，]]></description>
+</item><item>
     <title>Kubernetes 陈年老 bug - Stale Read</title>
     <link>https://www.likakuli.com/posts/staleread/</link>
     <pubDate>Sat, 04 Nov 2023 00:23:51 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kluster-capacity/</guid>
     <description><![CDATA[背景 容器平台的三个价值：稳定性、效率、成本，都离不开容量管理。容量管理是 Kubernetes 集群管理中非常重要的一部分。它可以确保系统中的资源得到合理的分配和]]></description>
-</item><item>
-    <title>调度器压测工具介绍</title>
-    <link>https://www.likakuli.com/posts/scheduler-stress-test/</link>
-    <pubDate>Sun, 12 Feb 2023 13:12:38 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/scheduler-stress-test/</guid>
-    <description><![CDATA[背景 源于一次线上 P0 故障，一个生产集群被误操作删除（不只是业务被删，是集群也被删了），集群规模较大，在集群恢复后 Pod 进行了重新、调度的过程，整个]]></description>
 </item></channel>
 </rss>

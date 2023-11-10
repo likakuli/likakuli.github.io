@@ -1449,6 +1449,30 @@
         "author": "Kaku Li"
     },
     {
+        "title": "从 ListWatch 到 WatchList",
+        "uri": "posts/watchlist",
+        "content": "kube apiserver                             List                         O n      O 1                                                kubernetes                   Informer     kube apiserver   OOM    Kubernetes     bug   Stale Read                           Client   Server                Informer     ListWatch              List              Server       List    Informer    Server   API                       Server              List          Stale Read                          RV    Resourceversion         v1 26 9                     Etcd            List    Watch      query       RV           RV              RV                1            RV      2  RV    0    3  RV      0                List       WatchCache Store               Etcd                                            RV                       3s                           Too large resource version            1s                List Stale Read                  kube apiserver    Etcd     RV    WatchCache Store      RV                                                                API    Watch             List             List             List                   List           Watch      Informer                       Watch API    List                       Informer    ListWatch        Watch API                                                  Watch API      SendInitialEvents true       List     Server      Watch                InitEvents                            BOOKMARK Event     Annotation   BOOKMARK   RV       bookmarkAfterRV                InitEvents                   BOOKMARK Event             InitEvent    List                  v1 29          v1 29    alpha            1 27            v1 29                                  WatchCache             kube apiserver            G1 G2      goroutine       Etcd                 CacheWatcher   input chan G1 1            Cacher        Reflector WatchCache    Reflector   Store     Etcd         G1 2 Reflector      Etcd List   Watch API       G1 3 Reflector            WatchCache   store   cyclic buffer                          G1 4      WatchCache      Event     Cacher   incoming chan    G2 1   Cacher   imcomming chan             CacheWatcher   input chan      1   1 25s    RV   bookmarkAfterRV   BOOKMARK        CacheWatcher   input chan                                        Reflector      Watch    query     RV    sendInitialEvent true resourceVersionMatch NotOlderThan AllowWatchBookmarks true      RV       RV  0        List                      Watch      RV               Watch API Stale Read     List Stale Read                List     FeatureGate         Consistent Read   Watch          FeatureGate           RV           Consistent Read                      CacheWachter     Server            bookmarkAfterRV       RV  0    bookmarkAfterRV    WatchCache RV WatchCache Store        RV     RV       Etcd        RV    bookmarkAfterRV   bookmarkAfterRV     CacheWatcher    CacheWatcher     WatchCache Store     input chan        InitEvents 2a     WatchCache Store                            Store            Store       RV         2b    input chan          RV     2a     RV         BOOKMARK      RV    2a     RV       bookmarkAfterRV        BOOKMARK         List            Annotation  k8s io initial events end                                Informer               WathList          Watch                     Annotation  k8s io initial events end   BOOKMARK         RV                  List             RV        Watch             Informer        Watch               KEP 3157 watch list                                                                                         2a b         2b c         G2 1               G1        Etcd                                                              Watch API     Stale Read     RV    WatchList             List   Stale Read       Watch API                      List API      WatchList      Stale Read      WatchCache Store       Cacher imcomming chan             2a       Store           RV     2b     imcomming chan        event RV   RV    BOOKMARK                        CacheWatcher   input chan       RV   bookmarkAfterRV                bookmarkAfterRV   KEP        2c                bookmark timer      1   1 25s       1   1 25s      BOOKMARK      RV   incoming chan    RV               3          G2 1                  CacheWatcher input chan  BOOKMARK     RV    bookmarkAfterRV               bookmarkAfterRV BOOKMARK                          RV       bookmarkAfterRV          bookmarkAfterRV   List         bookmarkAfterRV                            List         bookmark timer       1   1 25s      2b     BOOKMARK       RV    bookmarkAfterRV        bookmarkAfterRV BOOKMARK                bookmarkAfterRV BOOKMARK                          Watch timeout    1s                     WatchList                                WatchList                                          KEP                 kube apiserver",
+        "objectID": "posts/watchlist",
+        "date": "2023-11-07T14:10:18.000Z",
+        "lastmod": "2023-11-07T14:10:18.000Z",
+        "draft": false,
+        "keywords": [
+            "kubernetes",
+            "informer",
+            "watch",
+            "watchlist",
+            "kube-apiserver"
+        ],
+        "description": "",
+        "tags": [
+            "kubernetes"
+        ],
+        "categories": [
+            "源码分析"
+        ],
+        "author": "Kaku Li"
+    },
+    {
         "title": "组织项目介绍",
         "uri": "projects",
         "content": "k cloud labs     Kinitiras        Kubernetes admission webhook       Pidalio  Kinitiras        0         Kluster capacity                                 scheduler stress test",

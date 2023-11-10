@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</link>
         <description>源码分析 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 04 Nov 2023 00:23:51 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 07 Nov 2023 22:10:18 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="self" type="application/rss+xml" /><item>
+    <title>从 ListWatch 到 WatchList</title>
+    <link>https://www.likakuli.com/posts/watchlist/</link>
+    <pubDate>Tue, 07 Nov 2023 22:10:18 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/watchlist/</guid>
+    <description><![CDATA[背景 前面我们已经对 kube-apiserver 内存消耗进行了阐述，文中最后提到了使用流式的请求来支持 List 的效果，从而实现对于单个请求来说，空间复杂度从 O(n) 转换成 O(1)，]]></description>
+</item><item>
     <title>Kubernetes 陈年老 bug - Stale Read</title>
     <link>https://www.likakuli.com/posts/staleread/</link>
     <pubDate>Sat, 04 Nov 2023 00:23:51 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kubernetes-informer-deltafifo/</guid>
     <description><![CDATA[DeltaFIFO位于Reflector和LocalStore之间，看名字知道是个先进先出的队列，作用就是缓存数据变化，直接看代码 1 2 3 4 5]]></description>
-</item><item>
-    <title>Kube-apiserver watch实现</title>
-    <link>https://www.likakuli.com/posts/kubernetes-apiserver-watch/</link>
-    <pubDate>Wed, 21 Aug 2019 19:25:13 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/kubernetes-apiserver-watch/</guid>
-    <description><![CDATA[List-Watch是kubernetes的核心机制。组件kubelet、kube-controller-manager、kube-sche]]></description>
 </item></channel>
 </rss>
