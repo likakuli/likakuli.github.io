@@ -102,6 +102,11 @@
         alt="/avatar.png"
         title="/avatar.png" /></a></div><h1 class="home-title">李鹤</h1><h2 class="home-subtitle"><div id="id-1" class="typeit"></div></h2><div class="links"><a href="https://github.com/likakuli" title="GitHub" target="_blank" rel="noopener noreffer me"><i class="fab fa-github-alt fa-fw"></i></a><a href="mailto:1154584512@qq.com" title="Email" rel=" me"><i class="far fa-envelope fa-fw"></i></a><a href="/index.xml" title="RSS" target="_blank" rel="noopener noreffer me"><i class="fas fa-rss fa-fw"></i></a></div></div>
 <article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/resourcemgmt/">大规模容器平台共享资源池的预算，分配，核算机制</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2023-11-15">2023-11-15</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/"><i class="far fa-folder fa-fw"></i>系统设计</a></span></div><div class="content">转自知乎 https://zhuanlan.zhihu.com/p/408731614，略有修改 背景与挑战 背景 大型互联网公司内部资源池非常庞大</div><div class="post-footer">
+        <a href="/posts/resourcemgmt/">阅读全文</a><div class="post-tags">
+                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/">资源管理</a></div></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
         <a href="/posts/watchlist/">从 ListWatch 到 WatchList</a>
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2023-11-07">2023-11-07</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div><div class="content">背景 前面我们已经对 kube-apiserver 内存消耗进行了阐述，文中最后提到了使用流式的请求来支持 List 的效果，从而实现对于单个请求来说，空间复杂度从 O(n) 转换成 O(1)，</div><div class="post-footer">
         <a href="/posts/watchlist/">阅读全文</a><div class="post-tags">
@@ -125,11 +130,6 @@
         <a href="/posts/backclock/">kubernetes 月光宝盒 - 时间倒流</a>
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2023-09-25">2023-09-25</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div><div class="content">背景 碰到一个&quot;诡异&quot;的线上问题，已经定位到原因，虽然不是什么大问题，但感觉还是挺有意思的。在远古时期（k8s 1.7）中也</div><div class="post-footer">
         <a href="/posts/backclock/">阅读全文</a><div class="post-tags">
-                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/cpusetbug1/">Kubernetes 陈年老 bug - 绑核</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2023-09-14">2023-09-14</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div><div class="content">背景 最近遇到一个线上问题，使用了 lxcfs 的容器，跑在 cgroup v2 的机器上时，在容器内使用 top 或者 htop 看到的核数和 cpu 使用率有问题。虽然根本问题在 lxcfs 的实现，但问题</div><div class="post-footer">
-        <a href="/posts/cpusetbug1/">阅读全文</a><div class="post-tags">
                 <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
 </article><ul class="pagination"><li class="page-item active">
                     <span class="page-link">

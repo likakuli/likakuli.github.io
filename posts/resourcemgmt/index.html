@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>大规模容器平台共享资源池的预算，分配，核算机制 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="大规模容器平台共享资源池的预算，分配，核算机制" />
+<meta property="og:description" content="转自知乎 https://zhuanlan.zhihu.com/p/408731614，略有修改 背景与挑战 背景 大型互联网公司内部资源池非常庞大" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/resourcemgmt/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-11-15T20:15:15+08:00" />
+<meta property="article:modified_time" content="2023-11-15T21:27:22+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="大规模容器平台共享资源池的预算，分配，核算机制"/>
+<meta name="twitter:description" content="转自知乎 https://zhuanlan.zhihu.com/p/408731614，略有修改 背景与挑战 背景 大型互联网公司内部资源池非常庞大"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/resourcemgmt/" /><link rel="prev" href="https://www.likakuli.com/posts/watchlist/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "大规模容器平台共享资源池的预算，分配，核算机制",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/resourcemgmt\/"
+        },"genre": "posts","keywords": "资源管理","wordcount":  5346 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/resourcemgmt\/","datePublished": "2023-11-15T20:15:15+08:00","dateModified": "2023-11-15T21:27:22+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">大规模容器平台共享资源池的预算，分配，核算机制</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/"><i class="far fa-folder fa-fw"></i>系统设计</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-11-15">2023-11-15</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5346 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 11 分钟&nbsp;<span id="/posts/resourcemgmt/" class="leancloud_visitors" data-flag-title="大规模容器平台共享资源池的预算，分配，核算机制">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#背景与挑战"><strong>背景与挑战</strong></a>
+      <ul>
+        <li><a href="#背景">背景</a></li>
+        <li><a href="#挑战">挑战</a>
+          <ul>
+            <li><a href="#技术层面">技术层面</a></li>
+            <li><a href="#管理层面">管理层面</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#方案">方案</a>
+      <ul>
+        <li><a href="#预算">预算</a>
+          <ul>
+            <li><a href="#预算分配给业务">预算分配给业务</a></li>
+            <li><a href="#业务预算分配给项目">业务预算分配给项目</a></li>
+            <li><a href="#项目任务分级配额">项目任务分级配额</a>
+              <ul>
+                <li><a href="#超卖">超卖</a></li>
+                <li><a href="#问题">问题</a></li>
+                <li><a href="#分级配额机制">分级配额机制</a></li>
+                <li><a href="#pooling-机制">Pooling 机制</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li><a href="#精算系统">精算系统</a>
+          <ul>
+            <li><a href="#priority-和-quota">Priority 和 Quota</a></li>
+            <li><a href="#fine-grained-resource-requests">Fine-grained resource requests</a></li>
+          </ul>
+        </li>
+        <li><a href="#核算">核算</a></li>
+      </ul>
+    </li>
+    <li><a href="#角色与责任">角色与责任</a></li>
+    <li><a href="#相关资料">相关资料</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><blockquote>
+<p>转自知乎 <a href="https://zhuanlan.zhihu.com/p/408731614" target="_blank" rel="noopener noreffer">https://zhuanlan.zhihu.com/p/408731614</a>，略有修改</p>
+</blockquote>
+<h1 id="背景与挑战"><strong>背景与挑战</strong></h1>
+<h2 id="背景">背景</h2>
+<p>大型互联网公司内部资源池非常庞大。Google，Facebook 等公司都有统一的容器平台管理庞大的共享资源池，如 Borg，Twine 等等。大规模共享资源池可以提供许多好处，比如：</p>
+<ul>
+<li>应对单个任务突发资源上升需求；</li>
+<li>削峰填谷，混合部署，提高资源利用率；</li>
+<li>多地域提高可用性等能力；</li>
+</ul>
+<h2 id="挑战">挑战</h2>
+<p>平台不是全能的，许多理想需求和成本有矛盾性，不能无条件都满足。</p>
+<ul>
+<li>平台为了提高利用率，减低成本，通常会采取某种超卖（overcomitment）策略：让集群用的比较满，不能无限满足突发的资源需求；</li>
+<li>用户总是希望只为使用付费：在需要资源时快速获取，不需要时快速释放，这会导致平台难以预估平台需要准备的资源。过多预留会导致资源浪费，预留不足会导致资源补充（分钟级）耽误业务的紧急扩容需求；</li>
+<li>用户的任务是多种多样的：有些需要高可用性、资源的高保障，有些可以低频率的被抢占，有些可以排队，但是不能被抢占。</li>
+</ul>
+<h3 id="技术层面">技术层面</h3>
+<ul>
+<li>目前隔离技术并不完美：在网络层，存储层等还有不少挑战；</li>
+<li>调度能力有上限：扩缩容的速度和资源需求的规模有一定关系，可能是毫秒级，也可能是分钟级，甚至需要人工干预；</li>
+<li>平台很难通过简单的 SLO 和业务达成互相理解的协议；<a href="" rel="">https://storage.googleapis.com/pub-tools-public-publication-data/pdf/f647d24ee7eeb338acebf1eb73a5d11b357620b0.pdf</a></li>
+</ul>
+<h3 id="管理层面">管理层面</h3>
+<ul>
+<li>共享资源池的用户较多，<strong>平台侧消耗在沟通的沉默成本巨大</strong>；</li>
+<li>总体预算由少数中高层负责，如何高效合理的分配给大量具体项目的研发人员；</li>
+</ul>
+<h1 id="方案">方案</h1>
+<p>解决上面的挑战需要从两个方面着手</p>
+<ul>
+<li>机制设计</li>
+<li>平台技术研发</li>
+</ul>
+<p>平台技术研发方案有大量的资料讨论，然而顶层机制的讨论却非常少。<strong>常常导致负责技术的研发人员常常处于两难的&quot;脑裂&quot;的状态</strong>。<em>本文主要讨论资源的预算和分配这些机制的设计思路</em>。</p>
+<p>综合考虑上述原因，<strong>除了搭建搞水平的技术，还有另外一个必要前提条件：预算、分配、核算机制</strong>。通过达成共识的机制，让业务（Consumer Based Expectiation）和平台（Service Level Expectation）通过技术手段做到成本和效率的平衡。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://pic3.zhimg.com/80/v2-206024aba282352c9a6e6edcfed79546_1440w.webp"
+        data-srcset="https://pic3.zhimg.com/80/v2-206024aba282352c9a6e6edcfed79546_1440w.webp, https://pic3.zhimg.com/80/v2-206024aba282352c9a6e6edcfed79546_1440w.webp 1.5x, https://pic3.zhimg.com/80/v2-206024aba282352c9a6e6edcfed79546_1440w.webp 2x"
+        data-sizes="auto"
+        alt="https://pic3.zhimg.com/80/v2-206024aba282352c9a6e6edcfed79546_1440w.webp"
+        title="img" /></p>
+<p>具体的，这套机制需要解决如下关键问题，其中着重关注问题 2 ~ 5：</p>
+<ul>
+<li>预算分配给业务
+<ul>
+<li>共享池上的众多业务如何申请每个周期的预算总额；</li>
+</ul>
+</li>
+<li>业务预算分配给项目
+<ul>
+<li>获得预算的业务如何有效的将预算分配给具体需要使用资源的项目，比如视频业务需要转码项目，视频推荐排序项目，存储后台项目等。参与到项目中的研发需要使用共享资源池的算力来完成项目；</li>
+</ul>
+</li>
+<li>项目任务分级配额
+<ul>
+<li>研发为某个项目开发代码，提交计算任务到容器平台上会有不同的分级，对应不同的风险和定价策略。有些任务需要 &ldquo;更可靠&rdquo; 的资源预留，对应会有较高的定价。而部分批任务，离线任务可以运行在一定时间段内承担部分资源无法获得的情况，对应有较低的价格。具体表现为<strong>基于分级的差异化 SLO 和定价</strong>；</li>
+<li>项目根据自己任务的实际情况，使用不同等级任务的配额；</li>
+</ul>
+</li>
+<li>精算系统
+<ul>
+<li>通常公司内精算系统在满足业务实际需求前提下，以最大化资源利用率为优化目标。而公有云则更倾向于最大化收入为目标；</li>
+<li>基于历史、当前和预测的资源用量，平台技术能力等数据；</li>
+<li>预测共享资源池还可以售卖的各级资源额度，以及对应的 SLO 和价格；</li>
+</ul>
+</li>
+<li>核算
+<ul>
+<li>资源用量可以归属到组，通过组可以回溯到上游平台，业务，实体人等维度；</li>
+</ul>
+</li>
+</ul>
+<h2 id="预算">预算</h2>
+<h3 id="预算分配给业务">预算分配给业务</h3>
+<p>预算分配给业务往往是高层的决策。通过年度预算等和定期调整的方式进行。一般会参考：</p>
+<ul>
+<li>往年的成本；</li>
+<li>对于后续业务成长速度，规划，技术发展的预期；</li>
+</ul>
+<p>预算中的一部分会被分配给研发项目，用来确定在容器平台中能够使用的资源。
+预算的原始单位可能是具体的金额：</p>
+<ul>
+<li>金额具体如何转换成容器平台的物理资源通常是不公开的。可能会被加密成其他单位，比如 &ldquo;人时&rdquo;；</li>
+<li>换算的公式也可能是动态调整的，受众多因素影响：物理资源的成本变化，资源在不同区域的空闲情况，容器平台底层技术能力，用量是否突发超过预算等等；</li>
+</ul>
+<p>比如一个亿的预算中，具体可能会表现成 10000 算力单元在容器平台能购买某个等级一定量的 CPU 核。</p>
+<h3 id="业务预算分配给项目">业务预算分配给项目</h3>
+<p>每个业务的发展都需要开展研发项目。比如接入层，后台的存储服务，训练召回排序模型，推理服务等等。这些项目最终被拆分到研发身上。他们为了完成工作需要在共享资源池上提交任务。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://pic2.zhimg.com/80/v2-b1014d235e09d70f1342eac770dba999_1440w.webp"
+        data-srcset="https://pic2.zhimg.com/80/v2-b1014d235e09d70f1342eac770dba999_1440w.webp, https://pic2.zhimg.com/80/v2-b1014d235e09d70f1342eac770dba999_1440w.webp 1.5x, https://pic2.zhimg.com/80/v2-b1014d235e09d70f1342eac770dba999_1440w.webp 2x"
+        data-sizes="auto"
+        alt="https://pic2.zhimg.com/80/v2-b1014d235e09d70f1342eac770dba999_1440w.webp"
+        title="img" /></p>
+<p>因此，需要将业务的预算拆解到各个项目上。这里主要通过组（group）的媒介来完成。一个或多个业务线将预算的一部分划归给某个具体的组，研发加入组后就可以用组的身份去容器平台提交任务了。具体如下：</p>
+<ul>
+<li>创建组，将业务预算（可能转换成对应容器、存储等的资源单位）绑定到某个组上；</li>
+<li>研发加入组，通过组的身份提交任务到容器平台；</li>
+<li>容器平台得知组需要使用多少资源，去预核算确认这个组拥有充足的预算；</li>
+<li>如果预算充足，容器平台调度任务；</li>
+</ul>
+<p>&ldquo;组&rdquo; 的媒介提了许多好处，也有许多细节</p>
+<ul>
+<li>&ldquo;组&rdquo; 解耦了公司的管理树，可以方便让多个业务协同共享资源，多个部门研发协同开发；</li>
+<li>&ldquo;组&rdquo; 又可以进一步分类为 &ldquo;资源组&rdquo;，&ldquo;人员组&rdquo;。资源组仅有预算和身份能力，可以包含人员组，人员组可以包含人。解耦了资源和人的关系，人可以灵活加入和离去，但是项目可以持续的进行，使用资源；</li>
+<li>&ldquo;组&rdquo; 也能解耦平台，多个平台基于统一的组体系，可以大幅简化跨平台的使用，结算等问题；</li>
+</ul>
+<h3 id="项目任务分级配额">项目任务分级配额</h3>
+<p>前面的流程中存在一个比较大的问题，研发对于每个任务需要使用多少资源的判断是不准确的，而且通常是非常不准确。运行程序的研发和开发程序的研发往往不是一群人。即使研发运行的是自己的代码，也难以判断准确。具体表现如下：</p>
+<ul>
+<li>程序运行本身有不确定性，CPU 和内存的使用难以准确预估；</li>
+<li>在线服务存在潮汐现象，研发往往按照峰值资源用量来申请资源；</li>
+<li>为了保障在线服务的稳定性和不可预期的调用量增加，研发倾向于申请更多的资源；</li>
+</ul>
+<p>综上，假如容器平台为所有计算任务预留的资源和研发申请的资源一样，必然导致巨大的资源浪费。经验性：</p>
+<ul>
+<li>在峰值，申请的资源也比实际使用多出 30% 以上；</li>
+<li>在波谷，申请的资源可能比实际使用多出的 70% 以内；</li>
+</ul>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://pic4.zhimg.com/80/v2-24384a5c41016f2782fb80782ecb6363_1440w.webp"
+        data-srcset="https://pic4.zhimg.com/80/v2-24384a5c41016f2782fb80782ecb6363_1440w.webp, https://pic4.zhimg.com/80/v2-24384a5c41016f2782fb80782ecb6363_1440w.webp 1.5x, https://pic4.zhimg.com/80/v2-24384a5c41016f2782fb80782ecb6363_1440w.webp 2x"
+        data-sizes="auto"
+        alt="https://pic4.zhimg.com/80/v2-24384a5c41016f2782fb80782ecb6363_1440w.webp"
+        title="img" /></p>
+<p>如下图所示：</p>
+<p>Usage 是实际程序运行使用的 CPU，会不断波动。
+Allocation 是用户提交程序时申请的 CPU。通常超过 Usage，保障程序的运行速度等。
+Reservation 是平台为用户预留的总 CPU。可能因为用户还没来得及提交，或者有任务停掉等原因，比 Allocation 要多。
+Capactity 是整个集群实际物理 CPU 总量。通常会比 Reservation 多，可以被卖给其他用户。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="https://pic4.zhimg.com/80/v2-3801c1c83a066ab71e67ae1e1123fe5f_1440w.webp"
+        data-srcset="https://pic4.zhimg.com/80/v2-3801c1c83a066ab71e67ae1e1123fe5f_1440w.webp, https://pic4.zhimg.com/80/v2-3801c1c83a066ab71e67ae1e1123fe5f_1440w.webp 1.5x, https://pic4.zhimg.com/80/v2-3801c1c83a066ab71e67ae1e1123fe5f_1440w.webp 2x"
+        data-sizes="auto"
+        alt="https://pic4.zhimg.com/80/v2-3801c1c83a066ab71e67ae1e1123fe5f_1440w.webp"
+        title="img" /></p>
+<h4 id="超卖">超卖</h4>
+<p>由于所有任务不太可能同时到达峰值（大多数情况都不再峰值），平台如果按峰值的总和预留资源会造成巨大的浪费。为了让资源池的利用率高起来，容器平台一般会对资源进行超卖。</p>
+<p>举个例子，平台有 100 万核，卖给 A 业务 50 万核，A 大概率不会用到 50 万核，那么平台可以再卖 80 万核给 B 和 C。因为 B 和 C 大概率也不会用到 80 万核，所以平台的 100 万核（真实资源）大概率不会被 A，B 和 C 用满。
+在大多数情况下，A，B，C 和平台都很 happy。A，B，C 感觉自己便宜的买到了更多东西。平台 &ldquo;无中生有&rdquo;，降低了公司的运营成本。</p>
+<p>这有点像银行发放贷款，银行获得了100 万的储蓄，可以借 90 万给别人。只要存钱的人不一起来要这 100 万（大概率），银行就是安全的。</p>
+<h4 id="问题">问题</h4>
+<p>前面反复提到了概率的问题。当某些特殊情况发生时，平台，A，B，C 可能就不太 happy了。比如，A 业务出了个爆款，用户量爆增，真的用到了 50 万核（甚至更多）。但是 B 和 C 已经用了 60 万核了（卖给他们 80 万）。A 现在只能用到 40 万核。。。A 会非常不  happy！</p>
+<p>真实情况，很多公司平台如果有 100 万核，可能根本就不知道 A，B，C 分别预算多少。当任意一个业务量暴涨时，都会问平台要更多资源。而平台交不出来的话，就需要承担业务的损失。</p>
+<p>一种比较简单的办法：平台囤积部分资源不用（小金库），假装资源已经都分配了。当 A，B，C 某个业务需要使用时，再分配这部分资源。这样会导致 A，B，C 都需要为这部分囤积浪费的资源买单，提高了单位资源成本。</p>
+<h4 id="分级配额机制">分级配额机制</h4>
+<p>更合理的做法应该是分级，对不同级别基于对应的 SLO 和定价。类似 AWS 上的 Reserved Instance，OnDemand Instance 等。</p>
+<p>SLO 一般会考虑两个维度：</p>
+<ul>
+<li>Obtainability：用户想获得配额的资源时，有多大概率是能给的；</li>
+<li>Availability：用户的任务正在运行时，有多大的概率资源要被回收；</li>
+</ul>
+<p>基于以上两个维度，有 3 种场景的 SLO</p>
+<ul>
+<li>Reserved（Or Prod）：就是 Obtainability 和 Availability 是接近100%的，有较高定价；</li>
+<li>Economy（Or Batch）：研究表明，Obtainability 和 Availability 会在 98% 以上时，平台可以超卖相当可观的资源。而 98% 对于大多数离线任务，甚至部分在线服务都是可以接受的；</li>
+<li>Opportunistic（Or Free）：没有 SLO，但是在集群的缝隙通常也能获得一定的资源；</li>
+</ul>
+<h4 id="pooling-机制">Pooling 机制</h4>
+<p>这是一种附加策略，单个组的预算是非常有限的，Pooling 是一种互助协议。如果 A 和 B 签订了协议，那么当 A 超过了配额时，A 可以临时借用 B 没有用的配额。</p>
+<h2 id="精算系统">精算系统</h2>
+<p>前面提到的分级配额机制，通常需要一个精算系统的支持，对于大规模容器平台，可能有数百万到数千万核的算力资源。1% 的优化都能带来显著金钱上的节省。
+精算系统可以和调度系统解耦，判断每台物理机在一定概率条件下，实际剩余的空闲资源。或者判断每个容器在一定概率条件下，实际使用的资源。(Usage vs Limit vs Capacity）</p>
+<p>大致工作流程：</p>
+<ul>
+<li>获得如下数据
+<ul>
+<li>资源池总体的容量情况</li>
+<li>历史，现在和对未来任务资源使用的预测</li>
+<li>平台的调度、隔离能力等技术指标</li>
+</ul>
+</li>
+<li>数据科学家基于数据制定大致的分级策略，比如上文提到的 Prod, Batch, Free；</li>
+<li>精算系统计算出，在保障 SLO 的前提下，资源池的不同等级的资源还有多少可以被售卖；</li>
+</ul>
+<p>假设平台有 100W 核，A，B，C 三个组过来申请配额：</p>
+<ul>
+<li>A，B，C 为在线服务 A1，B1，C1 分别申请了 20W Prod，那么集群剩下 40W；</li>
+<li>精算系统通过测算，认为 99% 的概率下，集群能在 10 分钟内能够释放 60W 核的资源出来。或者说，这 60W 中，A1, B1, C1 同时需要使用 20W 中的一部分，导致只剩下 40W~60W 的概率小于 1%；</li>
+<li>平台会将 60W 核分配给 A，B，C 的 Batch。假设 A2，B2，C2 分别各申请获得 20W Batch；</li>
+<li>Free 配额可以一定概率在低谷期获得 20W 的碎片资源，白天某些时段获得 5W 碎片资源，依然有利可图；</li>
+</ul>
+<h3 id="priority-和-quota">Priority 和 Quota</h3>
+<p>优先级和配额用于防止运行的比实际能容纳多的这种负载情况。每个任务都有一个 <code>priority</code> 优先级，一个小的正整数。高优先级的 task 可以在牺牲较低优先级的 task 来获取资源，甚至是以抢占方式。 可以为不同用途定义不同的优先级：监控、生产、批处理和 best effort。</p>
+<p>针对生产级别的任务是禁止 task 互相抢占的。优先级决定任务处于运行还是等待状态。 <code>Quota</code> 配额被用于确定调度哪些任务。配额表示为一段时间内（通常为几个月）给定优先级的资源量（CPU、RAM、磁盘等）。这些值指定了用户的任务在请求时间段内可以使用的最大资源量。配额检查是准入控制的一部分，配额不足情况下，任务会被拒绝调度。</p>
+<p>高优先级的配额成本比低优先级要高。生产级别的配额仅限于集群中实际可用资源，因此用户提交满足生产级别任务运行预期的资源配额。虽然不建议用户配置超买，但是很多用户都会比实际的需要配额要大，以防止后续用户增长可能造成的资源短缺。对于超买，应对方案就是超卖。</p>
+<p>配额分配和物理容量设计密切相关，结果反映在不同数据中心的配额价格和可用性上。</p>
+<h3 id="fine-grained-resource-requests">Fine-grained resource requests</h3>
+<p>支持以 ms（毫秒）为单位请求 CPU，以 bytes（字节）为单位请求内存和磁盘空间。</p>
+<h2 id="核算">核算</h2>
+<p>基于上文机制开发的系统，核算应该是可以完全自动化的。整个链条从最初的总预算开始到最后任务在 CPU 上运行都是在系统中可追溯的。大致过程如下</p>
+<ul>
+<li>容器平台会结算每个任务运行消耗的资源；</li>
+<li>每个运行任务可以自动关联到 &ldquo;组&rdquo; 上；</li>
+<li>组的创建是来自某个项目的申请，因此可以管理到具体的事上，比如训练精排模型；</li>
+<li>组的预算来自于一个或多个业务授予的，也可以自动化拆分；</li>
+<li>组的成员组成也是明确的（包括它的变化记录），可以自动归属到对应的研发身上；</li>
+</ul>
+<h1 id="角色与责任">角色与责任</h1>
+<p>在整个链条中有如下几类角色</p>
+<ul>
+<li>决策层：负责定期或按需 Review 业务的总体预算是否满足业务发展的总体开销，并且将获得的预算分配各个领域的负责人；</li>
+<li>领域负责人：通常可能是业务某个领域负责人等角色，负责将预算分配给各个项目组，并对分配的额度是否够用负责。如果额度不够导致了容器平台拒绝提供资源，由项目 Admin 和下级负责；</li>
+<li>项目组负责人：需要主动观测项目组下所有任务的资源使用情况，在需要时及时向领域负责人申请调整。如果没有及时调整，<strong>额度不够导致平台拒绝提供资源，由项目负责人负责</strong>；</li>
+<li>研发：开发 Prod, Batch 等任务，优化任务的资源开销，尽可能在满足业务需求的前提下使用较低价格的资源等级；</li>
+<li>平台：对平台的健壮性，可观测性和承诺的 SLO 负责。在满足 SLO 前提下可以拒绝提供资源；</li>
+</ul>
+<h1 id="相关资料">相关资料</h1>
+<p><a href="https://dl.acm.org/doi/pdf/10.1145/2670979.2670999" target="_blank" rel="noopener noreffer">Long-term SLOs for reclaimed cloud computing resources</a></p>
+<p>Take it to the Limit: Peak Prediction-driven Resource Overcommitment in Datacenters</p>
+<p>Flex，JSSP 2018</p>
+<p><a href="https://link.zhihu.com/?target=https%3A//storage.googleapis.com/pub-tools-public-publication-data/pdf/f647d24ee7eeb338acebf1eb73a5d11b357620b0.pdf" target="_blank" rel="noopener noreffer">Nines are Not Enough: Meaningful Metrics for Clouds</a></p>
+<p><a href="https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43438.pdf" target="_blank" rel="noopener noreffer">Borg 2013</a></p>
+<p><a href="chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://dl.acm.org/doi/pdf/10.1145/3342195.3387517" target="_blank" rel="noopener noreffer">Next Borg</a></p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2023-11-15</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/resourcemgmt/" data-title="大规模容器平台共享资源池的预算，分配，核算机制" data-hashtags="资源管理"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/resourcemgmt/" data-hashtag="资源管理"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/resourcemgmt/" data-title="大规模容器平台共享资源池的预算，分配，核算机制" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/resourcemgmt/" data-title="大规模容器平台共享资源池的预算，分配，核算机制"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/resourcemgmt/" data-title="大规模容器平台共享资源池的预算，分配，核算机制"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/resourcemgmt/" data-title="大规模容器平台共享资源池的预算，分配，核算机制" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/resourcemgmt/" data-title="大规模容器平台共享资源池的预算，分配，核算机制" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/resourcemgmt/" data-title="大规模容器平台共享资源池的预算，分配，核算机制"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/">资源管理</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/watchlist/" class="prev" rel="prev" title="从 ListWatch 到 WatchList"><i class="fas fa-angle-left fa-fw"></i>从 ListWatch 到 WatchList</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

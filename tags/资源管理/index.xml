@@ -1,0 +1,15 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>资源管理 - 标签 - kaku&#39;s blog</title>
+        <link>https://www.likakuli.com/tags/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/</link>
+        <description>资源管理 - 标签 - kaku&#39;s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 15 Nov 2023 20:15:15 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86/" rel="self" type="application/rss+xml" /><item>
+    <title>大规模容器平台共享资源池的预算，分配，核算机制</title>
+    <link>https://www.likakuli.com/posts/resourcemgmt/</link>
+    <pubDate>Wed, 15 Nov 2023 20:15:15 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/resourcemgmt/</guid>
+    <description><![CDATA[转自知乎 https://zhuanlan.zhihu.com/p/408731614，略有修改 背景与挑战 背景 大型互联网公司内部资源池非常庞大]]></description>
+</item></channel>
+</rss>
