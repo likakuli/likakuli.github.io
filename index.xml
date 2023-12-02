@@ -4,9 +4,23 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 15 Nov 2023 20:15:15 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 02 Dec 2023 08:01:25 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>kube-apiserver 内存优化进阶</title>
+    <link>https://www.likakuli.com/posts/serialisation/</link>
+    <pubDate>Sat, 02 Dec 2023 08:01:25 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/serialisation/</guid>
+    <description><![CDATA[背景 前面我们已经对 kube-apiserver 内存消耗 进行了阐述，文中最后提到了使用流式的请求来支持 List 的效果，从而实现对于单个请求来说，空间复杂度从 O(n) 转换成 O(1)，]]></description>
+</item><item>
+    <title>从故障中我们学到了什么？</title>
+    <link>https://www.likakuli.com/posts/stability/</link>
+    <pubDate>Tue, 28 Nov 2023 22:02:41 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/stability/</guid>
+    <description><![CDATA[继阿里云之后，滴滴崩了上了热搜，故障原因了解了一些，会在文章最后谈到。近期国内多个公司发生了 P0 事故，当然也包括我司，只不过可能不出名，很多人]]></description>
+</item><item>
     <title>大规模容器平台共享资源池的预算，分配，核算机制</title>
     <link>https://www.likakuli.com/posts/resourcemgmt/</link>
     <pubDate>Wed, 15 Nov 2023 20:15:15 &#43;0800</pubDate>
@@ -61,20 +75,6 @@
     <pubDate>Sat, 26 Aug 2023 16:02:05 &#43;0800</pubDate>
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/cachebasedmanager3/</guid>
-    <description><![CDATA[背景 线上 k8s 集群 kube-apiserver 的 ConfigMap Get 操作 QPS 较高，且同时间段 Etcd 中 ConfigMap 资源的 Get 操作 QPS 也较高，看日志多数请求的发起方是 kubelet。对应 k8s v1.22.13 版本代码，同时在 v1.28.0 测]]></description>
-</item><item>
-    <title>high QPS for configmap GET requests in kube-apiserver - 2</title>
-    <link>https://www.likakuli.com/posts/cachebasedmanager2/</link>
-    <pubDate>Fri, 25 Aug 2023 16:02:05 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/cachebasedmanager2/</guid>
-    <description><![CDATA[背景 线上 k8s 集群 kube-apiserver 的 ConfigMap Get 操作 QPS 较高，且同时间段 Etcd 中 ConfigMap 资源的 Get 操作 QPS 也较高，看日志多数请求的发起方是 kubelet。对应 k8s v1.22.13 版本代码，同时在 v1.28.0 测]]></description>
-</item><item>
-    <title>high QPS for configmap GET requests in kube-apiserver - 1</title>
-    <link>https://www.likakuli.com/posts/cachebasedmanager1/</link>
-    <pubDate>Wed, 23 Aug 2023 18:13:30 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/cachebasedmanager1/</guid>
     <description><![CDATA[背景 线上 k8s 集群 kube-apiserver 的 ConfigMap Get 操作 QPS 较高，且同时间段 Etcd 中 ConfigMap 资源的 Get 操作 QPS 也较高，看日志多数请求的发起方是 kubelet。对应 k8s v1.22.13 版本代码，同时在 v1.28.0 测]]></description>
 </item></channel>
 </rss>
