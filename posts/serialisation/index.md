@@ -220,7 +220,7 @@ watchEncoder
 
 优化前
 
-![before](/Users/he.li/go/src/github.com/likakuli/blog/content/posts/serialisation/before.png)
+![before](before.png)
 
 优化后
 
