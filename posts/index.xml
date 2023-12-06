@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 02 Dec 2023 08:01:25 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 06 Dec 2023 12:53:24 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>让子弹飞一会儿</title>
+    <link>https://www.likakuli.com/posts/bomb/</link>
+    <pubDate>Wed, 06 Dec 2023 12:53:24 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/bomb/</guid>
+    <description><![CDATA[近期互联网故障频发，各大公众号各抒己见，指点江山，激扬文字，颇有百花齐放，百家争鸣的味道。一众吃瓜群众也是对此乐此不疲，津津乐道。 大家能够积]]></description>
+</item><item>
     <title>kube-apiserver 内存优化进阶</title>
     <link>https://www.likakuli.com/posts/serialisation/</link>
     <pubDate>Sat, 02 Dec 2023 08:01:25 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/cpusetbug1/</guid>
     <description><![CDATA[背景 最近遇到一个线上问题，使用了 lxcfs 的容器，跑在 cgroup v2 的机器上时，在容器内使用 top 或者 htop 看到的核数和 cpu 使用率有问题。虽然根本问题在 lxcfs 的实现，但问题]]></description>
-</item><item>
-    <title>high QPS for configmap GET requests in kube-apiserver - 3</title>
-    <link>https://www.likakuli.com/posts/cachebasedmanager3/</link>
-    <pubDate>Sat, 26 Aug 2023 16:02:05 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/cachebasedmanager3/</guid>
-    <description><![CDATA[背景 线上 k8s 集群 kube-apiserver 的 ConfigMap Get 操作 QPS 较高，且同时间段 Etcd 中 ConfigMap 资源的 Get 操作 QPS 也较高，看日志多数请求的发起方是 kubelet。对应 k8s v1.22.13 版本代码，同时在 v1.28.0 测]]></description>
 </item></channel>
 </rss>
