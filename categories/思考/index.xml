@@ -1,0 +1,15 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>思考 - 分类 - kaku&#39;s blog</title>
+        <link>https://www.likakuli.com/categories/%E6%80%9D%E8%80%83/</link>
+        <description>思考 - 分类 - kaku&#39;s blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 11 Dec 2023 18:07:44 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E6%80%9D%E8%80%83/" rel="self" type="application/rss+xml" /><item>
+    <title>从容器调度到降本增效</title>
+    <link>https://www.likakuli.com/posts/overcommit/</link>
+    <pubDate>Mon, 11 Dec 2023 18:07:44 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/overcommit/</guid>
+    <description><![CDATA[从容器调度作为入口，尝试看清问题的本质。 容器调度 前一篇中介绍了大规模容器平台的资源预算、精算、核算，本篇围绕容器调度开展。容器调度旨在有效地]]></description>
+</item></channel>
+</rss>

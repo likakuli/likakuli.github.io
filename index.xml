@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Wed, 06 Dec 2023 12:53:24 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 11 Dec 2023 18:07:44 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>从容器调度到降本增效</title>
+    <link>https://www.likakuli.com/posts/overcommit/</link>
+    <pubDate>Mon, 11 Dec 2023 18:07:44 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/overcommit/</guid>
+    <description><![CDATA[从容器调度作为入口，尝试看清问题的本质。 容器调度 前一篇中介绍了大规模容器平台的资源预算、精算、核算，本篇围绕容器调度开展。容器调度旨在有效地]]></description>
+</item><item>
     <title>让子弹飞一会儿</title>
     <link>https://www.likakuli.com/posts/bomb/</link>
     <pubDate>Wed, 06 Dec 2023 12:53:24 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/backclock/</guid>
     <description><![CDATA[背景 碰到一个&quot;诡异&quot;的线上问题，已经定位到原因，虽然不是什么大问题，但感觉还是挺有意思的。在远古时期（k8s 1.7）中也]]></description>
-</item><item>
-    <title>Kubernetes 陈年老 bug - 绑核</title>
-    <link>https://www.likakuli.com/posts/cpusetbug1/</link>
-    <pubDate>Thu, 14 Sep 2023 20:03:59 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/cpusetbug1/</guid>
-    <description><![CDATA[背景 最近遇到一个线上问题，使用了 lxcfs 的容器，跑在 cgroup v2 的机器上时，在容器内使用 top 或者 htop 看到的核数和 cpu 使用率有问题。虽然根本问题在 lxcfs 的实现，但问题]]></description>
 </item></channel>
 </rss>
