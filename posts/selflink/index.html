@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>k8s 骨灰级玩家都不知道的属性 - SelfLink - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="k8s 骨灰级玩家都不知道的属性 - SelfLink" />
+<meta property="og:description" content="本篇介绍一个可能连骨灰级 K8S 玩家都很少关注的属性 - SelfLink，以及这么一个名不见经传的小趴菜是怎么影响 kube-apiserver 性能的。大家可能没注意过他，但在" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/selflink/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-12-13T21:45:00+08:00" />
+<meta property="article:modified_time" content="2023-12-14T00:38:26+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="k8s 骨灰级玩家都不知道的属性 - SelfLink"/>
+<meta name="twitter:description" content="本篇介绍一个可能连骨灰级 K8S 玩家都很少关注的属性 - SelfLink，以及这么一个名不见经传的小趴菜是怎么影响 kube-apiserver 性能的。大家可能没注意过他，但在"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/selflink/" /><link rel="prev" href="https://www.likakuli.com/posts/overcommit/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "k8s 骨灰级玩家都不知道的属性 - SelfLink",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/selflink\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  3856 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/selflink\/","datePublished": "2023-12-13T21:45:00+08:00","dateModified": "2023-12-14T00:38:26+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><a class="menu-item" href="/friends/"> 友链 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a class="menu-item" href="/friends/" title="">友链</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">k8s 骨灰级玩家都不知道的属性 - SelfLink</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-12-13">2023-12-13</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3856 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 8 分钟&nbsp;<span id="/posts/selflink/" class="leancloud_visitors" data-flag-title="k8s 骨灰级玩家都不知道的属性 - SelfLink">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#背景">背景</a></li>
+    <li><a href="#作用">作用</a></li>
+    <li><a href="#被废弃">被废弃</a></li>
+    <li><a href="#原理">原理</a>
+      <ul>
+        <li><a href="#deepcopyobject">DeepCopyObject</a></li>
+        <li><a href="#缘起">缘起</a></li>
+        <li><a href="#到底几次">到底几次</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><blockquote>
+<p>本篇介绍一个可能连骨灰级 K8S 玩家都很少关注的属性 - <strong>SelfLink</strong>，以及这么一个名不见经传的小趴菜是怎么影响 kube-apiserver 性能的。大家可能没注意过他，但在分析 kube-apiserver 内存消耗时肯定见到过令人闻风丧胆的 DeepCopyObejct，本文会介绍他们之间的连续</p>
+</blockquote>
+<h1 id="背景">背景</h1>
+<p>前面已经有了一系列有关 informer 和 kube-apiserver 的文章，定位和内容深度偏中上，如果没有基础的话可能不容易看懂。本篇介绍一个可能连骨灰级 K8S 玩家都很少关注的属性 - <strong>SelfLink</strong>，以及这么一个名不见经传的小趴菜是怎么影响 kube-apiserver 性能的。</p>
+<h1 id="作用">作用</h1>
+<p>SelfLink 到底干什么的呢？</p>
+<blockquote>
+<p><code>SelfLink</code> is a URL representing a given object. It is part of <code>ObjectMeta</code> and <code>ListMeta</code> which means that it is part of every single Kubernetes object.</p>
+</blockquote>
+<p>SelfLink 从哪个版本引入的，存在的意义是什么，已经不得而知了，但可以明确的是从 v1.24 开始被正式废弃了。那为什么还要提一下他呢，因为他虽已不在江湖，但江湖上仍流传着他的传说。这个属性不仅没什么作用，甚至还有一些副作用，尤其你如果使用的是 v1.24 前的版本，更要注意下。</p>
+<h1 id="被废弃">被废弃</h1>
+<p>被废弃的原因有两点：</p>
+<ul>
+<li>在 generic-apiserver 中以非常特殊的方式处理 - 它是在序列化对象之前设置的唯一字段（因为这是设置它所需的所有必要信息的唯一位置）；</li>
+<li>具有不可忽略性能影响 - 构造该值需要执行几次内存分配；</li>
+</ul>
+<h1 id="原理">原理</h1>
+<h2 id="deepcopyobject">DeepCopyObject</h2>
+<p>上一篇 <a href="https://mp.weixin.qq.com/s/RrBOHRSztsnkp5M2_32VrQ" target="_blank" rel="noopener noreffer">kube-apiserver 内存优化进阶</a> 中介绍了从序列化的角度去优化 kube-apiserver 的内存使用，还不懂的建议先看前一篇。SelfLink 的处理就在序列化之前。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// ServeHTTP serves a series of encoded events via HTTP with Transfer-Encoding: chunked
+</span><span class="c1">// or over a websocket connection.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">WatchServer</span><span class="p">)</span> <span class="nf">ServeHTTP</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+	<span class="o">...</span>
+
+	<span class="k">for</span> <span class="p">{</span>
+		<span class="k">select</span> <span class="p">{</span>
+		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">done</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">timeoutCh</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="k">case</span> <span class="nx">event</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">ch</span><span class="p">:</span>
+			<span class="o">...</span>
+
+			<span class="nx">obj</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">Fixup</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Object</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">EmbeddedEncoder</span><span class="p">.</span><span class="nf">Encode</span><span class="p">(</span><span class="nx">obj</span><span class="p">,</span> <span class="nx">buf</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="c1">// unexpected error
+</span><span class="c1"></span>				<span class="nx">utilruntime</span><span class="p">.</span><span class="nf">HandleError</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;unable to encode watch object %T: %v&#34;</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">err</span><span class="p">))</span>
+				<span class="k">return</span>
+			<span class="p">}</span>
+
+			<span class="o">...</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// TODO: the functionality in this method and in WatchServer.Serve is not cleanly decoupled.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">serveWatch</span><span class="p">(</span><span class="nx">watcher</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Interface</span><span class="p">,</span> <span class="nx">scope</span> <span class="o">*</span><span class="nx">RequestScope</span><span class="p">,</span> <span class="nx">mediaTypeOptions</span> <span class="nx">negotiation</span><span class="p">.</span><span class="nx">MediaTypeOptions</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">,</span> <span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">timeout</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">)</span> <span class="p">{</span>
+	<span class="o">...</span>
+  
+	<span class="nx">server</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">WatchServer</span><span class="p">{</span>
+		<span class="o">...</span>
+
+		<span class="nx">Fixup</span><span class="p">:</span> <span class="kd">func</span><span class="p">(</span><span class="nx">obj</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">Object</span><span class="p">)</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">Object</span> <span class="p">{</span>
+			<span class="nx">result</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">transformObject</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="nx">mediaTypeOptions</span><span class="p">,</span> <span class="nx">scope</span><span class="p">,</span> <span class="nx">req</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">utilruntime</span><span class="p">.</span><span class="nf">HandleError</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to transform object %v: %v&#34;</span><span class="p">,</span> <span class="nx">reflect</span><span class="p">.</span><span class="nf">TypeOf</span><span class="p">(</span><span class="nx">obj</span><span class="p">),</span> <span class="nx">err</span><span class="p">))</span>
+				<span class="k">return</span> <span class="nx">obj</span>
+			<span class="p">}</span>
+			<span class="c1">// When we are transformed to a table, use the table options as the state for whether we
+</span><span class="c1"></span>			<span class="c1">// should print headers - on watch, we only want to print table headers on the first object
+</span><span class="c1"></span>			<span class="c1">// and omit them on subsequent events.
+</span><span class="c1"></span>			<span class="k">if</span> <span class="nx">tableOptions</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">options</span><span class="p">.(</span><span class="o">*</span><span class="nx">metav1</span><span class="p">.</span><span class="nx">TableOptions</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+				<span class="nx">tableOptions</span><span class="p">.</span><span class="nx">NoHeaders</span> <span class="p">=</span> <span class="kc">true</span>
+			<span class="p">}</span>
+			<span class="k">return</span> <span class="nx">result</span>
+		<span class="p">},</span>
+
+		<span class="nx">TimeoutFactory</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">realTimeoutFactory</span><span class="p">{</span><span class="nx">timeout</span><span class="p">},</span>
+	<span class="p">}</span>
+
+	<span class="nx">server</span><span class="p">.</span><span class="nf">ServeHTTP</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">req</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// transformObject takes the object as returned by storage and ensures it is in
+</span><span class="c1">// the client&#39;s desired form, as well as ensuring any API level fields like self-link
+</span><span class="c1">// are properly set.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">transformObject</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">obj</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">Object</span><span class="p">,</span> <span class="nx">opts</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">mediaType</span> <span class="nx">negotiation</span><span class="p">.</span><span class="nx">MediaTypeOptions</span><span class="p">,</span> <span class="nx">scope</span> <span class="o">*</span><span class="nx">RequestScope</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">(</span><span class="nx">runtime</span><span class="p">.</span><span class="nx">Object</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">co</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">obj</span><span class="p">.(</span><span class="nx">runtime</span><span class="p">.</span><span class="nx">CacheableObject</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">mediaType</span><span class="p">.</span><span class="nx">Convert</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="c1">// Non-nil mediaType.Convert means that some conversion of the object
+</span><span class="c1"></span>			<span class="c1">// has to happen. Currently conversion may potentially modify the
+</span><span class="c1"></span>			<span class="c1">// object or assume something about it (e.g. asTable operates on
+</span><span class="c1"></span>			<span class="c1">// reflection, which won&#39;t work for any wrapper).
+</span><span class="c1"></span>			<span class="c1">// To ensure it will work correctly, let&#39;s operate on base objects
+</span><span class="c1"></span>			<span class="c1">// and not cache it for now.
+</span><span class="c1"></span>			<span class="c1">//
+</span><span class="c1"></span>			<span class="c1">// TODO: Long-term, transformObject should be changed so that it
+</span><span class="c1"></span>			<span class="c1">// implements runtime.Encoder interface.
+</span><span class="c1"></span>			<span class="k">return</span> <span class="nf">doTransformObject</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">co</span><span class="p">.</span><span class="nf">GetObject</span><span class="p">(),</span> <span class="nx">opts</span><span class="p">,</span> <span class="nx">mediaType</span><span class="p">,</span> <span class="nx">scope</span><span class="p">,</span> <span class="nx">req</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nf">doTransformObject</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">opts</span><span class="p">,</span> <span class="nx">mediaType</span><span class="p">,</span> <span class="nx">scope</span><span class="p">,</span> <span class="nx">req</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">doTransformObject</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">obj</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">Object</span><span class="p">,</span> <span class="nx">opts</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">mediaType</span> <span class="nx">negotiation</span><span class="p">.</span><span class="nx">MediaTypeOptions</span><span class="p">,</span> <span class="nx">scope</span> <span class="o">*</span><span class="nx">RequestScope</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">(</span><span class="nx">runtime</span><span class="p">.</span><span class="nx">Object</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="o">...</span>
+  
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">setObjectSelfLink</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">req</span><span class="p">,</span> <span class="nx">scope</span><span class="p">.</span><span class="nx">Namer</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>总结下就是 WatchServer 中包含一个 FixUp 方法，用来在序列化最终要返回的 event 之前做一些操作，其中就包括为 event.object 设置 SelfLink，这是一个非标操作，整个过程只有他在序列化前做了特殊处理。</p>
+<p>但为什么设置 SelfLink 会对性能有影响呢，不就是一个简单的赋值操作吗？这就涉及到上一篇介绍过的 CacheableObject 对象了，对于非 CacheableObject 没有影响。上一篇中我们提到了一个神奇的地方</p>
+<blockquote>
+<p>cacheWatcher 的 input chan 的 event 对象的 object 有可能是正常的资源对象，例如 Pod，也有可能是 CacheableObject 对象，而真正的资源对象则保存在 CacheableObject 的 object 中</p>
+</blockquote>
+<p>所以上面代码 transformObject 在处理时也判断了类型，我们只关注 CacheableObject 这部分</p>
+<p><code>doTransformObject(ctx, co.GetObject(), opts, mediaType, scope, req)</code> 其中调用了 co.GetObject() 从 CacheableObject 中获取真实的资源对象（如 Pod），而这个方法会对资源对象执行一个 deepcopy 操作</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// GetObject implements runtime.CacheableObject interface.
+</span><span class="c1">// It returns deep-copy of the wrapped object to return ownership of it
+</span><span class="c1">// to the called according to the contract of the interface.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">o</span> <span class="o">*</span><span class="nx">cachingObject</span><span class="p">)</span> <span class="nf">GetObject</span><span class="p">()</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">Object</span> <span class="p">{</span>
+	<span class="nx">o</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">o</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span>
+	<span class="k">return</span> <span class="nx">o</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nf">DeepCopyObject</span><span class="p">().(</span><span class="nx">metaRuntimeInterface</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>针对 v1.24 之前的版本，在创建 cachingObject 对象时就已经对资源对象做了一次 deepcopy 操作了</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// newCachingObject performs a deep copy of the given object and wraps it
+</span><span class="c1">// into a cachingObject.
+</span><span class="c1">// An error is returned if it&#39;s not possible to cast the object to
+</span><span class="c1">// metav1.Object type.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">newCachingObject</span><span class="p">(</span><span class="nx">object</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">Object</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">cachingObject</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">object</span><span class="p">.(</span><span class="nx">metaRuntimeInterface</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+		<span class="nx">result</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">cachingObject</span><span class="p">{</span><span class="nx">object</span><span class="p">:</span> <span class="nx">obj</span><span class="p">.</span><span class="nf">DeepCopyObject</span><span class="p">().(</span><span class="nx">metaRuntimeInterface</span><span class="p">)}</span>
+		<span class="nx">result</span><span class="p">.</span><span class="nx">serializations</span><span class="p">.</span><span class="nf">Store</span><span class="p">(</span><span class="nb">make</span><span class="p">(</span><span class="nx">serializationsCache</span><span class="p">))</span>
+		<span class="k">return</span> <span class="nx">result</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;can&#39;t cast object to metav1.Object: %#v&#34;</span><span class="p">,</span> <span class="nx">object</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在 doTransformObject 时又进行了一次 deepcopy，这不仅需要分配内存，也会额外占用内存空间，对性能和内存使用量都会负面影响。</p>
+<p>而针对 v1.24 及之后的版本，cachingObject 做了优化，支持了 lazy deepcopy 的能力，即在创建 cachingObject 对象时，并不会无脑 deepcopy，而是在真正的去修改其 object 属性时再去执行 deepcopy</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// newCachingObject performs a deep copy of the given object and wraps it
+</span><span class="c1">// into a cachingObject.
+</span><span class="c1">// An error is returned if it&#39;s not possible to cast the object to
+</span><span class="c1">// metav1.Object type.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">newCachingObject</span><span class="p">(</span><span class="nx">object</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">Object</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">cachingObject</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">object</span><span class="p">.(</span><span class="nx">metaRuntimeInterface</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+		<span class="nx">result</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">cachingObject</span><span class="p">{</span>
+			<span class="nx">object</span><span class="p">:</span>     <span class="nx">obj</span><span class="p">,</span>
+			<span class="nx">deepCopied</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+		<span class="p">}</span>
+		<span class="nx">result</span><span class="p">.</span><span class="nx">serializations</span><span class="p">.</span><span class="nf">Store</span><span class="p">(</span><span class="nb">make</span><span class="p">(</span><span class="nx">serializationsCache</span><span class="p">))</span>
+		<span class="k">return</span> <span class="nx">result</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;can&#39;t cast object to metav1.Object: %#v&#34;</span><span class="p">,</span> <span class="nx">object</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">o</span> <span class="o">*</span><span class="nx">cachingObject</span><span class="p">)</span> <span class="nf">SetSelfLink</span><span class="p">(</span><span class="nx">selfLink</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">o</span><span class="p">.</span><span class="nf">conditionalSet</span><span class="p">(</span>
+		<span class="kd">func</span><span class="p">()</span> <span class="kt">bool</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">o</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nf">GetSelfLink</span><span class="p">()</span> <span class="o">==</span> <span class="nx">selfLink</span> <span class="p">},</span>
+		<span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">o</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nf">SetSelfLink</span><span class="p">(</span><span class="nx">selfLink</span><span class="p">)</span> <span class="p">},</span>
+	<span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">o</span> <span class="o">*</span><span class="nx">cachingObject</span><span class="p">)</span> <span class="nf">conditionalSet</span><span class="p">(</span><span class="nx">isNoop</span> <span class="kd">func</span><span class="p">()</span> <span class="kt">bool</span><span class="p">,</span> <span class="nx">set</span> <span class="kd">func</span><span class="p">())</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">fastPath</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">()</span> <span class="kt">bool</span> <span class="p">{</span>
+		<span class="nx">o</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span>
+		<span class="k">defer</span> <span class="nx">o</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span>
+		<span class="k">return</span> <span class="nf">isNoop</span><span class="p">()</span>
+	<span class="p">}();</span> <span class="nx">fastPath</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">o</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">o</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nf">isNoop</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">o</span><span class="p">.</span><span class="nx">deepCopied</span> <span class="p">{</span>
+		<span class="nx">o</span><span class="p">.</span><span class="nx">object</span> <span class="p">=</span> <span class="nx">o</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nf">DeepCopyObject</span><span class="p">().(</span><span class="nx">metaRuntimeInterface</span><span class="p">)</span>
+		<span class="nx">o</span><span class="p">.</span><span class="nx">deepCopied</span> <span class="p">=</span> <span class="kc">true</span>
+	<span class="p">}</span>
+	<span class="nx">o</span><span class="p">.</span><span class="nf">invalidateCacheLocked</span><span class="p">()</span>
+	<span class="nf">set</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>deepcopy 执行条件：<strong>object 对象被修改了，且之前没有进行过 deepcopy 操作</strong>。</p>
+<p>最后可以看到 v1.24 相对之前的版本，少了&quot;<strong>两次</strong>&ldquo;资源对象的 deepcopy 操作。其中一次是 SelfLink 造成的，一次是在 newCachingObject 的时候发生的。</p>
+<h2 id="缘起">缘起</h2>
+<p>严格的说，上面刚提到的&quot;两次&quot;其实并不严谨，更准确的说是一到两次。这里就又涉及到了一个细节：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">setCachingObjects</span><span class="p">(</span><span class="nx">event</span> <span class="o">*</span><span class="nx">watchCacheEvent</span><span class="p">,</span> <span class="nx">versioner</span> <span class="nx">storage</span><span class="p">.</span><span class="nx">Versioner</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">switch</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Type</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Added</span><span class="p">,</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Modified</span><span class="p">:</span>
+		<span class="k">if</span> <span class="nx">object</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">newCachingObject</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Object</span><span class="p">);</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">event</span><span class="p">.</span><span class="nx">Object</span> <span class="p">=</span> <span class="nx">object</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="nx">klog</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;couldn&#39;t create cachingObject from: %#v&#34;</span><span class="p">,</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Object</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="c1">// Don&#39;t wrap PrevObject for update event (for create events it is nil).
+</span><span class="c1"></span>		<span class="c1">// We only encode those to deliver DELETE watch events, so if
+</span><span class="c1"></span>		<span class="c1">// event.Object is not nil it can be used only for watchers for which
+</span><span class="c1"></span>		<span class="c1">// selector was satisfied for its previous version and is no longer
+</span><span class="c1"></span>		<span class="c1">// satisfied for the current version.
+</span><span class="c1"></span>		<span class="c1">// This is rare enough that it doesn&#39;t justify making deep-copy of the
+</span><span class="c1"></span>		<span class="c1">// object (done by newCachingObject) every time.
+</span><span class="c1"></span>	<span class="k">case</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Deleted</span><span class="p">:</span>
+		<span class="c1">// Don&#39;t wrap Object for delete events - these are not to deliver any
+</span><span class="c1"></span>		<span class="c1">// events. Only wrap PrevObject.
+</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">object</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">newCachingObject</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">PrevObject</span><span class="p">);</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="c1">// Update resource version of the object.
+</span><span class="c1"></span>			<span class="c1">// event.PrevObject is used to deliver DELETE watch events and
+</span><span class="c1"></span>			<span class="c1">// for them, we set resourceVersion to &lt;current&gt; instead of
+</span><span class="c1"></span>			<span class="c1">// the resourceVersion of the last modification of the object.
+</span><span class="c1"></span>			<span class="nf">updateResourceVersion</span><span class="p">(</span><span class="nx">object</span><span class="p">,</span> <span class="nx">versioner</span><span class="p">,</span> <span class="nx">event</span><span class="p">.</span><span class="nx">ResourceVersion</span><span class="p">)</span>
+			<span class="nx">event</span><span class="p">.</span><span class="nx">PrevObject</span> <span class="p">=</span> <span class="nx">object</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="nx">klog</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;couldn&#39;t create cachingObject from: %#v&#34;</span><span class="p">,</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Object</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Cacher 消费其 incoming chan，在去给每个筛选后的 cacheWatcher 发送 event 时，会执行 setCachingObjects 将资源对象做个封装，封装成 cachingObject，并将 cachingObject 设置为 event 的 Object 或者 PrevObject，具体设置到哪个属性上面，和 event type 有关，可以看上述代码，对于非 Deleted 类型，设置的是 event.Object，而对于 Deleted 类型的事件来说，设置的是 PrevObject，因为 Deleted 事件本身并不具备有效负载。这又和之前提的相呼应</p>
+<blockquote>
+<p>cacheWatcher 的 input chan 的 event 对象的 object 有可能是正常的资源对象，例如 Pod，也有可能是 CacheableObject 对象，而真正的资源对象则保存在 CacheableObject 的 object 中</p>
+</blockquote>
+<p>继续看上面的代码，在处理 Deleted 类型时，还做了一个操作 updateResourceVersion，其作用是将 event 的 resourceVersion 设置给 object，为什么要做这个处理呢？不知道大家还记不记得之前那篇 <a href="https://mp.weixin.qq.com/s/B1OTBSIY7I-4TF0LaxtQUA" target="_blank" rel="noopener noreffer">kubernetes 月光宝盒 - 时间倒流</a> 的文章，这里正好对应了里面介绍的第二个时间回溯现象</p>
+<blockquote>
+<p>PrevObject 的 ResourceVersion 是一个过去时的值，例如连续创建三个 Pod，再删除第一个 Pod，则此时返回的 watchEvent 的 Object 对象的 ResourceVersion 是第一个 Pod 创建后的 ResourceVersion，但实际情况是最新的 ResourceVersion 已经随着后两个 Pod 的创建而递增了。也就是此时客户端 watch 到一个 delete event 之后，客户端 informer 所使用的 reflector 内部维护的 resourceVersion 已经不对了，是一个历史值，如果此时发生一个问题（例如网络闪断）需要去重新 watch 时，会使用这个错误的 resourceVersion，也就是这个版本之后的所有符合条件的事件会再次接收并处理一遍，真正的回到过去，历史重演。</p>
+</blockquote>
+<p>在 v1.9 修复这个&quot;惊天大 bug&rdquo; 的时候，是在 cacheWatcher 消费自己 input chan 中的 event 发送给其 result chan 时处理的</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">cacheWatcher</span><span class="p">)</span> <span class="nf">convertToWatchEvent</span><span class="p">(</span><span class="nx">event</span> <span class="o">*</span><span class="nx">watchCacheEvent</span><span class="p">)</span> <span class="o">*</span><span class="nx">watch</span><span class="p">.</span><span class="nx">Event</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Type</span> <span class="o">==</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Bookmark</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="o">&amp;</span><span class="nx">watch</span><span class="p">.</span><span class="nx">Event</span><span class="p">{</span><span class="nx">Type</span><span class="p">:</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Bookmark</span><span class="p">,</span> <span class="nx">Object</span><span class="p">:</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Object</span><span class="p">.</span><span class="nf">DeepCopyObject</span><span class="p">()}</span>
+	<span class="p">}</span>
+
+	<span class="nx">curObjPasses</span> <span class="o">:=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Type</span> <span class="o">!=</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Deleted</span> <span class="o">&amp;&amp;</span> <span class="nx">c</span><span class="p">.</span><span class="nf">filter</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Key</span><span class="p">,</span> <span class="nx">event</span><span class="p">.</span><span class="nx">ObjLabels</span><span class="p">,</span> <span class="nx">event</span><span class="p">.</span><span class="nx">ObjFields</span><span class="p">)</span>
+	<span class="nx">oldObjPasses</span> <span class="o">:=</span> <span class="kc">false</span>
+	<span class="k">if</span> <span class="nx">event</span><span class="p">.</span><span class="nx">PrevObject</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">oldObjPasses</span> <span class="p">=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">filter</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Key</span><span class="p">,</span> <span class="nx">event</span><span class="p">.</span><span class="nx">PrevObjLabels</span><span class="p">,</span> <span class="nx">event</span><span class="p">.</span><span class="nx">PrevObjFields</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">curObjPasses</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">oldObjPasses</span> <span class="p">{</span>
+		<span class="c1">// Watcher is not interested in that object.
+</span><span class="c1"></span>		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+	<span class="k">switch</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="nx">curObjPasses</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">oldObjPasses</span><span class="p">:</span>
+		<span class="k">return</span> <span class="o">&amp;</span><span class="nx">watch</span><span class="p">.</span><span class="nx">Event</span><span class="p">{</span><span class="nx">Type</span><span class="p">:</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Added</span><span class="p">,</span> <span class="nx">Object</span><span class="p">:</span> <span class="nf">getMutableObject</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Object</span><span class="p">)}</span>
+	<span class="k">case</span> <span class="nx">curObjPasses</span> <span class="o">&amp;&amp;</span> <span class="nx">oldObjPasses</span><span class="p">:</span>
+		<span class="k">return</span> <span class="o">&amp;</span><span class="nx">watch</span><span class="p">.</span><span class="nx">Event</span><span class="p">{</span><span class="nx">Type</span><span class="p">:</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Modified</span><span class="p">,</span> <span class="nx">Object</span><span class="p">:</span> <span class="nf">getMutableObject</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Object</span><span class="p">)}</span>
+	<span class="k">case</span> <span class="p">!</span><span class="nx">curObjPasses</span> <span class="o">&amp;&amp;</span> <span class="nx">oldObjPasses</span><span class="p">:</span>
+		<span class="c1">// return a delete event with the previous object content, but with the event&#39;s resource version
+</span><span class="c1"></span>		<span class="nx">oldObj</span> <span class="o">:=</span> <span class="nf">getMutableObject</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">PrevObject</span><span class="p">)</span>
+		<span class="c1">// We know that if oldObj is cachingObject (which can only be set via
+</span><span class="c1"></span>		<span class="c1">// setCachingObjects), its resourceVersion is already set correctly and
+</span><span class="c1"></span>		<span class="c1">// we don&#39;t need to update it. However, since cachingObject efficiently
+</span><span class="c1"></span>		<span class="c1">// handles noop updates, we avoid this microoptimization here.
+</span><span class="c1"></span>		<span class="nf">updateResourceVersion</span><span class="p">(</span><span class="nx">oldObj</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">versioner</span><span class="p">,</span> <span class="nx">event</span><span class="p">.</span><span class="nx">ResourceVersion</span><span class="p">)</span>
+		<span class="k">return</span> <span class="o">&amp;</span><span class="nx">watch</span><span class="p">.</span><span class="nx">Event</span><span class="p">{</span><span class="nx">Type</span><span class="p">:</span> <span class="nx">watch</span><span class="p">.</span><span class="nx">Deleted</span><span class="p">,</span> <span class="nx">Object</span><span class="p">:</span> <span class="nx">oldObj</span><span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看到在最后一个 case 分支的处理逻辑中，仍然存在一个 updateResourceVersion 的操作，仍然是使用了 event.ResourceVersion 去覆盖了 oldObject 也即是上面提的 PrevObject 的 ResourceVersion 属性。在 v1.9 中其实只有后面这一次的调用，而在 v1.24 中存在着两次调用，上面代码中也特别注释了如果 oldObject 是 cachingObject 的话，他的 resourceversion 已经被正确的设置了，我们不需要再次设置它。但是由于 cachingObject 可以高效的处理 noop 更新操作，所以这里忽略了这个微乎其微的优化。cachingObject 为什么可以高效的处理 noop 是在其 conditionalSet 方法中实现的，他会判断要设置的值和当前的值是否一致，是的话就代表不需要执行更新操作，直接返回即可。</p>
+<h2 id="到底几次">到底几次</h2>
+<p>所以到底是少了几次 deepcopy 呢？</p>
+<p>这要根据 event type 来看，对于非 Deleted 类型的 event 来说，由于他们并不需要执行 updateResourceVersion 的操作，也就不会触发 deepcopy，而 SelfLink 是需要两次 deepcopy 的，所以是多了两次 deepcopy，而针对 Deleted 类型来说，由于其本身就需要一次 deepcopy（虽然两次 updateResourceVersion，但第二次属于 noop，直接返回），所以只是多了一次 deepcopy。</p>
+<p>综上，对于 Deleted 类型的 event，去掉 SelfLink 可以减少一次资源对象的 deepcopy，而针对其他类型的 event，去掉 SelfLink 则可以减少两次 deepcopy。</p>
+<h1 id="总结">总结</h1>
+<p>通过分析 SelfLink，我们又重新复习了 Cacher、cacheWatcher 甚至远古时期的惊天大&quot;bug&quot;，分析了到底他对性能有什么影响，去掉他之后优化了多少。</p>
+<p>不知道你有没有发现，过去这么多篇的文章并不是独立的，他们之间总是存在着千丝万缕的联系，而这些关系通过各种细节串联起来，点到线，线到面，最后成为一个网，或者一个图，成为知识体系。他不仅具备空间属性，还具备时间属性。如果你不知道之前版本的问题或者实现的话，单看当前的实现可能不容易体会到他的巧妙之处，或者印象并不深刻。</p>
+<p>从问题中来，沿着时间轴把相关的线索都梳理一遍，享受把这些蛛丝马迹串起来的过程，享受知识体系化的过程，体会并享受大佬们解决问题的思路。</p>
+<p>谁说 K8S 越来越复杂？我看挺有意思的嘛，而且移除 SelfLink 不也是在做减法。</p>
+<p>最后，针对上述描述如有问题，或者想交流的话，可以添加笔者 VX：YlikakuY，班门弄斧，欢迎互喷~</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2023-12-14</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/selflink/" data-title="k8s 骨灰级玩家都不知道的属性 - SelfLink" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/selflink/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/selflink/" data-title="k8s 骨灰级玩家都不知道的属性 - SelfLink" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/selflink/" data-title="k8s 骨灰级玩家都不知道的属性 - SelfLink"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/selflink/" data-title="k8s 骨灰级玩家都不知道的属性 - SelfLink"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/selflink/" data-title="k8s 骨灰级玩家都不知道的属性 - SelfLink" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/selflink/" data-title="k8s 骨灰级玩家都不知道的属性 - SelfLink" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/selflink/" data-title="k8s 骨灰级玩家都不知道的属性 - SelfLink"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/overcommit/" class="prev" rel="prev" title="从容器调度到降本增效"><i class="fas fa-angle-left fa-fw"></i>从容器调度到降本增效</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>
