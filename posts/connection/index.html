@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>kube-apiserver 连接数也会影响内存？ - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="kube-apiserver 连接数也会影响内存？" />
+<meta property="og:description" content="之前从资源对象的获取方式、序列化、深拷贝的角度分别分析了对 kube-apiserver 内存使用量的影响以及社区是如何进行优化的，这一篇围绕网络连接展开分析其对 kube-apiserver 内存的" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/connection/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-12-18T22:42:47+08:00" />
+<meta property="article:modified_time" content="2023-12-19T23:20:35+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="kube-apiserver 连接数也会影响内存？"/>
+<meta name="twitter:description" content="之前从资源对象的获取方式、序列化、深拷贝的角度分别分析了对 kube-apiserver 内存使用量的影响以及社区是如何进行优化的，这一篇围绕网络连接展开分析其对 kube-apiserver 内存的"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/connection/" /><link rel="prev" href="https://www.likakuli.com/posts/selflink/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "kube-apiserver 连接数也会影响内存？",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/connection\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  5904 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/connection\/","datePublished": "2023-12-18T22:42:47+08:00","dateModified": "2023-12-19T23:20:35+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><a class="menu-item" href="/friends/"> 友链 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a class="menu-item" href="/friends/" title="">友链</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">kube-apiserver 连接数也会影响内存？</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-12-18">2023-12-18</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5904 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 12 分钟&nbsp;<span id="/posts/connection/" class="leancloud_visitors" data-flag-title="kube-apiserver 连接数也会影响内存？">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#背景">背景</a></li>
+    <li><a href="#分析">分析</a>
+      <ul>
+        <li><a href="#内存消耗">内存消耗</a></li>
+        <li><a href="#logger-问题修复">Logger 问题修复</a></li>
+        <li><a href="#kube-apiserver-与-etcd-的连接">Kube-apiserver 与 Etcd 的连接</a>
+          <ul>
+            <li><a href="#one-client-per-etcd">One Client Per Etcd</a></li>
+            <li><a href="#又现惊天大-bug">又现惊天大 bug？</a></li>
+            <li><a href="#golang-相关问题">Golang 相关问题</a></li>
+            <li><a href="#etcd-相关问题">Etcd 相关问题</a></li>
+            <li><a href="#小结">小结</a></li>
+          </ul>
+        </li>
+        <li><a href="#client-go-与-kube-apiserver-的连接">client-go 与 kube-apiserver 的连接</a>
+          <ul>
+            <li><a href="#http2-io-多路复用">HTTP/2 IO 多路复用</a></li>
+            <li><a href="#cve-2023-39325">CVE-2023-39325</a></li>
+            <li><a href="#小结-1">小结</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><blockquote>
+<p>之前从资源对象的获取方式、序列化、深拷贝的角度分别分析了对 kube-apiserver 内存使用量的影响以及社区是如何进行优化的，这一篇围绕网络连接展开分析其对 kube-apiserver 内存的影响。涉及到如下内容：</p>
+<ul>
+<li>连接数是如何影响 kube-apiserver 内存的</li>
+<li>client-go 是如何与 kube-apiserver 建立连接的</li>
+<li>kube-apiserver 是如何与 etcd 建立连接的</li>
+<li>etcd 相关服务端实现和问题</li>
+<li>http2 的 io 多路复用的原理</li>
+<li>golang 在 http2 实现上的一些缺陷和安全漏洞</li>
+</ul>
+</blockquote>
+<h1 id="背景">背景</h1>
+<p>之前从资源对象的<a href="https://mp.weixin.qq.com/s/futHT0njb5y2UHLeg7BL7w" target="_blank" rel="noopener noreffer">获取方式</a>、<a href="https://mp.weixin.qq.com/s/RrBOHRSztsnkp5M2_32VrQ" target="_blank" rel="noopener noreffer">序列化</a>、<a href="https://mp.weixin.qq.com/s/ukwOzE5wXsb8wUXZ95xpEQ" target="_blank" rel="noopener noreffer">深拷贝</a>的角度分别分析了对 kube-apiserver 内存使用量的影响以及社区是如何进行优化的，这一篇围绕网络连接展开分析其对 kube-apiserver 内存的影响，以及这中间涉及到的其他相关问题。</p>
+<h1 id="分析">分析</h1>
+<h2 id="内存消耗">内存消耗</h2>
+<p>按照常理理解的话，进程负责了网络连接的管理，理论上连接数多了之后是对进程内存有影响的，但一般情况下在做内存优化的时候并不会上来就从连接数的角度去分析。在 kube-apiserver 中真实的出现了因为网络连接数造成的不可忽视的内存开销。</p>
+<p>相关问题是在 2022 年提出来的，在名为 <a href="https://github.com/kubernetes/kubernetes/issues/111476" target="_blank" rel="noopener noreffer">etcd3 client logger uses significant memory with many CRDs</a> 的 issue 中提到了一个现象，在一个通过 kind 启动的包含大约 1900 个 CRD 的集群中（注意是 CRD 不是 CR），issue 的作者发现 kube-apiserver 的内存使用量高达到 8G，而 etcd3 client&rsquo;s logger 贡献了大约 1.5G，很夸张的一个比例。随后其又做了一些测试并贴出来了 pprof 的结果，如下</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="log.png"
+        data-srcset="/posts/connection/log.png, log.png 1.5x, /posts/connection/log.png 2x"
+        data-sizes="auto"
+        alt="/posts/connection/log.png"
+        title="logger" /></p>
+<p>可以明显的看到 zapcore.newCounters 占用了 800+M 内存，这还只是一个用来复现问题的 demo，实际情况下的内存消耗要比这个值多。zap 是 etcd3 client 使用的日志包。</p>
+<p>经过其分析，logger 消耗内存多和 kube-apiserver 与 etcd3 的连接数有关，过程如下</p>
+<ul>
+<li>All of /apis is handled by a *crdHandler</li>
+<li>When a request comes in it gets an instance of the crd (from an informer)</li>
+<li>Gets serving info from a map of CRDs - if there is none it&hellip;</li>
+<li>Calls customresource.NewStorage which creates a genericregistry.Store</li>
+<li>Calls its CompleteWithOptions method</li>
+<li>That calls its “Decorator”, which is a genericregistry.StorageWithCacher</li>
+<li>That calls generic.NewRawStorage which just wraps factory.Create</li>
+<li>factory.Create calls newETCD3Storage which calls newETCD3Client</li>
+</ul>
+<p>最后的结果就是 kube-apiserver 会为每个 CRD 都和 etcd 建立一个连接，而 kube-apiserver 在设置 clientv3.Config 时并没有显示的指定 Logger，而 etcd clientv3 内部逻辑会判断 Logger 是否为空，是的话会实例化一个 Logger 对象出来，最终 kube-apiserver 和 etcd 有多少连接存在，就会有多少 Logger 对象存在。</p>
+<h2 id="logger-问题修复">Logger 问题修复</h2>
+<p>issue 作者提了 <a href="https://github.com/kubernetes/kubernetes/pull/111477" target="_blank" rel="noopener noreffer">Share a single etcd3 client logger across all clients</a> 来修复上述问题，改动比较简单，在 init 函数里创建一个 logger 对象，并将其设置给 clientv3.Config.Logger，结果就会是全局只使用一个 logger 对象，避免上述问题的出现。在 v1.25 中发布，并于 8 月份 backport 回了 v1.22 ~ v1.24 版本中，如果运行的 k8s 发行版的发型时间在此之前，且集群内使用了大量的 CRD 的话，就需要去注意下这个问题了。</p>
+<h2 id="kube-apiserver-与-etcd-的连接">Kube-apiserver 与 Etcd 的连接</h2>
+<h3 id="one-client-per-etcd">One Client Per Etcd</h3>
+<p>至此，logger 对象只有一个了，但 kube-apiserver 与 etcd 的连接数仍然存在多个，与资源类型的数量正相关，所以事情到这里并没有结束，大佬们又开始讨论是否可以继续优化 kube-apiserver 与 etcd 的连接数，而这个问题早在 2021 年就已经开始讨论了：https://kubernetes.slack.com/archives/C0EG7JC6T/p1618439560231400</p>
+<blockquote>
+<p>Yeah that sounds like what it currently does. What it should do is make one client per database (recall that you can put different collections in different etcd databases).</p>
+</blockquote>
+<p>针对这个问题，上面 issue 作者又提了 <a href="https://github.com/kubernetes/kubernetes/issues/111622" target="_blank" rel="noopener noreffer">API server creates one etcd client per CRD</a> 来跟进，同时还提了对应的修复代码 <a href="https://github.com/kubernetes/kubernetes/pull/111559" target="_blank" rel="noopener noreffer">Only create one etcd client per transport</a>，通过添加一个 transport 级别的 etcd3 client Cache 来解决此问题，并且给出了他的测试结果，内存减少了 35%，但这个 PR 最终没有合入主干中</p>
+<blockquote>
+<p>I would expect us to be able to move the client construction earlier in the server startup so a single instance can be shared by multiple registries.</p>
+</blockquote>
+<p>多个 reviewer 表示希望通过单例的方式实现，而不是添加 transport 级别的 cache，此 PR 作者并没有继续按上述思路去修改，随后关闭了这个 PR，由另外一个作者通过新的 PR <a href="https://github.com/kubernetes/kubernetes/pull/114458" target="_blank" rel="noopener noreffer">Create and reuse a single etcd client</a> 来解决此问题，新的 PR 按照上面的思路，通过 transport 级别的单例实现了<strong>每个 etcd 集群一个 Client 实例</strong>（注意这里不是连接，而是 Client 实例，原因后文会涉及到），但新的 PR 至今依然尚未合入主干，也就是说至今仍然是每种资源类型一个 Etcd Client 实例。</p>
+<h3 id="又现惊天大-bug">又现惊天大 bug？</h3>
+<p>在已经关闭的老 PR 中 Jordan 也提出了他的一些疑问</p>
+<blockquote>
+<p>As an aside, I do wonder if this will change the performance characteristics of large servers with lots of requests going to parallel resources at the same time, which previously got their own connections, and now would multiplex over a single (?) connection.</p>
+</blockquote>
+<p>从之前每种资源一个连接变成每个 etcd集群一个 Client 实例，依赖 io 多路复用，在大规模集群的场景下会不会存在性能问题？然后大佬们又就此进行了讨论</p>
+<blockquote>
+<p>I will be a little surprised if gRPC&rsquo;s multiplexing (over single HTTP/2 connection) is worse than the kernel/network fabric&rsquo;s multiplexing (over multiple connections).</p>
+</blockquote>
+<p>因为 etcd clientv3 本身已经是通过 gRPC 方式访问 etcd 了，应该不会有问题，但<strong>出于谨慎，还是进行了专门的测试，不测不要紧，一测就测出了问题</strong>：<a href="https://github.com/etcd-io/etcd/issues/15402" target="_blank" rel="noopener noreffer">Etcd watch stream starvation under high read response load when sharing same connection and TLS is enabled</a>。</p>
+<blockquote>
+<p>When etcd client is generating high read response load, it can result in watch response stream in the same connection being starved. For example a client with an open watch and running 10 concurrent Range requests each returning around 10MB. The watch might get starved and not get any response for tens of seconds.</p>
+<p>Problem does not occur when TLS is not enabled nor when watch is created on separate client/connection.</p>
+<p>This affects also K8s (any version) as Kubernetes has one client per resource. Problem will trigger when single K8s resource has a lot of data and there are 10+ concurrent LIST requests for the same resource send to apiserver. For example 10k pods. This can cause serious correctness issues in K8s, like controllers not doing any job as they depend on watch to get updates. For example scheduler not scheduling any pods.</p>
+<p>We tested and confirmed that all v3.4+ versions are affected.</p>
+<p>Issue affects any watch response type:</p>
+<ul>
+<li>Event</li>
+<li>Periodic watch progress notification</li>
+<li>Manual watch progress notification</li>
+</ul>
+</blockquote>
+<p><strong>在 TLS 模式下访问 Etcd 时</strong>，如果请求的数据量较大，可能会导致同一个连接的 watch stream 无法正常返回数据。尽管目前仍然是针对每种资源类型存在一个 Client 实例，但在<strong>针对同一个资源进行并行的 LIST 请求且资源量较大时，这个问题依然存在，且会影响 k8s 的所有版本</strong>。从某种程度上说，幸亏针对每个 Etcd 集群使用一个 Client 的功能还没有合入主干，否则这个问题出现的概率会被放大，大佬们对技术的谨慎态度值得我们学习。</p>
+<p>经过大佬们的分析，产生此问题的原因在 Etcd 的实现，以及 golang 中对 HTTP/2 处理。</p>
+<blockquote>
+<ul>
+<li>Problem occurs only when TLS is enabled. This is because <a href="https://github.com/etcd-io/etcd/blob/b5e224db7da3da3347b5843a9ecdd3137760bc94/server/embed/serve.go#L155-L201" target="_blank" rel="noopener noreffer">grpc handler is served through http server</a>, which <a href="https://github.com/etcd-io/etcd/blob/b5e224db7da3da3347b5843a9ecdd3137760bc94/server/embed/serve.go#L122-L129" target="_blank" rel="noopener noreffer">doesn&rsquo;t occur otherwise</a>.</li>
+<li>http server is affected by <a href="https://github.com/golang/go/issues/58804" target="_blank" rel="noopener noreffer">net/http: Stream starvation in http2 priority write scheduler golang/go#58804</a></li>
+</ul>
+</blockquote>
+<h3 id="golang-相关问题">Golang 相关问题</h3>
+<p>问题是在 golang 1.19 中引入 PriorityWriteScheduler 开始的，在 <a href="https://github.com/golang/net/commit/120fc906b30bade8c220769da77801566d7f4ec8" target="_blank" rel="noopener noreffer">golang/net@<code>120fc90</code></a> 修复，对应的 tag 为 v0.11.0。</p>
+<blockquote>
+<p>When the children of a node have varying weights, <code>walkReadyInOrder</code> sorts the children of a node by the ratio of weight to bytes sent. This prevents starvation&ndash;a low-priority stream will get a smaller fraction of the available resources, but it&rsquo;ll still get a fraction.</p>
+<p>However, when the children all have the same weight (the common case), <code>walkReadyInOrder</code> just picks the first available stream without consideration for how many bytes have been sent, permitting starvation.</p>
+</blockquote>
+<p>PriorityWriteScheduler 可以支持基于流的优先级的写的能力，但是当没有优先级的差异时，就会退化为 LIFO 的模式，新创建的流会优先得到处理，而已经创建一段时间并且发送了很多数据的流会排在靠后的位置等待处理。</p>
+<p>社区提到了几种解决方案，比如使用 random write scheduler 或者 round robin write scheduler 替换 priority write scheduler，最终采取了 round robin write scheduler，一是因为 random write scheduler 虽然可以解决上述问题，但其性能并不是最优的，存在一些长尾延迟问题，再就是在最新的 <a href="https://www.rfc-editor.org/rfc/rfc9113.html#section-5.3" target="_blank" rel="noopener noreffer">RFC 9113</a> 中已经废弃了 <code>stream prioritization scheme</code>，而这个概念是在  <a href="https://www.rfc-editor.org/rfc/rfc9113.html#RFC7540" target="_blank" rel="noopener noreffer">RFC 7540</a> 引入的。更详细的讨论可以参考 <a href="https://github.com/golang/go/issues/58804#issuecomment-1470330633" target="_blank" rel="noopener noreffer">https://github.com/golang/go/issues/58804#issuecomment-1470330633</a>。</p>
+<h3 id="etcd-相关问题">Etcd 相关问题</h3>
+<p>Etcd 针对上述问题做了如下处理</p>
+<ol>
+<li>[v3.4+] <a href="https://github.com/etcd-io/etcd/pull/15452" target="_blank" rel="noopener noreffer">Change http server frame scheduler to random</a>.</li>
+<li>[v3.4+] <a href="https://github.com/etcd-io/etcd/pull/15446" target="_blank" rel="noopener noreffer">Move http server to separate port</a> by passing <code>--listen-client-http-urls</code>.</li>
+<li>[v3.6+] <a href="https://github.com/etcd-io/etcd/pull/15510" target="_blank" rel="noopener noreffer">Use customised connection multiplexer for etcd</a></li>
+<li>[v3.4+] When ready for production use, change to new <a href="https://github.com/golang/go/issues/58804#issuecomment-1480303386" target="_blank" rel="noopener noreffer">frame scheduler round-robin algorithm</a>.</li>
+</ol>
+<p>先通过修改为 random write scheduler 来避免饥饿问题，同时通过暴露新的参数 <code>--listen-client-http-urls</code> 来解决 TLS 模式下通过 http server 处理 grpc handler 时受到 golang 影响的问题，最后把 random write scheduler 修改为 round robin write scheduler。而在 v3.6 及之后的版本中，会通过自定义 io 多路复用功能的方式替换了当前的实现（当前通过直接引用 cmux 包实现），由于这个改动较大，不适合放在已经正式 release 的 v3.4 和 v3.5 中。</p>
+<p><strong>最终在 v3.4.28 及以上、 v3.5.10 及以上的版本中问题得以彻底解决，如果还在使用 v3.4 或者 v3.5 较低版本的话，建议升级到上述版本。</strong></p>
+<p>这里重点提一下第二个改动，通过新增 <code>--listen-client-http-urls</code> 参数来规避问题，其原理是统一 etcd 服务端对 grpc 请求的处理，如果没有指定此参数，保持和之前实现一致的行为，如果同时定义了 <code>--listen-client-http-urls</code> 和 <code>--listen-client-http-urls</code> 则对前者使用 grpc server 对后者使用 http server 提供服务。为什么用了 random write scheduler 还要拆开呢？</p>
+<blockquote>
+<p>Even with random write scheduler grpc under http server can only handle 500 KB with 2 seconds delay. On the other hand,
+separate grpc server easily hits 10, 100 or even 1000 MB within 100 miliseconds.</p>
+</blockquote>
+<p>可以看到两种不同 server 类型的性能差异巨大，所以<strong>在升级 etcd 版本的基础上，设置好相关参数来为 TLS 也通过 grpc server 服务来提升性能，尤其是 k8s 集群规模较大的场景。</strong></p>
+<p><strong>强烈推荐看一下第二个实现的 PR</strong>，里面涉及到如何设置这个两个参数，同时也可以感受到大佬们做 code review 时的细致，里面有一个非常细节的闭包导致的 bug，都被揪了出来，但由于与此实现无关，是一个历史 bug，就不在这里介绍了。</p>
+<p>最后，也可以看出来其实并不是所有版本的 k8s 都会受此问题的影响的，取决于两个因素，影响也不同。</p>
+<ul>
+<li>k8s 使用的 golang 版本如果有问题的话，影响的是客户端访问 kube-apiserver；</li>
+<li>etcd 使用的 golang 版本有问题的话，影响的是 kube-apiserver 从 etcd 获取数据；</li>
+</ul>
+<h3 id="小结">小结</h3>
+<p><strong>最终建议在 etcd 升级，修改相关参数的同时，也要注意下使用的 k8s 版本会不会有这个问题，主要就是看编译时使用的 golang 版本。</strong></p>
+<p>至此，我们知道了 kube-apiserver 和 etcd 建立连接的过程，对内存的影响，存在的问题以及如何修复等社区进展。<strong>由于 kube-apiserver   不管有多少实例，每个实例都需要与 etcd 建立连接，所以无法通过增加 kube-apiserver 实例数来缓解这个问题。</strong></p>
+<h2 id="client-go-与-kube-apiserver-的连接">client-go 与 kube-apiserver 的连接</h2>
+<p>除了 kube-apiserver 与 etcd 会建立连接外，客户端也会与 kube-apiserver 建立连接，那么维护这些连接会不会也会造成内存使用明显增长的问题呢？这就需要我们了解 client-go 建连机制了，可以借机看看自己是否真的搞懂 client-go 与 kube-apiserver 建立连接这部分的内容了。</p>
+<p>client-go 通过 <code>Config</code> 结构维护访问 kube-apiserver 使用的配置，与此问题的对应的关键属性是 <code>Transport</code>，注意和上面 kube-apiserver 访问 etcd 提到的 transport 完全不一样的概念，不要混淆，后者是 kube-apiserver 内的自定义结构。如果没有显示的为 Config 设置 Transport，则其使用的是 http.DefaultTransport，默认使用 HTTP/2，考虑以下场景：未显示指定 Transport，通过 Config 创建了 clientset，使用 clientset 创建了 informerFactory，并同时针对不同的资源启动了对应的 informer，那么 client-go 会与 kube-apiserver 建立多少条连接呢？</p>
+<p>要回答这个问题，就需要了解 HTTP/2 io 多路复用的实现。</p>
+<h3 id="http2-io-多路复用">HTTP/2 IO 多路复用</h3>
+<p>io 多路复用的意思是每个连接上有多个 stream，而上面提到的针对不同资源都使用 informer 与 kube-apiserver 建立连接，最终可能是复用了已经存在的连接，只不过在其中多了一个 stream 而已。这也是最开始提到 kube-apiserver 与 etcd 建立连接时提到的 Per Etcd Per Client 而不是 Per Etcd Per Connection 的原因，因为即使是一个 Client 最终到底会建立多少连接，和请求量有关，也和服务端 <code>MaxConcurrentStreams</code> 参数设置有关，这个参数表示每个连接上最多可以有多少流，默认为 250。假如使用默认值的情况下，客户端同时发起了 250 个请求，那理论上只需要 1 条连接就能搞定，但如果你去实际测试一下话，你会发现有的时候会有一个连接，有的时候会有两个连接，这是为什么呢？</p>
+<p>这就需要去理解 HTTP/2 的实现了，客户端在尝试与服务端建立连接时</p>
+<ol>
+<li>首先获取连接，会先尝试从缓存中根据请求的 addr（host:port） 获取，如果没有获取到的话，会初始化一个连接（此时尚未与服务端建立连接，只是存在于客户端的一个数据额结构），每个连接也有个 <code>maxConcurrentStreams</code> 参数，默认值为 100，硬编码，无法修改；</li>
+<li>接着会根据如下公式判断是否需要新建新的连接 <code>maxConcurrentOkay = int64(len(cc.streams)+cc.streamsReserved+1) &lt;= int64(cc.maxConcurrentStreams)</code>；</li>
+<li>如果尚未与服务端建立连接的话（第一个 stream），就开始执行 Dial 的操作，之后与服务端建连成功后，先协商 setting，其中就包含了上面提到的服务端的 <code>MaxConcurrentStreams</code> 参数，会覆盖了连接初始时的 <code>maxConcurrentStreams</code> 的值，协商只有在每个连接第一次与服务端建立连接时进行，之后复用这个连接的时候不再需要重新协商的过程；</li>
+</ol>
+<p>之前每有请求过来都是重复上面的步骤，按需创建新的连接。</p>
+<p>并发 250 个请求，有时是一个连接，有时是两个连接的原因：由于请求是并发创建的，会出现在某一时刻一批请求同时执行到了步骤二，而这时客户端与服务端协商虽然在第一个请求到来后就已经开始，但涉及到网络传输有可能协商并未完成，也就是说客户端的 <code>maxConcurrentStreams</code> 还是 100，所以当第 101 个请求来的时候，客户端判断觉得需要新建一个连接了，然后就新建了一个连接，之后协商完成，客户端本地的 <code>maxConcurrentStreams</code> 变成了 250，后续的请求到来的时候就又可以继续复用已有的连接了。最终就会造成实际的连接数 &gt;=  请求并发 / <code>MaxConcurrentStreams</code>，如果协商在第 101 个请求到来之前已经完成，那么创建的连接数就是计算之后的结果，不会多。</p>
+<p>如果先发起一个请求，得到返回结果后再并发创建 249 个请求的话，那么连接数就会始终是 1，因为在第一个请求里面已经完成了协商，客户端的 <code>maxConcurrentStreams</code> 已经被设置了 250，正好可以处理剩下的 249 个请求。</p>
+<p>kube-apiserver 早期为 <code>MaxConcurrentStreams</code> 设置了默认值 250，并且暴露了参数可以在外部修改，而在 1.29 的发布中，将其默认值修改为了 100，同时 backport 回了从 v1.25 及之后的所有的版本，这个修改和 golang 的安全漏洞 <a href="https://github.com/advisories/GHSA-qppj-fm5r-hxr3" target="_blank" rel="noopener noreffer">CVE-2023-44487</a> and <a href="https://github.com/advisories/GHSA-4374-p667-p6c8" target="_blank" rel="noopener noreffer">CVE-2023-39325</a> 有关。</p>
+<h3 id="cve-2023-39325">CVE-2023-39325</h3>
+<p>一个恶意的 HTTP/2 客户端，迅速创建请求并立即重置它们，可能导致服务器资源的过度消耗。尽管请求的总数受限于 <code>http2.Server.MaxConcurrentStreams</code> 设置，但在处理中的请求被重置允许攻击者在现有请求仍在执行时创建新请求。</p>
+<p>有了上面的分析，理解这个漏洞及修复就会简单一些。漏洞产生的原因是虽然客户端在与服务端协商后会拿到服务端参数 <code>MaxConcurrentStreams</code> 的值，可以保证客户端单个连接上的 active stream 数量不超过这个阈值，但是有可能会导致服务端对应连接上的 stream 数量超过这个阈值。因为客户端虽然重置了请求，但可能请求在服务端还在运行中，客户端重置之后立马就可以重新发起请求，最终导致服务端资源被消耗殆尽，算是服务端实现的一个漏洞。</p>
+<p>在 golang/net v0.17.0 中修复此漏洞，<a href="https://github.com/golang/net/commit/b225e7ca6dde1ef5a5ae5ce922861bda011cfabd" target="_blank" rel="noopener noreffer">http2: limit maximum handler goroutines to MaxConcurrentStreams</a>。实现原理是在服务端添加相关逻辑，判断执行中的请求是否超过了 <code>MaxConcurrentStreams</code> 的值，没有超过的话就直接执行，超过的话则会入队列，等到运行中的某个请求完成之后再从队列中取一个请求开始处理。如果队列里面积压的未处理请求数量超过 <code>MaxConcurrentStreams</code> 的 4 倍的话，服务端会报错 too_many_early_resets 并返回  <code>ErrCodeEnhanceYourCalm</code>，然后强制关闭连接。</p>
+<p>golang 的上述修复 packport 到了 golang v1.20 和 v1.21 中，之前版本的 golang 仍然存在这个问题，但是由于 golang 版本维护策略只维护最新的两个版本，如果使用的还是之前 v1.19 或者之前的版本的话，可以升级 golang 版本，或者升级 x/net 版本到 v0.17.0 来解决。</p>
+<h3 id="小结-1">小结</h3>
+<p>Kube-apiserver 刻意把 <code>MaxConcurrentStreams</code> 从 250 缩小到 100，是为了降低服务端可能受到的影响，在受到攻击时关闭连接的时候每个连接上最多 100 * 4 个请求，如果还是用 250 的话，就会有 250 * 4 个请求。</p>
+<p>至此，应该就可以回答本节最开始提出的在未显示指定 Transport，通过 Config 创建了 clientset，使用 clientset 创建了 informerFactory，并同时针对不同的资源启动了对应的 informer，client-go 会与 kube-apiserver 会建立多少条连接的问题了。kube-apiserver 的连接多数来自于 daemonset 性质类的客户端请求，有了 io 多路复用之后，单个 agent 进程发起的请求可以通过少量的连接即可完成，这可以大大减少 kube-apiserver 的连接数，同时<strong>由于 kube-apiserver 可以多实例负载均衡（虽然不是那么的均衡），但至少可以通过增加实例数来分担单个实例上连接数过多的风险，这和 kube-apiserver 作为客户端去和 etcd 建立连接的场景完全相反</strong>。</p>
+<h1 id="总结">总结</h1>
+<p>本篇分别从 kube-apiserver 连接 etcd，client-go 连接 kube-apiserver  的角度分析了连接数对内存的影响，在此过程中又引出了一连串的 Etcd，Golang，HTTP/2 中存在的一些问题和漏洞，这些问题都是优化连接数时不得不考虑或者提前解决的问题。同时也给出了问题引入和修复的方式或者版本，目前线上主流运行中的 k8s 集群和使用的 etcd 大部分应该都有相关问题，可以考虑按需升级处理。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2023-12-19</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/connection/" data-title="kube-apiserver 连接数也会影响内存？" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/connection/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/connection/" data-title="kube-apiserver 连接数也会影响内存？" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/connection/" data-title="kube-apiserver 连接数也会影响内存？"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/connection/" data-title="kube-apiserver 连接数也会影响内存？"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/connection/" data-title="kube-apiserver 连接数也会影响内存？" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/connection/" data-title="kube-apiserver 连接数也会影响内存？" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/connection/" data-title="kube-apiserver 连接数也会影响内存？"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/selflink/" class="prev" rel="prev" title="k8s 骨灰级玩家都不知道的属性 - SelfLink"><i class="fas fa-angle-left fa-fw"></i>k8s 骨灰级玩家都不知道的属性 - SelfLink</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2023</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>
