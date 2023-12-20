@@ -115,7 +115,7 @@ Etcd 针对上述问题做了如下处理
 
 **最终在 v3.4.28 及以上、 v3.5.10 及以上的版本中问题得以彻底解决，如果还在使用 v3.4 或者 v3.5 较低版本的话，建议升级到上述版本。**
 
-这里重点提一下第二个改动，通过新增 `--listen-client-http-urls` 参数来规避问题，其原理是统一 etcd 服务端对 grpc 请求的处理，如果没有指定此参数，保持和之前实现一致的行为，如果同时定义了 `--listen-client-http-urls` 和 `--listen-client-http-urls` 则对前者使用 grpc server 对后者使用 http server 提供服务。为什么用了 random write scheduler 还要拆开呢？
+这里重点提一下第二个改动，通过新增 `--listen-client-http-urls` 参数来规避问题，其原理是统一 etcd 服务端对 grpc 请求的处理，如果没有指定此参数，保持和之前实现一致的行为，如果同时定义了 `--listen-client-urls` 和 `--listen-client-http-urls` 则对前者使用 grpc server 对后者使用 http server 提供服务。为什么用了 random write scheduler 还要拆开呢？
 
 > Even with random write scheduler grpc under http server can only handle 500 KB with 2 seconds delay. On the other hand,
 > separate grpc server easily hits 10, 100 or even 1000 MB within 100 miliseconds.

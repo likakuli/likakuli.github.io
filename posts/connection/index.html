@@ -10,7 +10,7 @@
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/connection/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2023-12-18T22:42:47+08:00" />
-<meta property="article:modified_time" content="2023-12-19T23:20:35+08:00" />
+<meta property="article:modified_time" content="2023-12-20T10:56:27+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
@@ -30,7 +30,7 @@
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/connection\/"
         },"genre": "posts","keywords": "kubernetes","wordcount":  5904 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/connection\/","datePublished": "2023-12-18T22:42:47+08:00","dateModified": "2023-12-19T23:20:35+08:00","publisher": {
+        "url": "https:\/\/www.likakuli.com\/posts\/connection\/","datePublished": "2023-12-18T22:42:47+08:00","dateModified": "2023-12-20T10:56:27+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -247,7 +247,7 @@
 </ol>
 <p>先通过修改为 random write scheduler 来避免饥饿问题，同时通过暴露新的参数 <code>--listen-client-http-urls</code> 来解决 TLS 模式下通过 http server 处理 grpc handler 时受到 golang 影响的问题，最后把 random write scheduler 修改为 round robin write scheduler。而在 v3.6 及之后的版本中，会通过自定义 io 多路复用功能的方式替换了当前的实现（当前通过直接引用 cmux 包实现），由于这个改动较大，不适合放在已经正式 release 的 v3.4 和 v3.5 中。</p>
 <p><strong>最终在 v3.4.28 及以上、 v3.5.10 及以上的版本中问题得以彻底解决，如果还在使用 v3.4 或者 v3.5 较低版本的话，建议升级到上述版本。</strong></p>
-<p>这里重点提一下第二个改动，通过新增 <code>--listen-client-http-urls</code> 参数来规避问题，其原理是统一 etcd 服务端对 grpc 请求的处理，如果没有指定此参数，保持和之前实现一致的行为，如果同时定义了 <code>--listen-client-http-urls</code> 和 <code>--listen-client-http-urls</code> 则对前者使用 grpc server 对后者使用 http server 提供服务。为什么用了 random write scheduler 还要拆开呢？</p>
+<p>这里重点提一下第二个改动，通过新增 <code>--listen-client-http-urls</code> 参数来规避问题，其原理是统一 etcd 服务端对 grpc 请求的处理，如果没有指定此参数，保持和之前实现一致的行为，如果同时定义了 <code>--listen-client-urls</code> 和 <code>--listen-client-http-urls</code> 则对前者使用 grpc server 对后者使用 http server 提供服务。为什么用了 random write scheduler 还要拆开呢？</p>
 <blockquote>
 <p>Even with random write scheduler grpc under http server can only handle 500 KB with 2 seconds delay. On the other hand,
 separate grpc server easily hits 10, 100 or even 1000 MB within 100 miliseconds.</p>
@@ -303,7 +303,7 @@ separate grpc server easily hits 10, 100 or even 1000 MB within 100 miliseconds.
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2023-12-19</span>
+                <span>更新于 2023-12-20</span>
             </div>
             <div class="post-info-license"></div>
         </div>
