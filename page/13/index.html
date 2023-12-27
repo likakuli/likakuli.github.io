@@ -102,35 +102,10 @@
         alt="/avatar.png"
         title="/avatar.png" /></a></div><h1 class="home-title">李鹤</h1><h2 class="home-subtitle"><div id="id-1" class="typeit"></div></h2><div class="links"><a href="https://github.com/likakuli" title="GitHub" target="_blank" rel="noopener noreffer me"><i class="fab fa-github-alt fa-fw"></i></a><a href="mailto:1154584512@qq.com" title="Email" rel=" me"><i class="far fa-envelope fa-fw"></i></a><a href="/index.xml" title="RSS" target="_blank" rel="noopener noreffer me"><i class="fas fa-rss fa-fw"></i></a></div></div>
 <article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/kubernetes-cpu-manager/">那些年，我们一起追的Bug</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2021-10-16">2021-10-16</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a>&nbsp;<a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div><div class="content">背景 上半年遇到了一些绑核相关的 bug，分析了其原因，但没有总结整理下来，现在又碰到了，补一下作业，同时也希望可以帮助大家快速从坑里爬出来。本</div><div class="post-footer">
-        <a href="/posts/kubernetes-cpu-manager/">阅读全文</a><div class="post-tags">
+        <a href="/posts/kubernetes-ca/">Kubernetes 1.9.6 CA IPVS CoreDNS</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2018-05-24">2018-05-24</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/"><i class="far fa-folder fa-fw"></i>使用说明</a></span></div><div class="content">简介 kubernetes 系统的各组件需要使用 TLS 证书对通信进行加密，本文档使用 CloudFlare 的 PKI 工具集 cfssl 来生成 Certificate Authority (CA) 和其它证书，操作系统CentOS7 amd64； 集群节点 10.202.43.132</div><div class="post-footer">
+        <a href="/posts/kubernetes-ca/">阅读全文</a><div class="post-tags">
                 <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/thoughtfulessay/">思想随笔1 - 思考思考的过程</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2021-07-10">2021-07-10</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%9A%8F%E7%AC%94/"><i class="far fa-folder fa-fw"></i>随笔</a></span></div><div class="content">机缘巧合 去年一个偶然的机会在抖音上刷到了&quot;姜胡说&quot;，里面不乏一些有趣且发人深思的内容，在其中一期中胡子提到了几本书，其中</div><div class="post-footer">
-        <a href="/posts/thoughtfulessay/">阅读全文</a><div class="post-tags">
-                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/%E6%80%9D%E8%80%83/">思考</a>,&nbsp;<a href="/tags/%E9%9A%8F%E7%AC%94/">随笔</a></div></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/kubernetes-topology-manager/">Kubenetes NUMA拓扑感知功能介绍</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2021-06-18">2021-06-18</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/"><i class="far fa-folder fa-fw"></i>原理介绍</a></span></div><div class="content">由来 最近的工作内容中涉及到了 NUMA 感知相关的功能，之前没有特意去看过 kubelet 相关部分的实现，也是趁此机会把落下的补补。在看代码的过程中，NUMA 感知部</div><div class="post-footer">
-        <a href="/posts/kubernetes-topology-manager/">阅读全文</a><div class="post-tags">
-                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/kubernetes-interpodaffinity/">Kube-scheduler InterPodAffinity性能优化史</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2021-06-08">2021-06-08</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"><i class="far fa-folder fa-fw"></i>性能优化</a></span></div><div class="content">从事Kubernetes相关工作的同学对Kube-scheduler一定不会感到陌生，有的甚至还可能遇到过里面的一些问题，本篇主要介绍其中的</div><div class="post-footer">
-        <a href="/posts/kubernetes-interpodaffinity/">阅读全文</a><div class="post-tags">
-                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a>,&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/gpu-metrics-not-display3/">容器开启特权模式后无法通过cadvisor获取GPU metrics指标</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2021-05-30">2021-05-30</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div><div class="content">问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信</div><div class="post-footer">
-        <a href="/posts/gpu-metrics-not-display3/">阅读全文</a><div class="post-tags">
-                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a>,&nbsp;<a href="/tags/gpu/">gpu</a>,&nbsp;<a href="/tags/cadvisor/">cadvisor</a></div></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/gpu-metrics-not-display2/">容器开启特权模式后无法通过cadvisor获取GPU metrics指标</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2021-05-30">2021-05-30</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5/"><i class="far fa-folder fa-fw"></i>问题排查</a></span></div><div class="content">问题描述 开启特权模式（--privileged）的容器，在使用nvidia GPU时，无法通过cAdvisor获取GPU相关的metrics信</div><div class="post-footer">
-        <a href="/posts/gpu-metrics-not-display2/">阅读全文</a><div class="post-tags">
-                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/docker/">docker</a>,&nbsp;<a href="/tags/gpu/">gpu</a>,&nbsp;<a href="/tags/cadvisor/">cadvisor</a></div></div>
 </article><ul class="pagination"><li class="page-item ">
                     <span class="page-link">
                         <a href="/">1</a>
@@ -139,27 +114,13 @@
                     <span class="page-link" aria-hidden="true">&hellip;</span>
                 </li><li class="page-item ">
                     <span class="page-link">
-                        <a href="/page/3/">3</a>
+                        <a href="/page/11/">11</a>
                     </span>
                 </li><li class="page-item ">
                     <span class="page-link">
-                        <a href="/page/4/">4</a>
+                        <a href="/page/12/">12</a>
                     </span>
                 </li><li class="page-item active">
-                    <span class="page-link">
-                        <a href="/page/5/">5</a>
-                    </span>
-                </li><li class="page-item ">
-                    <span class="page-link">
-                        <a href="/page/6/">6</a>
-                    </span>
-                </li><li class="page-item ">
-                    <span class="page-link">
-                        <a href="/page/7/">7</a>
-                    </span>
-                </li><li class="page-item ">
-                    <span class="page-link" aria-hidden="true">&hellip;</span>
-                </li><li class="page-item ">
                     <span class="page-link">
                         <a href="/page/13/">13</a>
                     </span>
