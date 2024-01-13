@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>kubernetes 究竟有没有 LTS？ - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="kubernetes 究竟有没有 LTS？" />
+<meta property="og:description" content="从一个有趣的问题引出很多人都在关注的 Kubernetes LTS 的问题。 有趣的问题 2019 年，一个名为 apiserver LoopbackClient Server cert expired after 1 year 的 issue 中提到了一个有趣的问题，如果一个 kube-apiserver 已经一年没有重" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/k8slts/" /><meta property="og:image" content="https://www.likakuli.com/posts/k8slts/feature.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-10-14T00:13:59+08:00" />
+<meta property="article:modified_time" content="2024-01-13T21:30:14+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/posts/k8slts/feature.png"/>
+<meta name="twitter:title" content="kubernetes 究竟有没有 LTS？"/>
+<meta name="twitter:description" content="从一个有趣的问题引出很多人都在关注的 Kubernetes LTS 的问题。 有趣的问题 2019 年，一个名为 apiserver LoopbackClient Server cert expired after 1 year 的 issue 中提到了一个有趣的问题，如果一个 kube-apiserver 已经一年没有重"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/k8slts/" /><link rel="prev" href="https://www.likakuli.com/posts/informer1/" /><link rel="next" href="https://www.likakuli.com/posts/cacher/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "kubernetes 究竟有没有 LTS？",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/k8slts\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  3285 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/k8slts\/","datePublished": "2023-10-14T00:13:59+08:00","dateModified": "2024-01-13T21:30:14+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><a class="menu-item" href="/friends/"> 友链 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a class="menu-item" href="/friends/" title="">友链</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">kubernetes 究竟有没有 LTS？</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/"><i class="far fa-folder fa-fw"></i>原理介绍</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-10-14">2023-10-14</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3285 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/k8slts/" class="leancloud_visitors" data-flag-title="kubernetes 究竟有没有 LTS？">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#有趣的问题">有趣的问题</a></li>
+    <li><a href="#feature-or-bug">Feature Or Bug?</a>
+      <ul>
+        <li><a href="#影响范围"><strong>影响范围</strong></a></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-lts">Kubernetes LTS</a></li>
+    <li><a href="#拓展">拓展</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>从一个有趣的问题引出很多人都在关注的 Kubernetes LTS 的问题。</p>
+<h1 id="有趣的问题">有趣的问题</h1>
+<p>2019 年，一个名为 <a href="https://github.com/kubernetes/kubernetes/issues/86552" target="_blank" rel="noopener noreffer">apiserver LoopbackClient Server cert expired after 1 year</a> 的 issue 中提到了一个有趣的问题，<strong>如果一个 kube-apiserver 已经一年没有重启过了，那么这个 kube-apiserver 就无法再正常工作了</strong>。</p>
+<p>issue 作者给出了自己的定位的原因：<strong>kube-apiserver 没有更新自签的 LoopbackClient 证书相关内容</strong>。从下面代码中可以看到证书过期时间被设置为了 1 年。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go">	<span class="c1">// create self-signed cert+key with the fake server.LoopbackClientServerNameOverride and
+</span><span class="c1"></span>	<span class="c1">// let the server return it when the loopback client connects.
+</span><span class="c1"></span>	<span class="nx">certPem</span><span class="p">,</span> <span class="nx">keyPem</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">certutil</span><span class="p">.</span><span class="nf">GenerateSelfSignedCertKey</span><span class="p">(</span><span class="nx">server</span><span class="p">.</span><span class="nx">LoopbackClientServerNameOverride</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to generate self-signed certificate for loopback connection: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">certProvider</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dynamiccertificates</span><span class="p">.</span><span class="nf">NewStaticSNICertKeyContent</span><span class="p">(</span><span class="s">&#34;self-signed loopback&#34;</span><span class="p">,</span> <span class="nx">certPem</span><span class="p">,</span> <span class="nx">keyPem</span><span class="p">,</span> <span class="nx">server</span><span class="p">.</span><span class="nx">LoopbackClientServerNameOverride</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to generate self-signed certificate for loopback connection: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+
+<span class="o">---</span>
+
+<span class="c1">// GenerateSelfSignedCertKeyWithFixtures creates a self-signed certificate and key for the given host.
+</span><span class="c1">// Host may be an IP or a DNS name. You may also specify additional subject alt names (either ip or dns names)
+</span><span class="c1">// for the certificate.
+</span><span class="c1">//
+</span><span class="c1">// If fixtureDirectory is non-empty, it is a directory path which can contain pre-generated certs. The format is:
+</span><span class="c1">// &lt;host&gt;_&lt;ip&gt;-&lt;ip&gt;_&lt;alternateDNS&gt;-&lt;alternateDNS&gt;.crt
+</span><span class="c1">// &lt;host&gt;_&lt;ip&gt;-&lt;ip&gt;_&lt;alternateDNS&gt;-&lt;alternateDNS&gt;.key
+</span><span class="c1">// Certs/keys not existing in that directory are created.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">GenerateSelfSignedCertKeyWithFixtures</span><span class="p">(</span><span class="nx">host</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">alternateIPs</span> <span class="p">[]</span><span class="nx">net</span><span class="p">.</span><span class="nx">IP</span><span class="p">,</span> <span class="nx">alternateDNS</span> <span class="p">[]</span><span class="kt">string</span><span class="p">,</span> <span class="nx">fixtureDirectory</span> <span class="kt">string</span><span class="p">)</span> <span class="p">([]</span><span class="kt">byte</span><span class="p">,</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">validFrom</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">Add</span><span class="p">(</span><span class="o">-</span><span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span><span class="p">)</span> <span class="c1">// valid an hour earlier to avoid flakes due to clock skew
+</span><span class="c1"></span>	<span class="nx">maxAge</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">365</span>          <span class="c1">// one year self-signed certs
+</span></code></pre></td></tr></table>
+</div>
+</div><p>注：LoopbackClient 是在 kube-apiserver 中用来访问自身时使用的，例如 kube-apiserver 在启动时需要获取 Service，EndPoint 等信息（AA 中用到了），就用到了这个 LoopbackClient。</p>
+<p>同时也给出了用来检查自己集群相关证书过期时间的方法，可以通过重启 kube-apiserver 来临时解决这个问题。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># replace {Master_IP} with your master IP and 6443 with your apiserver port</span>
+curl --resolve apiserver-loopback-client:6443:<span class="o">{</span>Master_IP<span class="o">}</span> -k -v https://apiserver-loopback-client:6443/healthz
+
+root@kind-control-plane:/# curl --resolve apiserver-loopback-client:6443:172.17.0.2 -k -v https://apiserver-loopback-client:6443/healthz
+* Added apiserver-loopback-client:6443:172.17.0.2 to DNS cache
+* Hostname apiserver-loopback-client was found in DNS cache
+*   Trying 172.17.0.2:6443...
+* TCP_NODELAY <span class="nb">set</span>
+* Connected to apiserver-loopback-client <span class="o">(</span>172.17.0.2<span class="o">)</span> port <span class="m">6443</span> <span class="o">(</span><span class="c1">#0)</span>
+* ALPN, offering h2
+* ALPN, offering http/1.1
+* successfully <span class="nb">set</span> certificate verify locations:
+*   CAfile: none
+  CApath: /etc/ssl/certs
+* TLSv1.3 <span class="o">(</span>OUT<span class="o">)</span>, TLS handshake, Client hello <span class="o">(</span>1<span class="o">)</span>:
+* TLSv1.3 <span class="o">(</span>IN<span class="o">)</span>, TLS handshake, Server hello <span class="o">(</span>2<span class="o">)</span>:
+* TLSv1.2 <span class="o">(</span>IN<span class="o">)</span>, TLS handshake, Certificate <span class="o">(</span>11<span class="o">)</span>:
+* TLSv1.2 <span class="o">(</span>IN<span class="o">)</span>, TLS handshake, Server key exchange <span class="o">(</span>12<span class="o">)</span>:
+* TLSv1.2 <span class="o">(</span>IN<span class="o">)</span>, TLS handshake, Request CERT <span class="o">(</span>13<span class="o">)</span>:
+* TLSv1.2 <span class="o">(</span>IN<span class="o">)</span>, TLS handshake, Server finished <span class="o">(</span>14<span class="o">)</span>:
+* TLSv1.2 <span class="o">(</span>OUT<span class="o">)</span>, TLS handshake, Certificate <span class="o">(</span>11<span class="o">)</span>:
+* TLSv1.2 <span class="o">(</span>OUT<span class="o">)</span>, TLS handshake, Client key exchange <span class="o">(</span>16<span class="o">)</span>:
+* TLSv1.2 <span class="o">(</span>OUT<span class="o">)</span>, TLS change cipher, Change cipher spec <span class="o">(</span>1<span class="o">)</span>:
+* TLSv1.2 <span class="o">(</span>OUT<span class="o">)</span>, TLS handshake, Finished <span class="o">(</span>20<span class="o">)</span>:
+* TLSv1.2 <span class="o">(</span>IN<span class="o">)</span>, TLS handshake, Finished <span class="o">(</span>20<span class="o">)</span>:
+* SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256
+* ALPN, server accepted to use h2
+* Server certificate:
+*  subject: <span class="nv">CN</span><span class="o">=</span>apiserver-loopback-client@1577103676
+*  start date: Dec <span class="m">23</span> 11:21:16 <span class="m">2019</span> GMT
+*  expire date: Dec <span class="m">22</span> 11:21:16 <span class="m">2020</span> GMT
+*  issuer: <span class="nv">CN</span><span class="o">=</span>apiserver-loopback-client-ca@1577103676
+*  SSL certificate verify result: self signed certificate in certificate chain <span class="o">(</span>19<span class="o">)</span>, continuing anyway.
+* Using HTTP2, server supports multi-use
+* Connection state changed <span class="o">(</span>HTTP/2 confirmed<span class="o">)</span>
+* Copying HTTP/2 data in stream buffer to connection buffer after upgrade: <span class="nv">len</span><span class="o">=</span><span class="m">0</span>
+* Using Stream ID: <span class="m">1</span> <span class="o">(</span>easy handle 0x55d565d9c1d0<span class="o">)</span>
+&gt; GET /healthz HTTP/2
+&gt; Host: apiserver-loopback-client:6443
+&gt; User-Agent: curl/7.65.3
+&gt; Accept: */*
+&gt; 
+* Connection state changed <span class="o">(</span><span class="nv">MAX_CONCURRENT_STREAMS</span> <span class="o">==</span> 250<span class="o">)</span>!
+&lt; HTTP/2 <span class="m">200</span> 
+&lt; cache-control: no-cache, private
+&lt; content-type: text/plain<span class="p">;</span> <span class="nv">charset</span><span class="o">=</span>utf-8
+&lt; x-content-type-options: nosniff
+&lt; content-length: <span class="m">2</span>
+&lt; date: Wed, <span class="m">23</span> Dec <span class="m">2020</span> 14:29:30 GMT
+&lt; 
+* Connection <span class="c1">#0 to host apiserver-loopback-client left intact</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="feature-or-bug">Feature Or Bug?</h1>
+<p>这个问题发生的概率比较低，需要让 kube-apiserver 持续运行 1 年才会触发，当然你也可以通过调整服务器时间到一年后来马上让他复现。</p>
+<p>社区大佬也是做出了回复，在当时 k8s 每 3 个月发布一个 minor 版本，同时遵循「N-2 支持政策」，这意味着仅 3 个最新的 minor 版本（N、N-1 和 N-2）会获得安全和错误修复。也就意味着如果集群管理员按照社区规范管理 k8s 集群的话就不会出现运行了 1 年以上的 k8s 组件，也就不会触发这个问题。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="feature.png"
+        data-srcset="/posts/k8slts/feature.png, feature.png 1.5x, /posts/k8slts/feature.png 2x"
+        data-sizes="auto"
+        alt="/posts/k8slts/feature.png"
+        title="image-20240113182714768" /></p>
+<p>同时也提到了有一个新的提案正在讨论中，用来把支持的版本从过去 9 个月提升到 12 ~ 14 个月，但在当时这也仅仅还只是个提案。<strong>最终这个 issue 并没有被当做是 bug，至今社区版本中此处仍然硬编码了个 1 年的过期时间。</strong></p>
+<p>而神奇的是，在距离上面 issue 被提到的四年后的今天，如果你上网搜索一下这个问题的话，你会发现在<a href="https://www.alibabacloud.com/help/zh/ack/product-overview/validity-period-change-for-api-server-internal-certificates" target="_blank" rel="noopener noreffer">阿里云官网文档</a>中也提到了这个问题</p>
+<blockquote>
+<p>API Server是ACK集群管控面的核心组件，其中内置了用于其内部<a href="https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apiserver/pkg/server/options/serving_with_loopback.go#L52-L61" target="_blank" rel="noopener noreffer">LoopbackClient</a>服务端工作的证书。该证书在社区版本中有效期为<a href="https://github.com/kubernetes/kubernetes/blob/69c3b23abdbda53d14e14afc2af2bdfef23ac7b0/staging/src/k8s.io/client-go/util/cert/cert.go#L40C7-L40C19" target="_blank" rel="noopener noreffer">1年</a>且无法自动轮转，只有当API Server Pod发生重启时，才会自动轮转更新。社区暂无延长该证书有效期的计划，更多信息请参见<a href="https://github.com/kubernetes/kubernetes/issues/86552#issuecomment-568492075" target="_blank" rel="noopener noreffer">#86552</a>。</p>
+<p>考虑到不同用户的运维习惯，容器服务 Kubernetes 版于近期调整了该内置证书的默认过期时间，修改后有效期为<strong>10年</strong>。</p>
+<h2 id="影响范围"><strong>影响范围</strong></h2>
+<p>API Server内置LoopbackClient证书的有效期为<strong>1年</strong>的ACK托管集群和ACK专有集群。</p>
+<ul>
+<li>在2023年03月15日之前创建的ACK集群，API Server内置LoopbackClient证书的有效期为<strong>1年。</strong></li>
+<li>在2023年03月15日及以后新建或升级至<strong>1.20.11或以上版本</strong>的ACK集群，API Server内置LoopbackClient证书的有效期为<strong>10年</strong>，不受影响。</li>
+</ul>
+</blockquote>
+<p>阿里云文档中说了自 2023 年 03 月 15 日之后的版本已经设置证书有效期为 10 年，也就是说阿里云其实是修改了这部分源码的。而且还特意在最后加了这么一句：</p>
+<blockquote>
+<p><strong>重要</strong>：对于短期无法操作升级的ACK专有集群，请登录集群的所有Master节点，手动重启API Server。</p>
+</blockquote>
+<p>阿里云作为国内最大的公有云厂商，最后也不得不修改代码去解决这个问题，从侧面也说明了另一个问题，即使已经 2023 年（当时）了，还有很多公司使用的 k8s 版本是远远落后于官方支持的版本的，甚至还存在一些已经运行了超过一年或者快要超过一年的集群。也不知道是该替阿里云的稳定性高兴（足以支持 k8s 跑一年都不重启），还是感慨一个四年前的问题在四年后终于得到了大家的关注。amazing and iteresting ~</p>
+<h1 id="kubernetes-lts">Kubernetes LTS</h1>
+<p>一个如此复杂的系统，最初的支持周期连 1 年都不到，需要用户每年一升级，升级一次工作量也大，这绝对是对用户心智的一种折磨。从结果看，确实也是存在不少的用户在使用过程中并没有完全遵循社区规范。</p>
+<p>从提案 <a href="https://github.com/kubernetes/enhancements/tree/master/keps/sig-release/1498-kubernetes-yearly-support-period" target="_blank" rel="noopener noreffer">1498-kubernetes-yearly-support-period</a> 被接受后，k8s 版本的支持时间从之前的 9 个月调整到了 14 个月，包含 12 个月的支持期和 2 个月的升级周期，v1.19 是第一个享受此待遇的版本。从提案 <a href="https://github.com/kubernetes/enhancements/tree/master/keps/sig-release/2572-release-cadence" target="_blank" rel="noopener noreffer">KEP-2572: Defining the Kubernetes Release Cadence</a> 被接受后，也就是 2020 年（有一部分新冠的原因），调整发版（minor）周期从每年四次到每年三次，v1.22 是第一个按这个节奏发版的版本。</p>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="upgrade-cadence.png"
+        data-srcset="/posts/k8slts/upgrade-cadence.png, upgrade-cadence.png 1.5x, /posts/k8slts/upgrade-cadence.png 2x"
+        data-sizes="auto"
+        alt="/posts/k8slts/upgrade-cadence.png"
+        title="upgrade-cadence" /></p>
+<ul>
+<li>Support Policy during the first 12 months.
+<ul>
+<li>Same as the current 9 months policy.</li>
+</ul>
+</li>
+<li>Support Policy during the final +2 months.
+<ul>
+<li>Only critical security patches and upgrade blocking fixes, i.e.:
+<ul>
+<li>CVE assigned by Product Security Committee initiated to release branch by Product Security Committee</li>
+<li>Cherry-pick of upgrade scenario bug fix approved by owning SIG and Patch Release Team</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>但从结果看，无论是 9 还是 14，这个时间对于用户来说仍然不够长（要不然阿里云就没必要在 2023 年还专门提上面问题了）。拿这个时间和众多的 Linux 发行版 LTS 对比看的话，这个时间相当短了。</p>
+<p>网上也不断有人为此发声：<a href="https://matduggan.com/why-kubernetes-needs-an-lts/" target="_blank" rel="noopener noreffer">Why Kubernetes needs an LTS?</a>。</p>
+<blockquote>
+<p>原因如下：</p>
+<p>第一，Kubernetes 是一个复杂的容器编排系统，由许多不同的组件和模块组成。这些组件和模块需要经过持续的维护和更新，以确保其安全性和稳定性。通过提供 LTS 版本，可以为用户提供一个稳定的基础，使他们能够在长期内使用 Kubernetes 而不必频繁升级。</p>
+<p>其次，许多组织在使用 Kubernetes 时会构建复杂的应用程序和基础架构。这些应用程序和基础架构可能依赖于特定版本的 Kubernetes，并且可能需要进行大量的测试和验证才能在新版本上运行。通过提供 LTS 版本，可以确保这些组织能够在长期内维持其应用程序和基础架构的稳定性，而不必担心由于升级到新版本而导致的不兼容性和故障。</p>
+<p>此外，许多组织可能面临着合规性和监管要求。这些要求可能要求他们使用特定版本的软件，并且在一段时间内保持该版本的支持。通过提供 LTS 版本，Kubernetes 可以满足这些合规性和监管要求，使组织能够在其环境中使用 Kubernetes 而不必担心违反规定。</p>
+<p>最后，对于那些不具备大规模升级和迁移能力的组织来说，LTS 版本可以提供更长时间的支持和稳定性。这些组织可能没有足够的资源和时间来频繁升级和迁移他们的应用程序和基础架构。通过提供 LTS 版本，Kubernetes 可以帮助这些组织保持其系统的稳定性和可靠性，而不必承担频繁升级的风险和成本。</p>
+</blockquote>
+<p>社区曾在 2019 年 2 月成立了 LTS 工作组，上面的第一个提案就是相关的产出，最终在 2020 年 10 月关闭了这个工作组。直到 2023 年 4 月又重新评估 LTS 的需求，7 月份正式重启了 LTS 工作组，截止目前并没有一些实质性的进展。详情可以参考 <a href="https://kubernetes.slack.com/messages/wg-lts" target="_blank" rel="noopener noreffer">slack</a> 或者 <a href="https://groups.google.com/a/kubernetes.io/g/wg-lts" target="_blank" rel="noopener noreffer">google 会话</a>。</p>
+<h1 id="拓展">拓展</h1>
+<p>虽然官方 LTS 工作组还没有实质进展，但 DaoCloud 有一个项目专门用来维护历史 k8s 版本，参考 <a href="https://github.com/klts-io/kubernetes-lts" target="_blank" rel="noopener noreffer">klts</a>，其关注点主要是 CVE 和 Critical issues。</p>
+<ul>
+<li><a href="https://github.com/kubernetes/kubernetes/pulls?q=is%3Apr&#43;is%3Amerged&#43;label%3Acherry-pick-approved&#43;CVE" target="_blank" rel="noopener noreffer">CVEs that were cherry-pick approved and merged after pull requests</a></li>
+<li><a href="https://www.cvedetails.com/vulnerability-list/vendor_id-15867/product_id-34016/Kubernetes-Kubernetes.html" target="_blank" rel="noopener noreffer">CVEs that were found and fixed recently</a></li>
+<li><a href="https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=Kubernetes" target="_blank" rel="noopener noreffer">Kubernetes-related CVEs that were found and listed on cve.org recently</a></li>
+</ul>
+<h1 id="总结">总结</h1>
+<p>k8s 14 个月的维护周期显然无法满足很多用户的需求，社区也清楚存在这个问题，也有专门的 LTS 工作组在跟进，在不久的将来，或许能看到 kubernetes LTS 的落地。</p>
+<p>最后还想多说一点，在选择使用哪个版本，升不升级，什么时间升级，并没有一个绝对的对错，适合自己的才是最好的，提防角色互换，从玩家变成被玩的人，还是要对所负责的东西有绝对的把控力。对待一些公众号之间对某些<strong>技术理念</strong>的争执（互喷）也一样，<strong>单纯意识形态上的争论对指导具体工作没有多大的意义</strong>。不可否认里面一些观念还是挺好的，也容易被人接受，但重要的还是要结合自己的实际场景，多思考，可以看看听听，但<strong>千万不要着相</strong>了，即使社会主义，前面都还有中国特色两个大字。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2024-01-13</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/k8slts/" data-title="kubernetes 究竟有没有 LTS？" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/k8slts/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/k8slts/" data-title="kubernetes 究竟有没有 LTS？" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/k8slts/" data-title="kubernetes 究竟有没有 LTS？"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/k8slts/" data-title="kubernetes 究竟有没有 LTS？"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/k8slts/" data-title="kubernetes 究竟有没有 LTS？" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/k8slts/" data-title="kubernetes 究竟有没有 LTS？" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/k8slts/" data-title="kubernetes 究竟有没有 LTS？"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/informer1/" class="prev" rel="prev" title="你真的搞懂 Informer 了吗？"><i class="fas fa-angle-left fa-fw"></i>你真的搞懂 Informer 了吗？</a>
+            <a href="/posts/cacher/" class="next" rel="next" title="kube-apiserver 又 OOM 了？">kube-apiserver 又 OOM 了？<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2024</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>
