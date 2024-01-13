@@ -110,7 +110,7 @@ root@kind-control-plane:/# curl --resolve apiserver-loopback-client:6443:172.17.
 >
 > 考虑到不同用户的运维习惯，容器服务 Kubernetes 版于近期调整了该内置证书的默认过期时间，修改后有效期为**10年**。
 >
-> ## **影响范围**
+> **影响范围**
 >
 > API Server内置LoopbackClient证书的有效期为**1年**的ACK托管集群和ACK专有集群。
 >

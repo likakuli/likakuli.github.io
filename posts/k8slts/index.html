@@ -9,8 +9,8 @@
 <meta property="og:description" content="从一个有趣的问题引出很多人都在关注的 Kubernetes LTS 的问题。 有趣的问题 2019 年，一个名为 apiserver LoopbackClient Server cert expired after 1 year 的 issue 中提到了一个有趣的问题，如果一个 kube-apiserver 已经一年没有重" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.likakuli.com/posts/k8slts/" /><meta property="og:image" content="https://www.likakuli.com/posts/k8slts/feature.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2023-10-14T00:13:59+08:00" />
-<meta property="article:modified_time" content="2024-01-13T21:30:14+08:00" />
+
+<meta property="article:modified_time" content="2024-01-13T21:36:00+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/posts/k8slts/feature.png"/>
@@ -19,7 +19,7 @@
 <meta name="application-name" content="LoveIt">
 <meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/k8slts/" /><link rel="prev" href="https://www.likakuli.com/posts/informer1/" /><link rel="next" href="https://www.likakuli.com/posts/cacher/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/k8slts/" /><link rel="next" href="https://www.likakuli.com/posts/kubernetes-ca/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
     {
         "@context": "http://schema.org",
         "@type": "BlogPosting",
@@ -29,7 +29,7 @@
             "@type": "WebPage",
             "@id": "https:\/\/www.likakuli.com\/posts\/k8slts\/"
         },"genre": "posts","keywords": "kubernetes","wordcount":  3285 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/k8slts\/","datePublished": "2023-10-14T00:13:59+08:00","dateModified": "2024-01-13T21:30:14+08:00","publisher": {
+        "url": "https:\/\/www.likakuli.com\/posts\/k8slts\/","dateModified": "2024-01-13T21:36:00+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -110,7 +110,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">kubernetes 究竟有没有 LTS？</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/"><i class="far fa-folder fa-fw"></i>原理介绍</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2023-10-14">2023-10-14</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3285 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="0001-01-01">0001-01-01</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3285 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/k8slts/" class="leancloud_visitors" data-flag-title="kubernetes 究竟有没有 LTS？">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
@@ -122,11 +122,7 @@
                 <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
   <ul>
     <li><a href="#有趣的问题">有趣的问题</a></li>
-    <li><a href="#feature-or-bug">Feature Or Bug?</a>
-      <ul>
-        <li><a href="#影响范围"><strong>影响范围</strong></a></li>
-      </ul>
-    </li>
+    <li><a href="#feature-or-bug">Feature Or Bug?</a></li>
     <li><a href="#kubernetes-lts">Kubernetes LTS</a></li>
     <li><a href="#拓展">拓展</a></li>
     <li><a href="#总结">总结</a></li>
@@ -316,7 +312,7 @@ root@kind-control-plane:/# curl --resolve apiserver-loopback-client:6443:172.17.
 <blockquote>
 <p>API Server是ACK集群管控面的核心组件，其中内置了用于其内部<a href="https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apiserver/pkg/server/options/serving_with_loopback.go#L52-L61" target="_blank" rel="noopener noreffer">LoopbackClient</a>服务端工作的证书。该证书在社区版本中有效期为<a href="https://github.com/kubernetes/kubernetes/blob/69c3b23abdbda53d14e14afc2af2bdfef23ac7b0/staging/src/k8s.io/client-go/util/cert/cert.go#L40C7-L40C19" target="_blank" rel="noopener noreffer">1年</a>且无法自动轮转，只有当API Server Pod发生重启时，才会自动轮转更新。社区暂无延长该证书有效期的计划，更多信息请参见<a href="https://github.com/kubernetes/kubernetes/issues/86552#issuecomment-568492075" target="_blank" rel="noopener noreffer">#86552</a>。</p>
 <p>考虑到不同用户的运维习惯，容器服务 Kubernetes 版于近期调整了该内置证书的默认过期时间，修改后有效期为<strong>10年</strong>。</p>
-<h2 id="影响范围"><strong>影响范围</strong></h2>
+<p><strong>影响范围</strong></p>
 <p>API Server内置LoopbackClient证书的有效期为<strong>1年</strong>的ACK托管集群和ACK专有集群。</p>
 <ul>
 <li>在2023年03月15日之前创建的ACK集群，API Server内置LoopbackClient证书的有效期为<strong>1年。</strong></li>
@@ -410,8 +406,8 @@ root@kind-control-plane:/# curl --resolve apiserver-loopback-client:6443:172.17.
         </section>
     </div>
 
-    <div class="post-nav"><a href="/posts/informer1/" class="prev" rel="prev" title="你真的搞懂 Informer 了吗？"><i class="fas fa-angle-left fa-fw"></i>你真的搞懂 Informer 了吗？</a>
-            <a href="/posts/cacher/" class="next" rel="next" title="kube-apiserver 又 OOM 了？">kube-apiserver 又 OOM 了？<i class="fas fa-angle-right fa-fw"></i></a></div>
+    <div class="post-nav">
+            <a href="/posts/kubernetes-ca/" class="next" rel="next" title="Kubernetes 1.9.6 CA IPVS CoreDNS">Kubernetes 1.9.6 CA IPVS CoreDNS<i class="fas fa-angle-right fa-fw"></i></a></div>
 </div>
 <div id="comments"><div id="valine" class="comment"></div><noscript>
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.

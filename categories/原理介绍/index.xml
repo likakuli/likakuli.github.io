@@ -4,19 +4,19 @@
         <link>https://www.likakuli.com/categories/%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/</link>
         <description>原理介绍 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 14 Oct 2023 00:13:59 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/" rel="self" type="application/rss+xml" /><item>
-    <title>kubernetes 究竟有没有 LTS？</title>
-    <link>https://www.likakuli.com/posts/k8slts/</link>
-    <pubDate>Sat, 14 Oct 2023 00:13:59 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/k8slts/</guid>
-    <description><![CDATA[从一个有趣的问题引出很多人都在关注的 Kubernetes LTS 的问题。 有趣的问题 2019 年，一个名为 apiserver LoopbackClient Server cert expired after 1 year 的 issue 中提到了一个有趣的问题，如果一个 kube-apiserver 已经一年没有重]]></description>
-</item><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Fri, 18 Jun 2021 18:59:04 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/" rel="self" type="application/rss+xml" /><item>
     <title>Kubenetes NUMA拓扑感知功能介绍</title>
     <link>https://www.likakuli.com/posts/kubernetes-topology-manager/</link>
     <pubDate>Fri, 18 Jun 2021 18:59:04 &#43;0800</pubDate>
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/kubernetes-topology-manager/</guid>
     <description><![CDATA[由来 最近的工作内容中涉及到了 NUMA 感知相关的功能，之前没有特意去看过 kubelet 相关部分的实现，也是趁此机会把落下的补补。在看代码的过程中，NUMA 感知部]]></description>
+</item><item>
+    <title>kubernetes 究竟有没有 LTS？</title>
+    <link>https://www.likakuli.com/posts/k8slts/</link>
+    <pubDate>Mon, 01 Jan 0001 00:00:00 &#43;0000</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/k8slts/</guid>
+    <description><![CDATA[从一个有趣的问题引出很多人都在关注的 Kubernetes LTS 的问题。 有趣的问题 2019 年，一个名为 apiserver LoopbackClient Server cert expired after 1 year 的 issue 中提到了一个有趣的问题，如果一个 kube-apiserver 已经一年没有重]]></description>
 </item></channel>
 </rss>
