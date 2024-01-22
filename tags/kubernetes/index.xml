@@ -12,6 +12,13 @@
     <guid>https://www.likakuli.com/posts/k8slist/</guid>
     <description><![CDATA[从一个看似简单的功能说明 k8s 确实越来越复杂了。 约定 k8s list 返回结果中的元素集合是按照字母顺序从 a 到 z 升序排列的。 原因 这个约定存在的原因是为了保持开]]></description>
 </item><item>
+    <title>kubernetes 究竟有没有 LTS？</title>
+    <link>https://www.likakuli.com/posts/k8slts/</link>
+    <pubDate>Sat, 13 Jan 2024 23:10:49 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/k8slts/</guid>
+    <description><![CDATA[从一个有趣的问题引出很多人都在关注的 Kubernetes LTS 的问题。 有趣的问题 2019 年，一个名为 apiserver LoopbackClient Server cert expired after 1 year 的 issue 中提到了一个有趣的问题，如果一个 kube-apiserver 已经一年没有重]]></description>
+</item><item>
     <title>k8s: 到底谁才是草台班子？</title>
     <link>https://www.likakuli.com/posts/k8sparams/</link>
     <pubDate>Thu, 28 Dec 2023 10:57:01 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/cacher/</guid>
     <description><![CDATA[代码版本：v1.26 由来 前一篇已经介绍了 Informer 的实现，Informer 对 kube-apiserver 发起了 list 和 watch 请求。我们知道大规模集群下，kube-apiserver 会]]></description>
-</item><item>
-    <title>你真的搞懂 Informer 了吗？</title>
-    <link>https://www.likakuli.com/posts/informer1/</link>
-    <pubDate>Sat, 14 Oct 2023 00:13:59 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/informer1/</guid>
-    <description><![CDATA[代码版本 v.126 由来 Informer 作为 client-go 的核心，网上有众多的源码分析，原理解析相关文章，可以教给大家如何&quot;正确&quot;的使用 Informer。当]]></description>
 </item></channel>
 </rss>

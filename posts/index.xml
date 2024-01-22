@@ -12,6 +12,13 @@
     <guid>https://www.likakuli.com/posts/k8slist/</guid>
     <description><![CDATA[从一个看似简单的功能说明 k8s 确实越来越复杂了。 约定 k8s list 返回结果中的元素集合是按照字母顺序从 a 到 z 升序排列的。 原因 这个约定存在的原因是为了保持开]]></description>
 </item><item>
+    <title>kubernetes 究竟有没有 LTS？</title>
+    <link>https://www.likakuli.com/posts/k8slts/</link>
+    <pubDate>Sat, 13 Jan 2024 23:10:49 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/k8slts/</guid>
+    <description><![CDATA[从一个有趣的问题引出很多人都在关注的 Kubernetes LTS 的问题。 有趣的问题 2019 年，一个名为 apiserver LoopbackClient Server cert expired after 1 year 的 issue 中提到了一个有趣的问题，如果一个 kube-apiserver 已经一年没有重]]></description>
+</item><item>
     <title>k8s: 到底谁才是草台班子？</title>
     <link>https://www.likakuli.com/posts/k8sparams/</link>
     <pubDate>Thu, 28 Dec 2023 10:57:01 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/stability/</guid>
     <description><![CDATA[继阿里云之后，滴滴崩了上了热搜，故障原因了解了一些，会在文章最后谈到。近期国内多个公司发生了 P0 事故，当然也包括我司，只不过可能不出名，很多人]]></description>
-</item><item>
-    <title>大规模容器平台共享资源池的预算，分配，核算机制</title>
-    <link>https://www.likakuli.com/posts/resourcemgmt/</link>
-    <pubDate>Wed, 15 Nov 2023 20:15:15 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/resourcemgmt/</guid>
-    <description><![CDATA[转自知乎 https://zhuanlan.zhihu.com/p/408731614，略有修改 背景与挑战 背景 大型互联网公司内部资源池非常庞大]]></description>
 </item></channel>
 </rss>
