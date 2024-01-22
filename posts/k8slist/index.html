@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>k8s 越来越复杂了吗？ - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="k8s 越来越复杂了吗？" />
+<meta property="og:description" content="从一个看似简单的功能说明 k8s 确实越来越复杂了。 约定 k8s list 返回结果中的元素集合是按照字母顺序从 a 到 z 升序排列的。 原因 这个约定存在的原因是为了保持开" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/k8slist/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-01-21T23:10:49+08:00" />
+<meta property="article:modified_time" content="2024-01-22T22:17:43+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="k8s 越来越复杂了吗？"/>
+<meta name="twitter:description" content="从一个看似简单的功能说明 k8s 确实越来越复杂了。 约定 k8s list 返回结果中的元素集合是按照字母顺序从 a 到 z 升序排列的。 原因 这个约定存在的原因是为了保持开"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/k8slist/" /><link rel="prev" href="https://www.likakuli.com/posts/k8sparams/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "k8s 越来越复杂了吗？",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/k8slist\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  2457 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/k8slist\/","datePublished": "2024-01-21T23:10:49+08:00","dateModified": "2024-01-22T22:17:43+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><a class="menu-item" href="/friends/"> 友链 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a class="menu-item" href="/friends/" title="">友链</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">k8s 越来越复杂了吗？</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>原理分析</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2024-01-21">2024-01-21</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 2457 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 5 分钟&nbsp;<span id="/posts/k8slist/" class="leancloud_visitors" data-flag-title="k8s 越来越复杂了吗？">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#约定">约定</a></li>
+    <li><a href="#原因">原因</a></li>
+    <li><a href="#实现">实现</a>
+      <ul>
+        <li><a href="#etcd">Etcd</a></li>
+        <li><a href="#watchcache">WatchCache</a></li>
+        <li><a href="#watchlist">WatchList</a></li>
+      </ul>
+    </li>
+    <li><a href="#结束语">结束语</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><blockquote>
+<p>从一个看似简单的功能说明 k8s 确实越来越复杂了。</p>
+</blockquote>
+<h1 id="约定">约定</h1>
+<p>k8s list 返回结果中的元素集合是按照字母顺序从 a 到 z 升序排列的。</p>
+<h1 id="原因">原因</h1>
+<p>这个约定存在的原因是为了保持开启 WatchCache 功能前后 list 请求返回结果的一致性。在关闭 WatchCache 功能的情况下，请求直接透传给 Etcd，此时返回的结果就是字母升序排列的。</p>
+<h1 id="实现">实现</h1>
+<h2 id="etcd">Etcd</h2>
+<p>在关闭 WatchCache 时 list 结果有序，这个能力是 Etcd 提供的。kube-apiserver 的实现中调用 Etcd API 执行 Range 操作的时候并没有显示指定 SortOrder 和 SortTarget，但最终却返回了按照 key 排序的数据。如果直接使用 Etcdctl 去获取指定 key collection 的话，不需要显示指定顺序，返回的结果也是有序的。</p>
+<p>这就涉及到 Etcd Range 的实现，在不显示设置排序顺序和排序对象的时候，默认返回 key 按照字母升序排序后的结果，相关的代码如下</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 最终排序位置
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ti</span> <span class="o">*</span><span class="nx">treeIndex</span><span class="p">)</span> <span class="nf">visit</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">end</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">,</span> <span class="nx">f</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ki</span> <span class="o">*</span><span class="nx">keyIndex</span><span class="p">)</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">keyi</span><span class="p">,</span> <span class="nx">endi</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">keyIndex</span><span class="p">{</span><span class="nx">key</span><span class="p">:</span> <span class="nx">key</span><span class="p">},</span> <span class="o">&amp;</span><span class="nx">keyIndex</span><span class="p">{</span><span class="nx">key</span><span class="p">:</span> <span class="nx">end</span><span class="p">}</span>
+
+	<span class="nx">ti</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">ti</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span>
+
+	<span class="nx">ti</span><span class="p">.</span><span class="nx">tree</span><span class="p">.</span><span class="nf">AscendGreaterOrEqual</span><span class="p">(</span><span class="nx">keyi</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">item</span> <span class="nx">btree</span><span class="p">.</span><span class="nx">Item</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">endi</span><span class="p">.</span><span class="nx">key</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">item</span><span class="p">.</span><span class="nf">Less</span><span class="p">(</span><span class="nx">endi</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">false</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="p">!</span><span class="nf">f</span><span class="p">(</span><span class="nx">item</span><span class="p">.(</span><span class="o">*</span><span class="nx">keyIndex</span><span class="p">))</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">false</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="kc">true</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果是沿着调用链路一步步看的话，在前一步（默认线性一致性读，需要等待 appliedIndex 赶上 confirmedIndex）返回数据时的代码中也有相关注释</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">applierV3backend</span><span class="p">)</span> <span class="nf">Range</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">txn</span> <span class="nx">mvcc</span><span class="p">.</span><span class="nx">TxnRead</span><span class="p">,</span> <span class="nx">r</span> <span class="o">*</span><span class="nx">pb</span><span class="p">.</span><span class="nx">RangeRequest</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">pb</span><span class="p">.</span><span class="nx">RangeResponse</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="o">...</span>
+
+	<span class="nx">sortOrder</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">SortOrder</span>
+	<span class="k">if</span> <span class="nx">r</span><span class="p">.</span><span class="nx">SortTarget</span> <span class="o">!=</span> <span class="nx">pb</span><span class="p">.</span><span class="nx">RangeRequest_KEY</span> <span class="o">&amp;&amp;</span> <span class="nx">sortOrder</span> <span class="o">==</span> <span class="nx">pb</span><span class="p">.</span><span class="nx">RangeRequest_NONE</span> <span class="p">{</span>
+		<span class="c1">// Since current mvcc.Range implementation returns results
+</span><span class="c1"></span>		<span class="c1">// sorted by keys in lexiographically ascending order,
+</span><span class="c1"></span>		<span class="c1">// sort ASCEND by default only when target is not &#39;KEY&#39;
+</span><span class="c1"></span>		<span class="nx">sortOrder</span> <span class="p">=</span> <span class="nx">pb</span><span class="p">.</span><span class="nx">RangeRequest_ASCEND</span>
+	<span class="p">}</span>
+	<span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>注释写的很明显了，默认情况下 mvcc.Range 就是返回按字母升序排序后的结果。</p>
+<h2 id="watchcache">WatchCache</h2>
+<p>如果在开启 WatchCache 的情况下调用 list 可能会发现结果并不是有序的，这是因为直到 v1.27 才开始加上有序的功能，换句话说就是从有了 WatchCache 开始直到 v1.27，list 都不是严格有序的，也就是没有遵循之前的约定。如果你的客户端依赖 list 结果的顺序，那么在使用 v1.27 之前的版本的时候可能就会遇到问题了，如果没有遇到问题，说明客户端对顺序没有依赖，而这也是大部分的场景，也正如此，这个问题才不容易被发现。</p>
+<p>List 返回的是 WatchCache store 中的数据，而 store 中的数据是无序的。在 v1.27 <a href="https://github.com/kubernetes/kubernetes/pull/113730" target="_blank" rel="noopener noreffer">Reuse generic GetList test for watchcache and fix inconsistency issues for both etcd3 and watchcache</a> 开始在从 store 返回最终数据时进行了主动排序的操作，原理很简单，就是实现了 golang sort.Interface 接口，然后调用了 sort.Sort 方法对 slice 进行排序。</p>
+<p>看似人畜无害的一个行为，引入了一个新的问题，sort.Sort 的执行是在加锁的情况下执行的，而在 Reflector 处理每个从 Etcd 返回的 event 的时候也会进行加锁操作，因此 list 操作就会对 event 的处理产生影响，导致一些不必要的处理延迟。而这个问题最终在 v1.30（尚未发布） <a href="https://github.com/kubernetes/kubernetes/pull/122027" target="_blank" rel="noopener noreffer">Don&rsquo;t sort in the critical section</a> 才得到修复，通过 defer 把排序操作放在了加锁前面。</p>
+<p>即使在没有上述问题的情况下，针对每次请求都额外多一次排序操作是否会对 API 延迟或 kube-apiserver 内存有一些影响呢？或者影响有多大呢？这就和其使用的排序算法有关了，上面提到使用 sort.Sort 进行排序，不同版本性能不一样，最新的实现是 <a href="https://blog.csdn.net/ByteDanceTech/article/details/124464192" target="_blank" rel="noopener noreffer">pdqsort</a> 算法，是字节贡献给社区的，其性能是之前的 2~60 倍，无需额外内存。所以对最终的内存没有影响，对延迟的影响取决于数据量的大小，但相比于对数据进行序列化，网络传输等的耗时，此处排序的耗时显得微乎其微。如果要较真的话，这里还可以再修改一下，改成使用 slices.Sort 的方式，使用泛型 + pdqsort，耗时会更低。</p>
+<p>那有没有更好的办法来实现返回有序的效果呢，能想到的一种方案是在处理 event 将资源对象保存到 WatchCache store 的时候就保持 store 有序，这样可以避免每次 list 时的实时排序操作。但收益如何需要实现之后对比评估，理论上收益并不大。</p>
+<h2 id="watchlist">WatchList</h2>
+<p>WatchCache 是将 store 中的数据排序后一次性的返回给客户端，WatchList 为了优化 kube-apiserver 内存消耗，改用流的方式实现 list 的效果，参考 <a href="https://mp.weixin.qq.com/s/futHT0njb5y2UHLeg7BL7w" target="_blank" rel="noopener noreffer">从 ListWatch 到 WatchList</a>，那么他返回的结果也应该遵循规范做到按字母升序排列。</p>
+<p>在最新的 v1.29.0 实现中 WatchList 还是 alpha 状态，尚未做到严格有序，原因是 WatchList 的实现是用 watchCacheInterval 的数据（WatchCache store 或者 cyclic buffer 中的数据） + cacheWatcher input chan 中的数据作为 list 的结果，由于 cacheWatcher input chan 中的数据是按 resourceversion 排序的，而且必须是按 RV 排序，就会导致最终的数据无法严格字母升序。</p>
+<p>社区也是在对此功能进行开发，目前存在两个尚未合并的 PR，<a href="https://github.com/kubernetes/kubernetes/pull/120897/" target="_blank" rel="noopener noreffer">Ensure that initial events are sorted for WatchList</a> 和 <a href="https://github.com/kubernetes/kubernetes/pull/122830" target="_blank" rel="noopener noreffer">storage/cacher: ensure the cache is at the Most Recent ResourceVersion when streaming was requested</a>。前者是对前半部分 watchCacheInterval 的数据进行排序，后者是用来保证 watchCacheInterval 中的数据已经是 list 所需的全量数据，也就是说不再需要从 cacheWatcher input chan 拼接数据了。</p>
+<p>理论上通过上面两个改动是可以实现 WatchList 下的 list 有序的，但同样会引入新的问题，即当前的实现是服务端收到 Watch 请求后会立马开始往客户端发送数据，而上述改动则需要服务端等待 watchCacheInterval 是全量数据，排序后才开始往客户端发送数据，这就引入了一个数据处理的延迟。也就是说处理方式变成了从当前的有一条数据就发一条的实现，变成了要先等到服务端是全量数据后再开始一条一条的发送给客户端。</p>
+<p>那么这个延迟会有多大呢，这个值跟 Etcd 的配置有关，当前的实现是依赖 ProgressNotify 的，通过 <code>--experimental-watch-progress-notify-interval</code> 控制 ProgressNotify event 发送的周期，默认是 10m，也就是说默认情况下会存在最大 10m + 1.25s 的延迟，这显然是不可接受的。可以通过缩小此参数的值来缩短延迟，一般情况下设置为 5s，也就会有最大 5s + 1.25s 的延迟。这个延迟其实也很难让人接受，其中的 1.25s 是来自 bookmarktimer 的 1s~1.25s 的定时周期导致的。社区计划是利用 ConsistentRead 机制中已经使用到的 RequestProgressNotify 机制，由 kube-apiserver 周期性（100ms）主动请求 Etcd 发送 ProgessNotify 的原理把这个周期缩短到 100ms（1.25是否存在待定），此功能已经在 ConsistentRead FeatureGate 开启后的 List 请求中使用到了，尚未在 WatchList 中支持。</p>
+<p>这个延迟和 ConsistentRead/WatchList + ProgressNotify 机制有关，ConsistentRead/WatchList 都是先请求 Etcd 获取当前最大的 RV，等待 Cache 数据追上 RV 之后才开始后续流程的，问题就在这个最大 RV，因为 Etcd 的 RV 是全局的，由于节点一直在上报 lease 状态，就会导致 Etcd 中的最新 RV 一直在增加，但是资源对象的 RV 很可能是一直不变的。例如获取 default namespace 下的所有 pods，即使在此 ns 下没有任何 pod 的情况下使用 ConsistentRead 或者 WatchList 时也能感觉到明显的延迟，延迟的大小和上面提到的 Etcd 参数有关，如果没有显示指定的话给人的感觉就是一直无法返回数据直到超时或者取消请求，避险问题，感兴趣的话可以用最新版本（v1.29.0）测试下。</p>
+<h1 id="结束语">结束语</h1>
+<p>一个看似简单的 list 有序，竟也会牵扯到这么多的内容，而且还有很多尚未实现的功能。k8s 为了一个基本不会用到的 list 有序，需要做这么多的工作，复杂度的提升可想而知，谁知道里面还会有多少这种实际几乎不会用到的功能呢？！</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2024-01-22</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/k8slist/" data-title="k8s 越来越复杂了吗？" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/k8slist/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/k8slist/" data-title="k8s 越来越复杂了吗？" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/k8slist/" data-title="k8s 越来越复杂了吗？"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/k8slist/" data-title="k8s 越来越复杂了吗？"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/k8slist/" data-title="k8s 越来越复杂了吗？" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/k8slist/" data-title="k8s 越来越复杂了吗？" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/k8slist/" data-title="k8s 越来越复杂了吗？"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/k8sparams/" class="prev" rel="prev" title="k8s: 到底谁才是草台班子？"><i class="fas fa-angle-left fa-fw"></i>k8s: 到底谁才是草台班子？</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2024</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

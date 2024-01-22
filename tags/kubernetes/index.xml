@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/tags/kubernetes/</link>
         <description>kubernetes - 标签 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 28 Dec 2023 10:57:01 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/kubernetes/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 21 Jan 2024 23:10:49 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/tags/kubernetes/" rel="self" type="application/rss+xml" /><item>
+    <title>k8s 越来越复杂了吗？</title>
+    <link>https://www.likakuli.com/posts/k8slist/</link>
+    <pubDate>Sun, 21 Jan 2024 23:10:49 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/k8slist/</guid>
+    <description><![CDATA[从一个看似简单的功能说明 k8s 确实越来越复杂了。 约定 k8s list 返回结果中的元素集合是按照字母顺序从 a 到 z 升序排列的。 原因 这个约定存在的原因是为了保持开]]></description>
+</item><item>
     <title>k8s: 到底谁才是草台班子？</title>
     <link>https://www.likakuli.com/posts/k8sparams/</link>
     <pubDate>Thu, 28 Dec 2023 10:57:01 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/informer1/</guid>
     <description><![CDATA[代码版本 v.126 由来 Informer 作为 client-go 的核心，网上有众多的源码分析，原理解析相关文章，可以教给大家如何&quot;正确&quot;的使用 Informer。当]]></description>
-</item><item>
-    <title>kubernetes 月光宝盒 - 时间倒流</title>
-    <link>https://www.likakuli.com/posts/backclock/</link>
-    <pubDate>Mon, 25 Sep 2023 22:15:51 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/backclock/</guid>
-    <description><![CDATA[背景 碰到一个&quot;诡异&quot;的线上问题，已经定位到原因，虽然不是什么大问题，但感觉还是挺有意思的。在远古时期（k8s 1.7）中也]]></description>
 </item></channel>
 </rss>

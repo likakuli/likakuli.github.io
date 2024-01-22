@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 28 Dec 2023 10:57:01 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sun, 21 Jan 2024 23:10:49 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>k8s 越来越复杂了吗？</title>
+    <link>https://www.likakuli.com/posts/k8slist/</link>
+    <pubDate>Sun, 21 Jan 2024 23:10:49 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/k8slist/</guid>
+    <description><![CDATA[从一个看似简单的功能说明 k8s 确实越来越复杂了。 约定 k8s list 返回结果中的元素集合是按照字母顺序从 a 到 z 升序排列的。 原因 这个约定存在的原因是为了保持开]]></description>
+</item><item>
     <title>k8s: 到底谁才是草台班子？</title>
     <link>https://www.likakuli.com/posts/k8sparams/</link>
     <pubDate>Thu, 28 Dec 2023 10:57:01 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/resourcemgmt/</guid>
     <description><![CDATA[转自知乎 https://zhuanlan.zhihu.com/p/408731614，略有修改 背景与挑战 背景 大型互联网公司内部资源池非常庞大]]></description>
-</item><item>
-    <title>从 ListWatch 到 WatchList</title>
-    <link>https://www.likakuli.com/posts/watchlist/</link>
-    <pubDate>Tue, 07 Nov 2023 22:10:18 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/watchlist/</guid>
-    <description><![CDATA[背景 前面我们已经对 kube-apiserver 内存消耗进行了阐述，文中最后提到了使用流式的请求来支持 List 的效果，从而实现对于单个请求来说，空间复杂度从 O(n) 转换成 O(1)，]]></description>
 </item></channel>
 </rss>
