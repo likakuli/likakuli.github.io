@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 30 Jan 2024 19:31:45 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 02 Mar 2024 17:05:23 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>k8s watch 丢事件 - 1</title>
+    <link>https://www.likakuli.com/posts/k8seventlost1/</link>
+    <pubDate>Sat, 02 Mar 2024 17:05:23 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/k8seventlost1/</guid>
+    <description><![CDATA[Kube-apiserver 提供了 Watch API 来支持实时接收资源对象变化的功能，也是 Informer 实现的基础，那么我们通过 Watch 或者 Informer 本地缓存拿到的数据是否真的和 Etcd 中的数据一致呢？ 先说结论：]]></description>
+</item><item>
     <title>kube-apiserver 又 Panic 了 - handler</title>
     <link>https://www.likakuli.com/posts/k8sapiserverpanic/</link>
     <pubDate>Tue, 30 Jan 2024 19:31:45 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/bomb/</guid>
     <description><![CDATA[近期互联网故障频发，各大公众号各抒己见，指点江山，激扬文字，颇有百花齐放，百家争鸣的味道。一众吃瓜群众也是对此乐此不疲，津津乐道。 大家能够积]]></description>
-</item><item>
-    <title>kube-apiserver 内存优化进阶</title>
-    <link>https://www.likakuli.com/posts/serialisation/</link>
-    <pubDate>Sat, 02 Dec 2023 08:01:25 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/serialisation/</guid>
-    <description><![CDATA[背景 前面我们已经对 kube-apiserver 内存消耗 进行了阐述，文中最后提到了使用流式的请求来支持 List 的效果，从而实现对于单个请求来说，空间复杂度从 O(n) 转换成 O(1)，]]></description>
 </item></channel>
 </rss>
