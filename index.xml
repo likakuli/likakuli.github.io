@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 02 Mar 2024 17:05:23 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 09 Mar 2024 18:06:23 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>k8s watch 丢事件 - 2</title>
+    <link>https://www.likakuli.com/posts/k8seventlost2/</link>
+    <pubDate>Sat, 09 Mar 2024 18:06:23 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/k8seventlost2/</guid>
+    <description><![CDATA[前一篇已经描述了较老版本中存在的丢事件的问题，本篇继续描述另外一种。 现象 v1.27 的 K8s，在 kube-apiserver 的日志中会看到 &ldquo;etcd event received with PrevKv=nil&rdquo; 的字样，资源对象被删除后在 Etcd]]></description>
+</item><item>
     <title>k8s watch 丢事件 - 1</title>
     <link>https://www.likakuli.com/posts/k8seventlost1/</link>
     <pubDate>Sat, 02 Mar 2024 17:05:23 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/overcommit/</guid>
     <description><![CDATA[从容器调度作为入口，尝试看清问题的本质。 容器调度 前一篇中介绍了大规模容器平台的资源预算、精算、核算，本篇围绕容器调度开展。容器调度旨在有效地]]></description>
-</item><item>
-    <title>让子弹飞一会儿</title>
-    <link>https://www.likakuli.com/posts/bomb/</link>
-    <pubDate>Wed, 06 Dec 2023 12:53:24 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/bomb/</guid>
-    <description><![CDATA[近期互联网故障频发，各大公众号各抒己见，指点江山，激扬文字，颇有百花齐放，百家争鸣的味道。一众吃瓜群众也是对此乐此不疲，津津乐道。 大家能够积]]></description>
 </item></channel>
 </rss>

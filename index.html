@@ -102,6 +102,11 @@
         alt="/avatar.png"
         title="/avatar.png" /></a></div><h1 class="home-title">李鹤</h1><h2 class="home-subtitle"><div id="id-1" class="typeit"></div></h2><div class="links"><a href="https://github.com/likakuli" title="GitHub" target="_blank" rel="noopener noreffer me"><i class="fab fa-github-alt fa-fw"></i></a><a href="mailto:1154584512@qq.com" title="Email" rel=" me"><i class="far fa-envelope fa-fw"></i></a><a href="/index.xml" title="RSS" target="_blank" rel="noopener noreffer me"><i class="fas fa-rss fa-fw"></i></a></div></div>
 <article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/k8seventlost2/">k8s watch 丢事件 - 2</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2024-03-09">2024-03-09</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>原理分析</a></span></div><div class="content">前一篇已经描述了较老版本中存在的丢事件的问题，本篇继续描述另外一种。 现象 v1.27 的 K8s，在 kube-apiserver 的日志中会看到 &ldquo;etcd event received with PrevKv=nil&rdquo; 的字样，资源对象被删除后在 Etcd</div><div class="post-footer">
+        <a href="/posts/k8seventlost2/">阅读全文</a><div class="post-tags">
+                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
         <a href="/posts/k8seventlost1/">k8s watch 丢事件 - 1</a>
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2024-03-02">2024-03-02</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>原理分析</a></span></div><div class="content">Kube-apiserver 提供了 Watch API 来支持实时接收资源对象变化的功能，也是 Informer 实现的基础，那么我们通过 Watch 或者 Informer 本地缓存拿到的数据是否真的和 Etcd 中的数据一致呢？ 先说结论：</div><div class="post-footer">
         <a href="/posts/k8seventlost1/">阅读全文</a><div class="post-tags">
@@ -126,11 +131,6 @@
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2023-12-28">2023-12-28</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/"><i class="far fa-folder fa-fw"></i>使用说明</a></span></div><div class="content">大家在对 2023 年诸多互联网公司故障的总结中多次提到了控制 &ldquo;爆炸半径&rdquo;，几乎都在说缩小集群规模，那除了缩小集群规模外还有没</div><div class="post-footer">
         <a href="/posts/k8sparams/">阅读全文</a><div class="post-tags">
                 <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/watchlife/">一条 Watch 请求的一生</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2023-12-23">2023-12-23</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div><div class="content">Watch 请求像极了打工人的一生，从加入社会（cacher.watchers）开始就不停地被 Push，拼命的干，干的慢了就有可能会被干掉，干的快的奖</div><div class="post-footer">
-        <a href="/posts/watchlife/">阅读全文</a><div class="post-tags">
-                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
 </article><ul class="pagination"><li class="page-item active">
                     <span class="page-link">
                         <a href="/">1</a>
@@ -147,7 +147,7 @@
                     <span class="page-link" aria-hidden="true">&hellip;</span>
                 </li><li class="page-item ">
                     <span class="page-link">
-                        <a href="/page/13/">13</a>
+                        <a href="/page/14/">14</a>
                     </span>
                 </li></ul></div></div>
             </main><footer class="footer">
