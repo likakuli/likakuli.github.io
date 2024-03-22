@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 09 Mar 2024 18:06:23 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Fri, 22 Mar 2024 14:10:52 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>k8s watch 丢事件 - 3</title>
+    <link>https://www.likakuli.com/posts/k8seventlost3/</link>
+    <pubDate>Fri, 22 Mar 2024 14:10:52 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/k8seventlost3/</guid>
+    <description><![CDATA[现象 v1.27 的 K8s，在 kube-apiserver 的日志中会看到 &ldquo;etcd event received with PrevKv=nil&rdquo; 的字样，资源对象被删除后在 Etcd 中已经不存在了但在 Reflector store 中仍然存在，可以在 Informer 或者 watchCache 中看到对应的对象，依]]></description>
+</item><item>
     <title>k8s watch 丢事件 - 2</title>
     <link>https://www.likakuli.com/posts/k8seventlost2/</link>
     <pubDate>Sat, 09 Mar 2024 18:06:23 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/selflink/</guid>
     <description><![CDATA[本篇介绍一个可能连骨灰级 K8S 玩家都很少关注的属性 - SelfLink，以及这么一个名不见经传的小趴菜是怎么影响 kube-apiserver 性能的。大家可能没注意过他，但在]]></description>
-</item><item>
-    <title>从容器调度到降本增效</title>
-    <link>https://www.likakuli.com/posts/overcommit/</link>
-    <pubDate>Mon, 11 Dec 2023 18:07:44 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/overcommit/</guid>
-    <description><![CDATA[从容器调度作为入口，尝试看清问题的本质。 容器调度 前一篇中介绍了大规模容器平台的资源预算、精算、核算，本篇围绕容器调度开展。容器调度旨在有效地]]></description>
 </item></channel>
 </rss>
