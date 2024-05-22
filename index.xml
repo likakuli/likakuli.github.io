@@ -4,9 +4,16 @@
         <link>https://www.likakuli.com/</link>
         <description>一亩三分自留地</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Fri, 22 Mar 2024 14:10:52 &#43;0800</lastBuildDate>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Fri, 17 May 2024 17:35:25 &#43;0800</lastBuildDate>
             <atom:link href="https://www.likakuli.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>f**king k8s - pod namespace</title>
+    <link>https://www.likakuli.com/posts/k8s-ns/</link>
+    <pubDate>Fri, 17 May 2024 17:35:25 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/k8s-ns/</guid>
+    <description><![CDATA[不定期分享 k8s 里面各种坑，Just 避雷 结论 太长不看版：在拦截 pod 创建请求时，在业务逻辑中不要直接依赖 admission request 的 pod namespace 属性。可以使用 adminssion request 的 namespa]]></description>
+</item><item>
     <title>k8s watch 丢事件 - 3</title>
     <link>https://www.likakuli.com/posts/k8seventlost3/</link>
     <pubDate>Fri, 22 Mar 2024 14:10:52 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/connection/</guid>
     <description><![CDATA[之前从资源对象的获取方式、序列化、深拷贝的角度分别分析了对 kube-apiserver 内存使用量的影响以及社区是如何进行优化的，这一篇围绕网络连接展开分析其对 kube-apiserver 内存的]]></description>
-</item><item>
-    <title>k8s 骨灰级玩家都不知道的属性 - SelfLink</title>
-    <link>https://www.likakuli.com/posts/selflink/</link>
-    <pubDate>Wed, 13 Dec 2023 21:45:00 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/selflink/</guid>
-    <description><![CDATA[本篇介绍一个可能连骨灰级 K8S 玩家都很少关注的属性 - SelfLink，以及这么一个名不见经传的小趴菜是怎么影响 kube-apiserver 性能的。大家可能没注意过他，但在]]></description>
 </item></channel>
 </rss>

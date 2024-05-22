@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/categories/%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/</link>
         <description>原理分析 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Fri, 22 Mar 2024 14:10:52 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Fri, 17 May 2024 17:35:25 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/" rel="self" type="application/rss+xml" /><item>
+    <title>f**king k8s - pod namespace</title>
+    <link>https://www.likakuli.com/posts/k8s-ns/</link>
+    <pubDate>Fri, 17 May 2024 17:35:25 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/k8s-ns/</guid>
+    <description><![CDATA[不定期分享 k8s 里面各种坑，Just 避雷 结论 太长不看版：在拦截 pod 创建请求时，在业务逻辑中不要直接依赖 admission request 的 pod namespace 属性。可以使用 adminssion request 的 namespa]]></description>
+</item><item>
     <title>k8s watch 丢事件 - 3</title>
     <link>https://www.likakuli.com/posts/k8seventlost3/</link>
     <pubDate>Fri, 22 Mar 2024 14:10:52 &#43;0800</pubDate>
