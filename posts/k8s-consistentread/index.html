@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>k8s List 一致性读 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="k8s List 一致性读" />
+<meta property="og:description" content="历史文章 k8s stale read ListWatch 到 WatchList 原理 一致性读按严格程度划分，k8s 支持的顺序一致性，而 etcd 支持的是更严格的线性一致性。详情可以参考这篇文章 https://" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/k8s-consistentread/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-06-05T19:06:23+08:00" />
+<meta property="article:modified_time" content="2024-06-05T22:23:38+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="k8s List 一致性读"/>
+<meta name="twitter:description" content="历史文章 k8s stale read ListWatch 到 WatchList 原理 一致性读按严格程度划分，k8s 支持的顺序一致性，而 etcd 支持的是更严格的线性一致性。详情可以参考这篇文章 https://"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/k8s-consistentread/" /><link rel="prev" href="https://www.likakuli.com/posts/k8s-ns/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "k8s List 一致性读",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/k8s-consistentread\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  3283 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/k8s-consistentread\/","datePublished": "2024-06-05T19:06:23+08:00","dateModified": "2024-06-05T22:23:38+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><a class="menu-item" href="/friends/"> 友链 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a class="menu-item" href="/friends/" title="">友链</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">k8s List 一致性读</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2024-06-05">2024-06-05</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3283 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 7 分钟&nbsp;<span id="/posts/k8s-consistentread/" class="leancloud_visitors" data-flag-title="k8s List 一致性读">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#历史文章">历史文章</a></li>
+    <li><a href="#原理">原理</a>
+      <ul>
+        <li><a href="#社区实现">社区实现</a></li>
+        <li><a href="#当前进展">当前进展</a></li>
+        <li><a href="#相关问题">相关问题</a></li>
+        <li><a href="#问题一">问题一</a></li>
+        <li><a href="#问题二">问题二</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="历史文章">历史文章</h1>
+<p><a href="https://mp.weixin.qq.com/s/SMnKpnP5J07HBeG35oC9WQ" target="_blank" rel="noopener noreffer">k8s stale read</a></p>
+<p><a href="https://mp.weixin.qq.com/s/futHT0njb5y2UHLeg7BL7w" target="_blank" rel="noopener noreffer">ListWatch 到 WatchList</a></p>
+<h1 id="原理">原理</h1>
+<p>一致性读按严格程度划分，k8s 支持的顺序一致性，而 etcd 支持的是更严格的线性一致性。详情可以参考这篇文章 <a href="https://fgiesen.wordpress.com/2014/07/07/cache-coherency/" target="_blank" rel="noopener noreffer">https://fgiesen.wordpress.com/2014/07/07/cache-coherency/</a>。</p>
+<p>之前分享了 k8s stale read 的问题，核心就是从 <strong>kube-apiserver watch cache</strong> 返回数据的时候一致性由从 etcd 返回数据时的<strong>线性一致性降低成了顺序一致性</strong>。问题在 watch cache 引入时就存在一直到了现在。</p>
+<h2 id="社区实现">社区实现</h2>
+<p>涉及到两个 KEP，<a href="https://github.com/kubernetes/enhancements/tree/master/keps/sig-api-machinery/3157-watch-list" target="_blank" rel="noopener noreffer">3157-watch-list</a> 和 <a href="https://github.com/kubernetes/enhancements/tree/master/keps/sig-api-machinery/2340-Consistent-reads-from-cache" target="_blank" rel="noopener noreffer">2340-consistent-read-from-cache</a>，以后者为主，后者用到了前者实现的部分函数。</p>
+<p>核心逻辑如下，这里就不翻译了，保持原汁原味。</p>
+<blockquote>
+<p>When a consistent LIST request is received and the watch cache is enabled:</p>
+<ul>
+<li>Get the current revision from etcd for the resource type being served.</li>
+<li>Check if the watch cache already has the current revision, if not:
+<ul>
+<li>Add a &ldquo;waiting read&rdquo; and notify the goroutine running in background.</li>
+<li>Wait for watch cache to catch up. If wait times out, reject the request. (see &ldquo;What if the watch cache is stale?&rdquo; section for details)</li>
+<li>Remove a &ldquo;waiting read&rdquo;</li>
+</ul>
+</li>
+<li>Serve the request from watch cache</li>
+</ul>
+<p>In background, run a dedicated goroutine that will:</p>
+<ul>
+<li>Wait for changes to &ldquo;waiting read&rdquo; count.</li>
+<li>Repeat as long there is at least one &ldquo;waiting read&rdquo;:
+<ul>
+<li>Send <code>WatchProgressRequest</code> request to etcd.</li>
+<li>Wait 100ms</li>
+</ul>
+</li>
+</ul>
+<p>Consistent GET requests will continue to be served directly from etcd. We will only serve consistent LIST requests from cache.</p>
+</blockquote>
+<p>简单说就是当收到 LIST 请求并且满足 consistent read 条件时，会先调用 <code>getCurrentResourceVersionFromStorage</code> 函数（第一个 KEP 里面实现的）获取 Etcd 最新的 RV，记为 RV1，watch cache 开始 watch Etcd 并将收到的 event 的 RV 记为 RV2，如果 RV2 追上了 RV1，则认为缓存中是最新数据了，然后把对应的数据集返回给客户端。</p>
+<p>后台 goroutine 存在的原因在于 watch cache 是资源级别（如 Pod，Node 对应各自的 watch cache）的，而 etcd RV 是全局的。etcd 已经支持了定期（默认 10m，公有云上一版设置为 5s）给所有客户端发送一次 ProgressNotify event 来通知客户端此时服务端的最大 RV 值，客户端收到此类事件后会更新本地 RV 值，所以理论上 watch cache 最大 RV 与 etcd 实际最大 RV 的最大延迟就是这个定期同步的周期。因为上面的逻辑是需要等 watch cache 数据已经追上 etcd 数据后才开始返回，显然默认 10m 的数据延迟对于 List 请求是不可接受的。</p>
+<p>所以通过每 100ms 由客户端主动请求一次 ProgressNotify，让 etcd 返回最新的 RV，这样就可以把延迟缩小到 100ms 以内，比如 List 全量数据如果需要 20s 的话，总的最大耗时就是 20.1s（100ms + 20s）。相比开启 consistent read 之前，List 的总耗时会略有增加。</p>
+<h2 id="当前进展">当前进展</h2>
+<p>上面提到了满足 consistent read 条件时，才会启用这个能力。那么条件是什么呢？</p>
+<ol>
+<li>开启了 <code>ConsistentListFromCache</code> 的 feature gate</li>
+<li>Etcd 版本在 v3.4.31+ 或者 v3.5.13+</li>
+<li>List 请求的 ResourceVeresion 为空</li>
+</ol>
+<p>只有满足上述三个条件才会命中 consistent read 的逻辑。其中条件 3 最初的实现是针对 RV=&ldquo;0&rdquo; 和 RV=&quot;&quot; 的 List 请求都会生效，最近通过 <a href="https://github.com/kubernetes/kubernetes/pull/123676" target="_blank" rel="noopener noreffer">Fix enabling consistent list from watch cache also works for resourceVersion=0</a> 修改为当前的状态，经过和社区沟通，以及从代码，KEP 确认，发现设计之初的目标确实只是针对 RV=&quot;&quot; 生效。影响主要体现为目前使用 Informer 发起的 List 请求默认都是 RV=&ldquo;0&rdquo;，也就是说针对存量 informer 来说，consistent read 是无效的，除非开启 WatchList 的功能，改用 Watch 代替 List。</p>
+<h2 id="相关问题">相关问题</h2>
+<p>consistent read 依赖 Etcd 的版本，其实 Etcd 在很早就已经支持了 <code>WatchProgressRequest</code> 了，但是在使用过程中发现有 bug，直到上面提到的版本才修复，所以加了对 etcd 版本的判断逻辑。</p>
+<h2 id="问题一">问题一</h2>
+<p><a href="https://github.com/etcd-io/etcd/issues/15220" target="_blank" rel="noopener noreffer">Requested watcher progress notifications are not synchronised with stream</a></p>
+<p>表现为客户端实际还没有收到指定 RV 的数据，但已经收到了指定 RV 的 ProgressNotify event。原因在于存在两个途径传递数据，一个是 <code>sws.ctrlStream</code>，另一个是 <code>sws.watchStream</code>，后者用来发送携带有效荷载的 event，前者发送 ProgressNotify，所以导致可能在后者尚未返回给客户端时，如果此时前者有数据的话会被返回给客户端，给客户端一个错觉，自己已经拿到最新数据了，但实际上并没有。</p>
+<p>代码如下，删减了无关代码</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="kd">func</span> <span class="p">(</span><span class="nx">sws</span> <span class="o">*</span><span class="nx">serverWatchStream</span><span class="p">)</span> <span class="nf">recvLoop</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="p">{</span>
+		<span class="o">...</span>
+    
+		<span class="k">switch</span> <span class="nx">uv</span> <span class="o">:=</span> <span class="nx">req</span><span class="p">.</span><span class="nx">RequestUnion</span><span class="p">.(</span><span class="kd">type</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">case</span> <span class="o">*</span><span class="nx">pb</span><span class="p">.</span><span class="nx">WatchRequest_CreateRequest</span><span class="p">:</span>
+			<span class="o">...</span>
+      <span class="nx">id</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">sws</span><span class="p">.</span><span class="nx">watchStream</span><span class="p">.</span><span class="nf">Watch</span><span class="p">(</span><span class="nx">mvcc</span><span class="p">.</span><span class="nf">WatchID</span><span class="p">(</span><span class="nx">creq</span><span class="p">.</span><span class="nx">WatchId</span><span class="p">),</span> <span class="nx">creq</span><span class="p">.</span><span class="nx">Key</span><span class="p">,</span> <span class="nx">creq</span><span class="p">.</span><span class="nx">RangeEnd</span><span class="p">,</span> <span class="nx">rev</span><span class="p">,</span> <span class="nx">filters</span><span class="o">...</span><span class="p">)</span>
+      <span class="o">...</span>
+		<span class="k">case</span> <span class="o">*</span><span class="nx">pb</span><span class="p">.</span><span class="nx">WatchRequest_CancelRequest</span><span class="p">:</span>
+			<span class="o">...</span>
+		<span class="k">case</span> <span class="o">*</span><span class="nx">pb</span><span class="p">.</span><span class="nx">WatchRequest_ProgressRequest</span><span class="p">:</span>
+			<span class="k">if</span> <span class="nx">uv</span><span class="p">.</span><span class="nx">ProgressRequest</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">sws</span><span class="p">.</span><span class="nx">ctrlStream</span> <span class="o">&lt;-</span> <span class="o">&amp;</span><span class="nx">pb</span><span class="p">.</span><span class="nx">WatchResponse</span><span class="p">{</span>
+					<span class="nx">Header</span><span class="p">:</span>  <span class="nx">sws</span><span class="p">.</span><span class="nf">newResponseHeader</span><span class="p">(</span><span class="nx">sws</span><span class="p">.</span><span class="nx">watchStream</span><span class="p">.</span><span class="nf">Rev</span><span class="p">()),</span>
+					<span class="nx">WatchId</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="c1">// response is not associated with any WatchId and will be broadcast to all watch channels
+</span><span class="c1"></span>				<span class="p">}</span>
+			<span class="p">}</span>
+		<span class="k">default</span><span class="p">:</span>
+			<span class="c1">// we probably should not shutdown the entire stream when
+</span><span class="c1"></span>			<span class="c1">// receive an valid command.
+</span><span class="c1"></span>			<span class="c1">// so just do nothing instead.
+</span><span class="c1"></span>			<span class="k">continue</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">sws</span> <span class="o">*</span><span class="nx">serverWatchStream</span><span class="p">)</span> <span class="nf">sendLoop</span><span class="p">()</span> <span class="p">{</span>
+	<span class="o">...</span>
+
+	<span class="k">for</span> <span class="p">{</span>
+		<span class="k">select</span> <span class="p">{</span>
+		<span class="k">case</span> <span class="nx">wresp</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">sws</span><span class="p">.</span><span class="nx">watchStream</span><span class="p">.</span><span class="nf">Chan</span><span class="p">():</span>
+			<span class="o">...</span>
+			<span class="k">if</span> <span class="p">!</span><span class="nx">fragmented</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+				<span class="nx">serr</span> <span class="p">=</span> <span class="nx">sws</span><span class="p">.</span><span class="nx">gRPCStream</span><span class="p">.</span><span class="nf">Send</span><span class="p">(</span><span class="nx">wr</span><span class="p">)</span>
+			<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+				<span class="nx">serr</span> <span class="p">=</span> <span class="nf">sendFragments</span><span class="p">(</span><span class="nx">wr</span><span class="p">,</span> <span class="nx">sws</span><span class="p">.</span><span class="nx">maxRequestBytes</span><span class="p">,</span> <span class="nx">sws</span><span class="p">.</span><span class="nx">gRPCStream</span><span class="p">.</span><span class="nx">Send</span><span class="p">)</span>
+			<span class="p">}</span>
+			<span class="o">...</span>
+
+		<span class="k">case</span> <span class="nx">c</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">sws</span><span class="p">.</span><span class="nx">ctrlStream</span><span class="p">:</span>
+			<span class="o">...</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">sws</span><span class="p">.</span><span class="nx">gRPCStream</span><span class="p">.</span><span class="nf">Send</span><span class="p">(</span><span class="nx">c</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="o">...</span>
+			<span class="p">}</span>
+
+			<span class="o">...</span>
+		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">progressTicker</span><span class="p">.</span><span class="nx">C</span><span class="p">:</span>
+			<span class="nx">sws</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+			<span class="k">for</span> <span class="nx">id</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">sws</span><span class="p">.</span><span class="nx">progress</span> <span class="p">{</span>
+				<span class="k">if</span> <span class="nx">ok</span> <span class="p">{</span>
+					<span class="nx">sws</span><span class="p">.</span><span class="nx">watchStream</span><span class="p">.</span><span class="nf">RequestProgress</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span>
+				<span class="p">}</span>
+				<span class="nx">sws</span><span class="p">.</span><span class="nx">progress</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span> <span class="p">=</span> <span class="kc">true</span>
+			<span class="p">}</span>
+			<span class="nx">sws</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">sws</span><span class="p">.</span><span class="nx">closec</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>recvLoop 获取数据并写到对应的 chan 中，sendLoop 消费对应的 chan，最终把结果写到 response 中。因为同时往上述提到的两个 chan 中写数据，消费方就会出现顺序错乱的问题。</p>
+<p>存在两种发送 ProgressNotify 的方式，一种是 server 端定时触发，一种是客户端主动请求。此 bug 只有在客户端主动请求时才会出现。针对 server 端轮询的方式，本身就已经是通过 <code>sws.watchStream</code> 发送 ProgressNotify，所以并没有并发问题。这是一个很神奇的地方，可能是因为不是一个人实现的才导致出现两种实现方式。</p>
+<p>通过 <a href="https://github.com/etcd-io/etcd/pull/15237" target="_blank" rel="noopener noreffer">etcdserver: Send requested progress notifications through watchStream</a> 修复此 bug，核心逻辑是 ProgressNotify event 也通过 <code>sws.watchStream</code> 传递，但是需要等待有效荷载 event 同步完成后再发送。</p>
+<h2 id="问题二">问题二</h2>
+<p><a href="https://github.com/etcd-io/etcd/issues/17507" target="_blank" rel="noopener noreffer">Etcd not respond to progress notification on newly created watch RPC until there is a event in a watch</a></p>
+<p>此问题是修复问题一的 PR 引入的新问题，现象是对于新创建的 watch 请求，如果其携带了一个较老的 RV，这个 watch 会被认为是 unsynced。如果没有与之匹配的真实的 event 发生的话，即使这个 watch 在被认为是 synced 状态后，Etcd 也<strong>无法给所有 watcher 发送 ProgressNotify 事件</strong>，直到有新的事件到来后才可以正常开始发送 ProgressNotify。</p>
+<p>这是个非常有意思的问题，涉及到很多细节。</p>
+<ol>
+<li>有一个后台 goroutine <code>syncWatchers</code>，每 100ms 执行一次，尝试同步未同步完成的 watcher 并更新 synced 和 unsynced 维护的 watcher 列表；</li>
+<li>新创建的 watcher 会根据其 RV 判断是否为 synced 状态，如果 RV=0 或者 RV &gt; s.store.currentRev 则会被认为是 synced，否则认为是 unsynced；</li>
+<li>k8s reflector 与 etcd 交互时，存在发起 RV &lt; s.store.currentRev 的请求，这些请求对应的 watcher 在 etcd 看来是 unsynced 状态；</li>
+<li>问题一的 PR 实现逻辑
+<ol>
+<li>recvLoop 里面接收到客户端主动请求 <code>WatchRequest_ProgressRequest</code> 后判断变量 <code>deferredProgress</code> 如果为 false，则尝试调用 <code>sws.watchStream.RequestProgressAll</code>，此函数会先判断是否所有 watcher 都已经是 synced 状态，如果不是则直接返回 false，如果是则给所有 watcher 发送 ProgressNotify event。如果存在 unsynced 状态的 watcher，则设置 <code>deferredProgress</code> 为 true；</li>
+<li>sendLoop 里面在从 <code>sws.watchStream</code> 收到有效荷载事件并发送完成后会判断 <code>deferredProgress</code> 是否为 true，是的话会再次尝试调用 <code>sws.watchStream.RequestProgressAll</code> 试图在所有 watcher 都是 synced 状态时为其发送 ProgressNotify 事件，发送成功的话则设置 <code>deferredProgress</code> 为 false；</li>
+</ol>
+</li>
+</ol>
+<p>问题产生的原因和以上四个逻辑有关</p>
+<ol>
+<li>T1 时刻客户端发起了 watch 请求，RV &lt; s.store.currentRev，被认为是 unsynced 状态；</li>
+<li>T2 时刻客户端主动请求 ProgressNotify，etcd 收到请求后命中 4.1 的逻辑中，由于存在 unsynced 的 watcher，所以不会给任何 watcher 发送 ProgressNotify event，<code>deferredProgress</code> 最终被设置为 true；</li>
+<li>T3 时刻后台的 <code>syncWatchers</code> 发现刚才的 watcher 并没有需要发送的数据，会将其从 unsynced 列表中删除，添加到 synced 列表中；</li>
+<li>如果 T3 之后的某个时间有满足此 watcher 的有效荷载的 event 发生，从而走到 4.2 的逻辑里面，此时因为 <code>deferredProgress</code> 是 true，并且 watcher 已经变成了 synced 状态，所以 ProgressNotify 可以发送成功；但是<strong>如果在 T3 之后一直没有满足条件事件发生，也就无法走到 4.2 里面，即使此时客户端（kube-apiserver）过了 100ms（k8s 里面的设置） 又去重新主动请求 ProgressNotify 事件，etcd 收到请求后走到 4.1 的逻辑，但由于此时 <code>deferredProgress</code> 仍然是 true，所以仍然不会去请求 <code>sws.watchStream.RequestProgressAll</code>，最终就会导致在没有满足条件的 event 发生之前，所有的 watcher 都不会受到 ProgressNotify event 了，这是一个非常严重的问题，因为 consistent read 严重依赖于其返回的结果来判断是否 watch cache 已经追上了 etcd，如果一直没有响应，则 consistent read 的 List 请求将会一直等待直到超时；</strong></li>
+</ol>
+<p>此问题通过 <a href="https://github.com/etcd-io/etcd/pull/17557" target="_blank" rel="noopener noreffer">Fix progress notification for watch that doesn&rsquo;t get any events</a> 被解决。</p>
+<p>其实在 etcd 看来，如果没有 event 要同步，那么就不需要发送 ProgressNotify，这是社区给的回复，设计如此。但在 k8s 看来，这显然是不可接受的，最后 etcd 社区还是接受了这个修改，但是目前看相关的一些文档和注释并未同步更新。</p>
+<h1 id="总结">总结</h1>
+<p>无论是要开启 WatchList 还是 Consistent Read，Etcd 版本需要满足在 v3.4.31+ 或者 v3.5.13+。Consistent Read 目前尚未支持全部 List 请求，后续还会有进一步的实现。</p>
+<p>慎用 alpha 的功能，一直在变化。就像之前提到的 watch RV=0 的请求一样，从最初的从缓存获取数据并返回，改为穿透到 etcd，现在又被改了回来，加了个 feature gate，默认还是从缓存中返回。</p>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2024-06-05</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/k8s-consistentread/" data-title="k8s List 一致性读" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/k8s-consistentread/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/k8s-consistentread/" data-title="k8s List 一致性读" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/k8s-consistentread/" data-title="k8s List 一致性读"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/k8s-consistentread/" data-title="k8s List 一致性读"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/k8s-consistentread/" data-title="k8s List 一致性读" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/k8s-consistentread/" data-title="k8s List 一致性读" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/k8s-consistentread/" data-title="k8s List 一致性读"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/k8s-ns/" class="prev" rel="prev" title="f**king k8s - pod namespace"><i class="fas fa-angle-left fa-fw"></i>f**king k8s - pod namespace</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2024</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>
