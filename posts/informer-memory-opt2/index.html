@@ -5,32 +5,32 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noodp" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
-        <title>Informer 内存使用优化 - 1 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Informer 内存使用优化 - 1" />
+        <title>Informer 内存使用优化 - 2 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Informer 内存使用优化 - 2" />
 <meta property="og:description" content="概述 Informer 几乎在所有 k8s 组件中都会用到，即使是在 kube-apiserver 中。这里主要介绍 Informer 在 v1.27 ~ 1.32.0 之间做的一些内存使用相关的优化，可以降低使用 Informer 组件的内存使用量，减少 OOM" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://www.likakuli.com/posts/informer-memory-opt1/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2024-12-29T21:03:52+08:00" />
-<meta property="article:modified_time" content="2024-12-30T11:15:05+08:00" />
+<meta property="og:url" content="https://www.likakuli.com/posts/informer-memory-opt2/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-12-30T17:49:15+08:00" />
+<meta property="article:modified_time" content="2024-12-30T18:32:19+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
-<meta name="twitter:title" content="Informer 内存使用优化 - 1"/>
+<meta name="twitter:title" content="Informer 内存使用优化 - 2"/>
 <meta name="twitter:description" content="概述 Informer 几乎在所有 k8s 组件中都会用到，即使是在 kube-apiserver 中。这里主要介绍 Informer 在 v1.27 ~ 1.32.0 之间做的一些内存使用相关的优化，可以降低使用 Informer 组件的内存使用量，减少 OOM"/>
 <meta name="application-name" content="LoveIt">
 <meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/informer-memory-opt1/" /><link rel="prev" href="https://www.likakuli.com/posts/scheduler_perf/" /><link rel="next" href="https://www.likakuli.com/posts/informer-memory-opt2/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/informer-memory-opt2/" /><link rel="prev" href="https://www.likakuli.com/posts/informer-memory-opt1/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
     {
         "@context": "http://schema.org",
         "@type": "BlogPosting",
-        "headline": "Informer 内存使用优化 - 1",
+        "headline": "Informer 内存使用优化 - 2",
         "inLanguage": "zh-CN",
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": "https:\/\/www.likakuli.com\/posts\/informer-memory-opt1\/"
-        },"genre": "posts","keywords": "kubernetes","wordcount":  1184 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/informer-memory-opt1\/","datePublished": "2024-12-29T21:03:52+08:00","dateModified": "2024-12-30T11:15:05+08:00","publisher": {
+            "@id": "https:\/\/www.likakuli.com\/posts\/informer-memory-opt2\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  1095 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/informer-memory-opt2\/","datePublished": "2024-12-30T17:49:15+08:00","dateModified": "2024-12-30T18:32:19+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -109,10 +109,10 @@
                 <div class="container"><div class="toc" id="toc-auto">
             <h2 class="toc-title">目录</h2>
             <div class="toc-content always-active" id="toc-content-auto"></div>
-        </div><article class="page single"><h1 class="single-title animated flipInX">Informer 内存使用优化 - 1</h1><div class="post-meta">
+        </div><article class="page single"><h1 class="single-title animated flipInX">Informer 内存使用优化 - 2</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2024-12-29">2024-12-29</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1184 字&nbsp;
-                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 3 分钟&nbsp;<span id="/posts/informer-memory-opt1/" class="leancloud_visitors" data-flag-title="Informer 内存使用优化 - 1">
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2024-12-30">2024-12-30</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1095 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 3 分钟&nbsp;<span id="/posts/informer-memory-opt2/" class="leancloud_visitors" data-flag-title="Informer 内存使用优化 - 2">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
@@ -123,13 +123,17 @@
                 <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
   <ul>
     <li><a href="#概述">概述</a></li>
-    <li><a href="#settransform">SetTransform</a>
+    <li><a href="#原理">原理</a>
       <ul>
-        <li><a href="#managedfields">managedFields</a></li>
+        <li><a href="#list">List</a></li>
       </ul>
     </li>
-    <li><a href="#问题修复">问题修复</a></li>
-    <li><a href="#总结">总结</a></li>
+    <li><a href="#解决">解决</a>
+      <ul>
+        <li><a href="#gc">GC</a></li>
+        <li><a href="#规避">规避</a></li>
+      </ul>
+    </li>
   </ul>
 </nav></div>
             </div><div class="content" id="content"><h1 id="概述">概述</h1>
@@ -139,56 +143,66 @@
 <li>SetTransform 移除资源对象中不需要的属性；</li>
 <li>ExtractListWithAlloc 解决 golang slice GC 机制导致的内存无法回收问题；</li>
 </ol>
-<p>分两篇讲解，本篇主要介绍第一个优化，比较简单。</p>
-<h1 id="settransform">SetTransform</h1>
-<p>Informer 提供了 SetTransform 方法，其作用是在把接收到的资源对象存储到 Reflector 之前可以做一些自定义的操作，例如修改某个属性的值。也就是说虽然 Informer 从服务端拿到的是完整的对象，但存储在本地的可以是对象的一部分。这个方法在早一些的版本（例如 1.24）中就已经存在了，但是并没有显示使用。1.29 开始在 kube-scheduler 和 kube-controller-manager 中使用此方法来优化内存使用，1.31 开始在 kube-apiserver 中使用此方法优化内存使用。</p>
-<h2 id="managedfields">managedFields</h2>
-<p>所有资源对象上有个共同的属性 managedFields，其存在于 ObjectMeta 中，供 SSA（Server-Side-Apply） 功能使用。此属性和 Informer 业务逻辑关系不大，几乎在所有使用 Informer 的客户端代码中都可以忽略此属性。其会随着每次对资源对象的修改更新其内容，改的属性越多，其内容也越多，甚至通过 kubectl 查看某个资源对象的 yaml 时，有一半的行数是在展示此字段的内容，可读性也非常差，好在之前的版本中 kubectl 已经默认不在 get 的默认返回内容中显示此属性，如果想显示的话可以通过 <code>--show-managed-fields</code> 参数来控制，默认是 false 即不展示此属性。</p>
-<p>控制面适配：</p>
-<p>[Kube-scheduler] <a href="https://github.com/kubernetes/kubernetes/pull/119556" target="_blank" rel="noopener noreffer">Improve memory usage of kube-scheduler by dropping the .metadata.managedFields field that kube-scheduler doesn&rsquo;t require</a></p>
-<p>[Kube-controller-manager] <a href="https://github.com/kubernetes/kubernetes/pull/118455" target="_blank" rel="noopener noreffer">Improve memory usage of kube-controller-manager by dropping the .metadata.managedFields field that kube-controller-manager doesn&rsquo;t require</a></p>
-<p>[Kube-apiserver] <a href="https://github.com/kubernetes/kubernetes/pull/124667" target="_blank" rel="noopener noreffer">Improved memory usage of kube-apiserver by dropping.metadata.managedFields field that self-requested informers of kube-apiserver didn&rsquo;t need</a></p>
-<h1 id="问题修复">问题修复</h1>
-<p>SetTransform 实现逻辑也引入了一些 data race 的问题，触发频率不高，甚至在某些组件内并不会触发，具体与 Informer 的使用方式有关系。目前已经修复了已知的 data race 问题，但在某些极端场景，例如自定义 Reflector 时，如果不知道某些原理可能还是会写出存在问题的代码，好在日常开发几乎不会涉及到自定义 Reflector 的需求。</p>
-<p>涉及到的两个修复 Informer 中存在的 data race 问题的 PR 如下</p>
-<p>[Informer] <a href="https://github.com/kubernetes/kubernetes/pull/117870" target="_blank" rel="noopener noreffer">Fixed a race condition between Run() and SetTransform() and SetWatchErrorHandler() in shared informers</a></p>
-<p>[Informer] <a href="https://github.com/kubernetes/kubernetes/pull/124344" target="_blank" rel="noopener noreffer">Fix a race condition in transforming informer happening when objects were accessed during Resync operation</a></p>
-<p>都比较容易理解，就不再具体描述了。同时在客户端使用 SetTransform 时也做了适配，如下</p>
-<p>[Kube-scheduler &amp; Kube-controller-manager] <a href="https://github.com/kubernetes/kubernetes/pull/124352" target="_blank" rel="noopener noreffer">Fixed a race condition in kube-controller-manager and the scheduler, caused by a bug in the transforming informer during the Resync operation, by making the transforming function idempotent</a></p>
-<p>总结下就是客户端想对某个对象做一些属性修改时，需要判断下传进来的对象是否已经符合预期，符合的话就不需要再调用 SetTransform 来进行修改了。例如针对去掉 managedFields 属性的修改，正确的代码如下</p>
+<p><a href="https://mp.weixin.qq.com/s/aIuERflILXhNJ2w7REe2Ug" target="_blank" rel="noopener noreffer">上一篇</a>中介绍了第一个优化，本篇介绍第二个优化。</p>
+<h1 id="原理">原理</h1>
+<p>问题的原因和 Go GC 机制有关，slice 中只要任意元素还在被其他对象引用，slice 就无法被 GC，即使其他元素已经不再被任何对象引用了。详见 <a href="https://go.dev/blog/slices-intro#a-possible-gotcha" target="_blank" rel="noopener noreffer">https://go.dev/blog/slices-intro#a-possible-gotcha</a>。</p>
+<h2 id="list">List</h2>
+<p>以 PodList 为例，Reflector 在调用 List 请求拿到 PodList 后遍历 Items 存入 store 中。</p>
+<p>PodList 数据结构：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="k">if</span> <span class="nx">accessor</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">meta</span><span class="p">.</span><span class="nf">Accessor</span><span class="p">(</span><span class="nx">obj</span><span class="p">);</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
-			<span class="k">if</span> <span class="nx">accessor</span><span class="p">.</span><span class="nf">GetManagedFields</span><span class="p">()</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-				<span class="nx">accessor</span><span class="p">.</span><span class="nf">SetManagedFields</span><span class="p">(</span><span class="kc">nil</span><span class="p">)</span>
-			<span class="p">}</span>
-		<span class="p">}</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>或者</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="k">if</span> <span class="nx">accessor</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">meta</span><span class="p">.</span><span class="nf">Accessor</span><span class="p">(</span><span class="nx">obj</span><span class="p">);</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">accessor</span><span class="p">.</span><span class="nf">GetManagedFields</span><span class="p">()</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-	 <span class="nx">accessor</span><span class="p">.</span><span class="nf">SetManagedFields</span><span class="p">(</span><span class="kc">nil</span><span class="p">)</span>
+<pre tabindex="0" class="chroma"><code class="language-golang" data-lang="golang"><span class="c1">// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+</span><span class="c1">// +k8s:prerelease-lifecycle-gen:introduced=1.0
+</span><span class="c1"></span>
+<span class="c1">// PodList is a list of Pods.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">PodList</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">metav1</span><span class="p">.</span><span class="nx">TypeMeta</span> <span class="s">`json:&#34;,inline&#34;`</span>
+	<span class="c1">// Standard list metadata.
+</span><span class="c1"></span>	<span class="c1">// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+</span><span class="c1"></span>	<span class="c1">// +optional
+</span><span class="c1"></span>	<span class="nx">metav1</span><span class="p">.</span><span class="nx">ListMeta</span> <span class="s">`json:&#34;metadata,omitempty&#34; protobuf:&#34;bytes,1,opt,name=metadata&#34;`</span>
+
+	<span class="c1">// List of pods.
+</span><span class="c1"></span>	<span class="c1">// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md
+</span><span class="c1"></span>	<span class="nx">Items</span> <span class="p">[]</span><span class="nx">Pod</span> <span class="s">`json:&#34;items&#34; protobuf:&#34;bytes,2,rep,name=items&#34;`</span>
 <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
-</div><p>变相提高了对开发人员的要求，在使用此方法时需要清楚的知道其背后的逻辑和潜在的风险，以及如何写出没问题的代码。</p>
-<p>除 k8s 项目外，如 controller-runtime 也已经做了适配，支持这些功能，也修复了上述问题。</p>
-<h1 id="总结">总结</h1>
-<p>这个优化的核心还是减少不必要属性的存储，对于存在的 data race 的问题，除了通过锁实现外，也可以通过减少不必要的方法调用来规避问题。如果还在使用老的 client-go 版本同时又想在不升级 k8s 集群的前提下使用此优化，建议把上述 PR 都 pick 回来。</p>
+</div><p>store 可以简化为 map[string] *Pod  的结构。</p>
+<p>Reflector 在获取到 PodList 后会遍历 Items，并取每个 pod 的地址，最后放到 store 中，也就是说 store 里面包含了所有 Items 的引用。这个时候问题就来了，比如 Informer 初始化时有 10000 个 Pod，运行过程中删除了 9999 个，只剩一个 Pod，但这 9999 个 Pod 对应的内存无法被 GC 回收，原因在开头已经说了。</p>
+<h1 id="解决">解决</h1>
+<p>有两种解决方式，一种是解决 slice 无法被 GC 的问题，另一种是直接规避问题。</p>
+<h2 id="gc">GC</h2>
+<p>让 store 中存储的对象不再引用 Items 就可以解决此问题。有两种方式：</p>
+<ol>
+<li>对 Items 中的每个对象执行 deep copy 后存入 store；</li>
+<li>对 Items 中的每个对象执行 shadow copy 后存在 store；</li>
+</ol>
+<p>在内存使用来看，如果采用 deep copy，会导致在处理数据时存在内存 double 的风险，而且执行 deep copy 耗时也相对较长。最终采用的是 shadow copy 的方案，即对所有 Items 对象做浅拷贝后再取地址，保存到 store 中。浅拷贝需要申请的内存量相比深拷贝要少很多，基本是一些基础类型的属性，或者 slice 结构本身，而无需复制 Data。</p>
+<p>无论哪种方式都不可避免的需要申请内存，一定程度上导致内存使用量和执行耗时的提升，这是不可避免的，幸运的是在解决此问题的过程中发现了 Reflector 代码实现中使用 Reflect 时的一些可以优化的地方，而这些优化恰好可以抹平浅拷贝带来的影响。</p>
+<p>涉及到的所有的改动在一个 PR 中完成，分多个 commit，非常方便阅读。具体详见 <a href="https://github.com/kubernetes/kubernetes/pull/113362" target="_blank" rel="noopener noreffer">Faster ExtractList. Add ExtractListWithAlloc variant</a>。</p>
+<p>为了方便大家理解，这里给出一段问题复现和解决的示例程序，参考 <a href="https://github.com/likakuli/SliceGC" target="_blank" rel="noopener noreffer">SliceGC</a>。</p>
+<p>此方式需要升级所有使用了 Informer 的程序。</p>
+<h2 id="规避">规避</h2>
+<p>由于是在 List 时引入的问题，如果不执行 List 也就没问题了。恰好新版本中支持了 client-go 通过 feature-gate 来控制是否开启 WatchList，直到写本文时最新的 v1.32.0 版本，此特性开关仍然是默认关闭状态。</p>
+<p>此方式除升级所有使用了 Informer 的程序外，还依赖于升级 k8s 集群，同时依赖于升级 ETCD 集群，因为 WatchList 对 ETCD 功能有依赖。</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -211,7 +225,7 @@
         <div class="post-info-line">
             <div class="post-info-md"></div>
             <div class="post-info-share">
-                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/informer-memory-opt1/" data-title="Informer 内存使用优化 - 1" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/informer-memory-opt1/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/informer-memory-opt1/" data-title="Informer 内存使用优化 - 1" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/informer-memory-opt1/" data-title="Informer 内存使用优化 - 1"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/informer-memory-opt1/" data-title="Informer 内存使用优化 - 1"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/informer-memory-opt1/" data-title="Informer 内存使用优化 - 1" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/informer-memory-opt1/" data-title="Informer 内存使用优化 - 1" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/informer-memory-opt1/" data-title="Informer 内存使用优化 - 1"><i class="fab fa-evernote fa-fw"></i></a></span>
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/informer-memory-opt2/" data-title="Informer 内存使用优化 - 2" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/informer-memory-opt2/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/informer-memory-opt2/" data-title="Informer 内存使用优化 - 2" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/informer-memory-opt2/" data-title="Informer 内存使用优化 - 2"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/informer-memory-opt2/" data-title="Informer 内存使用优化 - 2"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/informer-memory-opt2/" data-title="Informer 内存使用优化 - 2" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/informer-memory-opt2/" data-title="Informer 内存使用优化 - 2" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/informer-memory-opt2/" data-title="Informer 内存使用优化 - 2"><i class="fab fa-evernote fa-fw"></i></a></span>
             </div>
         </div>
     </div>
@@ -223,8 +237,7 @@
         </section>
     </div>
 
-    <div class="post-nav"><a href="/posts/scheduler_perf/" class="prev" rel="prev" title="调度器性能调优系列"><i class="fas fa-angle-left fa-fw"></i>调度器性能调优系列</a>
-            <a href="/posts/informer-memory-opt2/" class="next" rel="next" title="Informer 内存使用优化 - 2">Informer 内存使用优化 - 2<i class="fas fa-angle-right fa-fw"></i></a></div>
+    <div class="post-nav"><a href="/posts/informer-memory-opt1/" class="prev" rel="prev" title="Informer 内存使用优化 - 1"><i class="fas fa-angle-left fa-fw"></i>Informer 内存使用优化 - 1</a></div>
 </div>
 <div id="comments"><div id="valine" class="comment"></div><noscript>
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
