@@ -17,7 +17,7 @@
 
 # Framework
 
-![scheduling-framework-extensions (1)](scheduling-framework-extensions (1).png)
+![scheduling-framework-extensions](scheduling-framework-extensions.png)
 
 这个图应该都不陌生，想当于定义好了把大象放冰箱需要的步骤，算是 kube-scheduler 的基础吧。这个过程中会涉及到两个关键结构：Cache 与 Snapshot。
 
