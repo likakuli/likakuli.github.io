@@ -5,32 +5,32 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noodp" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
-        <title>informer relist - feature or bug? - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="informer relist - feature or bug?" />
-<meta property="og:description" content="由来 Informer 作为 client-go 的核心，网上有众多的源码分析，原理解析相关文章，可以教给大家如何&quot;正确&quot;的使用 Informer。当然其前提是" />
+        <title>labelselector 2则性能优化 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="labelselector 2则性能优化" />
+<meta property="og:description" content="背景 近期在定位 InterPodAffinity 插件的性能问题，部分问题已经在 1.33 中修复，比如 Improve Goroutines metric calls in parallelizer.Until，除此之外还发现一些其他尚未修复的" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://www.likakuli.com/posts/informer-relist/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2025-01-27T09:43:51+08:00" />
-<meta property="article:modified_time" content="2025-01-27T11:58:34+08:00" />
+<meta property="og:url" content="https://www.likakuli.com/posts/labelselector/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2025-06-16T22:26:25+08:00" />
+<meta property="article:modified_time" content="2025-06-16T23:02:58+08:00" />
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
 
-<meta name="twitter:title" content="informer relist - feature or bug?"/>
-<meta name="twitter:description" content="由来 Informer 作为 client-go 的核心，网上有众多的源码分析，原理解析相关文章，可以教给大家如何&quot;正确&quot;的使用 Informer。当然其前提是"/>
+<meta name="twitter:title" content="labelselector 2则性能优化"/>
+<meta name="twitter:description" content="背景 近期在定位 InterPodAffinity 插件的性能问题，部分问题已经在 1.33 中修复，比如 Improve Goroutines metric calls in parallelizer.Until，除此之外还发现一些其他尚未修复的"/>
 <meta name="application-name" content="LoveIt">
 <meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/informer-relist/" /><link rel="prev" href="https://www.likakuli.com/posts/informer-memory-opt2/" /><link rel="next" href="https://www.likakuli.com/posts/labelselector/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/labelselector/" /><link rel="prev" href="https://www.likakuli.com/posts/informer-relist/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
     {
         "@context": "http://schema.org",
         "@type": "BlogPosting",
-        "headline": "informer relist - feature or bug?",
+        "headline": "labelselector 2则性能优化",
         "inLanguage": "zh-CN",
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": "https:\/\/www.likakuli.com\/posts\/informer-relist\/"
-        },"genre": "posts","keywords": "kubernetes","wordcount":  1319 ,
-        "url": "https:\/\/www.likakuli.com\/posts\/informer-relist\/","datePublished": "2025-01-27T09:43:51+08:00","dateModified": "2025-01-27T11:58:34+08:00","publisher": {
+            "@id": "https:\/\/www.likakuli.com\/posts\/labelselector\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  1207 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/labelselector\/","datePublished": "2025-06-16T22:26:25+08:00","dateModified": "2025-06-16T23:02:58+08:00","publisher": {
             "@type": "Organization",
             "name": "kaku","logo": {
                     "@type": "ImageObject",
@@ -109,10 +109,10 @@
                 <div class="container"><div class="toc" id="toc-auto">
             <h2 class="toc-title">目录</h2>
             <div class="toc-content always-active" id="toc-content-auto"></div>
-        </div><article class="page single"><h1 class="single-title animated flipInX">informer relist - feature or bug?</h1><div class="post-meta">
-            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2025-01-27">2025-01-27</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1319 字&nbsp;
-                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 3 分钟&nbsp;<span id="/posts/informer-relist/" class="leancloud_visitors" data-flag-title="informer relist - feature or bug?">
+        </div><article class="page single"><h1 class="single-title animated flipInX">labelselector 2则性能优化</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/"><i class="far fa-folder fa-fw"></i>性能优化</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2025-06-16">2025-06-16</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1207 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 3 分钟&nbsp;<span id="/posts/labelselector/" class="leancloud_visitors" data-flag-title="labelselector 2则性能优化">
                         <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
                     </span>&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
@@ -122,48 +122,46 @@
                 </div>
                 <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
   <ul>
-    <li><a href="#由来">由来</a></li>
-    <li><a href="#万恶之源">万恶之源</a>
-      <ul>
-        <li><a href="#relist">Relist</a>
-          <ul>
-            <li><a href="#too-large-resource-version">Too large resource version</a></li>
-            <li><a href="#too-old-resource-version">Too old resource version</a></li>
-            <li><a href="#internalerror">InternalError</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li><a href="#现存问题">现存问题</a>
-      <ul>
-        <li><a href="#client-side-timeout">client-side timeout</a></li>
-      </ul>
-    </li>
+    <li><a href="#背景">背景</a></li>
+    <li><a href="#selector">Selector</a></li>
+    <li><a href="#list">List</a></li>
     <li><a href="#总结">总结</a></li>
   </ul>
 </nav></div>
-            </div><div class="content" id="content"><h1 id="由来">由来</h1>
-<p>Informer 作为 client-go 的核心，网上有众多的源码分析，原理解析相关文章，可以教给大家如何&quot;正确&quot;的使用 Informer。当然其前提是在 Informer 本身逻辑没问题的前提下，本篇继续为大家指出 Informer 里面长期存在甚至现在仍然存在的问题。之前已经写过一篇来介绍，参考<a href="https://mp.weixin.qq.com/s/ciEzUs5qb9WZYMl6QC8sZA" target="_blank" rel="noopener noreffer">你真的搞懂 informer 了吗</a></p>
-<p>通过这些问题可以检查下自己是否真的对工作原理理解了，而不仅仅是停留在使用的阶段，也希望引起大家注意，遇到相关问题时可以及时定位原因，解决问题，最好是可以在最初就避免问题。</p>
-<p>下文假设大家已经看过 Informer 源码，或者看过相关源码解析的文章，因此在本文中不会过多涉及代码。</p>
-<h1 id="万恶之源">万恶之源</h1>
-<p>kube-apiserver oom 的一个常见触发原因就是 informer 在 <code>ListWatch</code> 模式下触发大规模 relist 导致的，尤其是在大规模集群场景下。本篇主要介绍触发 relist 的一些原因以及其中存在的问题，<code>WatchList</code> 模式不在讨论范围内。</p>
-<h2 id="relist">Relist</h2>
-<p>首先需要明确一点，判断是否需要 relist 是客户端的行为，客户端根据执行过程中返回的报错来判断是否需要 relist。 一些典型的不需要 reslist 的场景，如<strong>临时的网络连接问题</strong>，<strong>服务端限流</strong>等。笔者曾经遇到一个 <a href="https://mp.weixin.qq.com/s/bO5922AIU5f-dlc3NxnbWQ" target="_blank" rel="noopener noreffer">kube-apiserver 重启导致的 relist 问题</a>，根因是 k8s 未能正确识别临时的网络连接问题，这个问题也是笔者给 k8s 提的第一个 PR。</p>
-<h3 id="too-large-resource-version">Too large resource version</h3>
-<p>服务端返回的报错，在传入的 RV 比 ETCD 中最大 RV 还要大，或者比 kube-apiserver Cacher 中的最大 RV 大，且 Cacher 在等待 3s 后其最新的 RV 仍然比传入的 RV 小的时候会返回此报错。后者需要开启 <code>ConsistentRead</code> 或者在 <code>WatchList</code> 模式下才会出现。前者一般不容易出现，如果遇到 Etcd Restore 时可能会出现。</p>
-<h3 id="too-old-resource-version">Too old resource version</h3>
-<p>服务端返回的报错，在传入的 RV 比 Cacher 中最小的 RV 还要小的时候返回此报错。在老版本中出现的频率较高，新版本中开启 watchcache 动态窗口大小后出现频率较低。另外在未开启 <code>ConsistentRead</code> 时，从一个 kube-apiserver 断开连接重新与另一个 kube-apiserver 建立连接时也可能会遇到此问题。</p>
-<p>注意<strong>以上两种报错触发的 relist 操作会直接穿透到 ETCD</strong>。</p>
-<h3 id="internalerror">InternalError</h3>
-<p>客户端长时间连接不上服务端，或者在处理服务端返回数据时报错等。但有一个例外，为了避免 ETCD 选主失败导致 kube-apiserver 重新去 ETCD list 全量数据，特意增加了对此异常的处理，参考 <a href="https://github.com/kubernetes/kubernetes/pull/111387" target="_blank" rel="noopener noreffer">Add option to retry internal api error in reflector</a>，此处理目前仅仅在 kube-apiserver 访问 ETCD 时生效，在 informer 中不生效，也就是说 <strong>informer 中的 reflector 遇到任何 InternalError 都会触发 relist。</strong></p>
-<h1 id="现存问题">现存问题</h1>
-<h2 id="client-side-timeout">client-side timeout</h2>
-<p>当客户端主动关闭，或者客户端超时时，应该直接重新 watch 而不是 relist。但由于当前实现的 bug，在客户端超时时也可能会触发 relist 操作，已经提了 <a href="https://github.com/kubernetes/kubernetes/pull/129792" target="_blank" rel="noopener noreffer">PR</a> 来修复此问题，问题产生的原因参考此 <a href="https://github.com/kubernetes/kubernetes/issues/129683#issuecomment-2609354913" target="_blank" rel="noopener noreffer">issue</a>。</p>
-<p>修复很简单，但是发现此问题的过程很坎坷。这里涉及到 watch 的实现，默认是利用 HTTP Chunked Transfer Encoding 实现的。针对 k8s 内置的资源类型，默认是通过 <code>lengthDelimitedFrameReader</code> 对 watch response body 中的 protobuf 进行 read 和 decode 来生成具体的 event。<code>lengthDelimitedFrameReader</code> 不断的从 response body 中读取内容，解码，重复这个过程，设计上如果遇到 client-side timeout 时会返回，但不会往最终的 event chan 中发送数据，但实现中有 bug 导致遇到 client-side timeout 后依然会往 event chan 写数据，从而走到上面 <code>InternalError</code> 的处理逻辑导致 relist 的出现。为什么会出现 client-side timeout 呢，因为 informer 会为 watch 添加默认超时时间，默认为 5m ~ 10m，超时后重新基于 last resource version 继续 watch。</p>
+            </div><div class="content" id="content"><h1 id="背景">背景</h1>
+<p>近期在定位 InterPodAffinity 插件的性能问题，部分问题已经在 1.33 中修复，比如 <a href="https://github.com/kubernetes/kubernetes/pull/128999" target="_blank" rel="noopener noreffer">Improve Goroutines metric calls in parallelizer.Until</a>，除此之外还发现一些其他尚未修复的问题，并提了对应修复的 PR，这里做个分享。</p>
+<h1 id="selector">Selector</h1>
+<p>Selector 是 k8s 里面非常常见的数据结构，经常用来根据 label 筛选对象。以以下 selector 为例：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="nt">selector</span><span class="p">:</span><span class="w">
+</span><span class="w">  </span><span class="nt">matchExpressions</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span>- {<span class="w"> </span><span class="nt">key: tier, operator: In, values</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="l">cache, rds] }</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>其筛选逻辑是在 labels 中查找 tier 是否存在，不存在则返回 false，存在的话获取对应的 value，然后判断 value 是否在 [cache, rds] 中。乍一看这么实现也没有问题，但实际上当前的实现访问了两遍 map，第一遍访问只判断 key 是否存在，第二遍访问只返回 value。在 go 里面，完全可以只访问一遍 map 就可以实现上述效果，即经典的 map 访问表达式：val, ok := map[key] 的形式，既能获取知否存在，也能拿到其 value。</p>
+<p>访问两遍和访问一遍的在性能上会有很大的差距吗？map 不是 O(1) 的时间复杂度吗？如果只是调用一次 Match 方法，那么确实可以忽略这个差距，如果要调用很多遍的话，这个差距就是不可忽视的，尤其是在 InterPodAffinity 这种需要根据 Topology 进行大量计算的场景下，在集群规模比较大，且集群中存在大量携带了 Preferred PodAffinity 的 Pod 时，这个方法在一次调度周期内可能被执行百万次。如果用 pprof 看的话，可以看到有个热点在 mapaccess2_faststr 函数中，此函数是 golang runtime 内置的函数，在无法修改其实现的前提下，降低对其的调用是一个缓解期性能问题的方法。已经通 PR <a href="https://github.com/kubernetes/kubernetes/pull/132232" target="_blank" rel="noopener noreffer">optimize label selector match performance</a> 修复，合入 master。</p>
+<h1 id="list">List</h1>
+<p>List 时经常会传递 selector 对象进去用来筛选对象，我们可能会常用到 labels.Everything() 对象用来返回所有的结果。labels 内部还内置了另一个 labels.Nothing() 的对象，与前者恰好相反，表示不需要返回任何对象。但是，List 最内层的实现并没有判断传入的 selector 是否为 labels.Nothing()，也就是说如果你在写代码时通过 List 并传递 labels.Nothing() 的话，其最终还是会遍历一遍所有对象，只是并不会返回任何内容，会有这么一个无效遍历的过程。
+你可能会说，我为什么要传递 labels.Nothing() 给 List 方法呢，这不是纯有毛病吗？是的，在你明确知道要传递给 List 什么时，你是不会传递 labels.Nothing() 的，但问题就在于传递的是个 Selector 的 interface，而最终传递的对象往往是通过其他函数获得的，类似</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">selector, _ := metav1.LabelSelectorAsSelector(labelSelector)
+objs := objLister.List(selector)
+</code></pre></td></tr></table>
+</div>
+</div><p>类似这种写法，有谁会注意这里的 selector 到底是什么呢，可以搜一下 k8s 代码，很多地方有这个写法，而且传入的 labelSelector 经常就是某个结构里面定义的 *labels.Selector 的属性，默认就是 nil，而上面的函数在 labelSelector 是 nil 时返回的 selector 就是 labels.Nothing()，然后 List 的时候就会来一遍无效遍历，看起来好像很忙，但是是没有任何产出的瞎忙。这个问题也已经提了 PR <a href="https://github.com/kubernetes/kubernetes/pull/132255/" target="_blank" rel="noopener noreffer">optimize ListAll and ListAllByNamespace to return directly when nothing to select</a>，当前还在讨论是通过在 Selector 中添加新的方法，还是在此文件中添加 helper 函数来判断传入的 labelSelector 是否是 labels.Nothing()，但无论如何，这个问题是需要解决的。</p>
 <h1 id="总结">总结</h1>
-<p>informer 中的 reflector 遇到任何 InternalError 都会触发 relist，这一点值得商榷。</p>
-<p>一些设计合理的逻辑也可能会在实现中存在 bug 导致预期外的行为，有时候光看注释或者文档解决不了问题，还是得看代码实现。</p>
+<p>其实都是一些平时不会注意的地方，通过 pprof 或者仔细看代码的话，还是可以轻松的发现的，修复方式也比较简单。此外也发现一些其他的会影响 InterPodAffinity 性能的小问题，就不在这里说了，如果再提 PR 的话，会单独再开一篇来描述。</p>
 </div><div class="post-reward">
   <input type="checkbox" name="reward" id="reward" hidden />
   <label class="reward-button" for="reward">赞赏支持</label>
@@ -179,14 +177,14 @@
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2025-01-27</span>
+                <span>更新于 2025-06-16</span>
             </div>
             <div class="post-info-license"></div>
         </div>
         <div class="post-info-line">
             <div class="post-info-md"></div>
             <div class="post-info-share">
-                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/informer-relist/" data-title="informer relist - feature or bug?" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/informer-relist/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/informer-relist/" data-title="informer relist - feature or bug?" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/informer-relist/" data-title="informer relist - feature or bug?"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/informer-relist/" data-title="informer relist - feature or bug?"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/informer-relist/" data-title="informer relist - feature or bug?" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/informer-relist/" data-title="informer relist - feature or bug?" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/informer-relist/" data-title="informer relist - feature or bug?"><i class="fab fa-evernote fa-fw"></i></a></span>
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/labelselector/" data-title="labelselector 2则性能优化" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/labelselector/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/labelselector/" data-title="labelselector 2则性能优化" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/labelselector/" data-title="labelselector 2则性能优化"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/labelselector/" data-title="labelselector 2则性能优化"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/labelselector/" data-title="labelselector 2则性能优化" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/labelselector/" data-title="labelselector 2则性能优化" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/labelselector/" data-title="labelselector 2则性能优化"><i class="fab fa-evernote fa-fw"></i></a></span>
             </div>
         </div>
     </div>
@@ -198,8 +196,7 @@
         </section>
     </div>
 
-    <div class="post-nav"><a href="/posts/informer-memory-opt2/" class="prev" rel="prev" title="Informer 内存使用优化 - 2"><i class="fas fa-angle-left fa-fw"></i>Informer 内存使用优化 - 2</a>
-            <a href="/posts/labelselector/" class="next" rel="next" title="labelselector 2则性能优化">labelselector 2则性能优化<i class="fas fa-angle-right fa-fw"></i></a></div>
+    <div class="post-nav"><a href="/posts/informer-relist/" class="prev" rel="prev" title="informer relist - feature or bug?"><i class="fas fa-angle-left fa-fw"></i>informer relist - feature or bug?</a></div>
 </div>
 <div id="comments"><div id="valine" class="comment"></div><noscript>
                 Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.

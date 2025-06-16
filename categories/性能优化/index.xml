@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</link>
         <description>性能优化 - 分类 - kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Tue, 08 Jun 2021 20:24:22 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Mon, 16 Jun 2025 22:26:25 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="self" type="application/rss+xml" /><item>
+    <title>labelselector 2则性能优化</title>
+    <link>https://www.likakuli.com/posts/labelselector/</link>
+    <pubDate>Mon, 16 Jun 2025 22:26:25 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/labelselector/</guid>
+    <description><![CDATA[背景 近期在定位 InterPodAffinity 插件的性能问题，部分问题已经在 1.33 中修复，比如 Improve Goroutines metric calls in parallelizer.Until，除此之外还发现一些其他尚未修复的]]></description>
+</item><item>
     <title>Kube-scheduler InterPodAffinity性能优化史</title>
     <link>https://www.likakuli.com/posts/kubernetes-interpodaffinity/</link>
     <pubDate>Tue, 08 Jun 2021 20:24:22 &#43;0800</pubDate>
