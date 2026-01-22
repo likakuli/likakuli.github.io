@@ -35,7 +35,7 @@
 
 对于问题四，为什么删除了 Podg1 后，Podb 的 cpuset 还是只有 6c？此时去看 cpu_state_manager 文件内容的话，可以看到 defaultCPU 只有 6c，而且 Podg1 的信息仍然还存在。既然删了之后没释放，可用的只有 6c 了，那继续问题五的步骤，岂不是 cpu 会被用完，导致没有剩余的 cpu 给 Podb 用了？但结果 Podb 仍然还有 6c 可用，此时再去看 cpu_manager_state 文件内容，defaultCPU 仍然是 6c，但已经分配的内容变了，换了个 PodID，但实际也是只有一个 Pod 分配了 6c，而不是两个。是不是很神奇，看起来泄露了一个，等新的 Podg2 调度上去之后，之前未删除的记录反而消失了。
 
-之前曾经整理过一篇有关绑核的 bug，但那是针对较低版本的 k8s 的，可以看这篇：https://www.likakuli.com/posts/kubernetes-cpu-manager/。
+之前曾经整理过一篇有关绑核的 bug，但那是针对较低版本的 k8s 的，可以看这篇：https://www.likakuli.net/posts/kubernetes-cpu-manager/。
 
 > ### ISSUE
 >

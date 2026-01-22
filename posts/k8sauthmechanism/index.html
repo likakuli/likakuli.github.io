@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转 - kaku&#39;s blog</title><meta name="Description" content="一亩三分自留地"><meta property="og:title" content="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转" />
+<meta property="og:description" content="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转 你是否好奇过：为什么 Pod 内的应用只需要 Token 就能访问 API Server？为什么 Kubelet 使用客户端证书而不是 Token" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.likakuli.com/posts/k8sauthmechanism/" /><meta property="og:image" content="https://www.likakuli.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2026-01-22T21:13:24+08:00" />
+<meta property="article:modified_time" content="2026-01-22T22:10:30+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://www.likakuli.com/logo.png"/>
+
+<meta name="twitter:title" content="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转"/>
+<meta name="twitter:description" content="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转 你是否好奇过：为什么 Pod 内的应用只需要 Token 就能访问 API Server？为什么 Kubelet 使用客户端证书而不是 Token"/>
+<meta name="application-name" content="LoveIt">
+<meta name="apple-mobile-web-app-title" content="LoveIt"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://www.likakuli.com/posts/k8sauthmechanism/" /><link rel="prev" href="https://www.likakuli.com/posts/labelselector/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/www.likakuli.com\/posts\/k8sauthmechanism\/"
+        },"genre": "posts","keywords": "kubernetes","wordcount":  4495 ,
+        "url": "https:\/\/www.likakuli.com\/posts\/k8sauthmechanism\/","datePublished": "2026-01-22T21:13:24+08:00","dateModified": "2026-01-22T22:10:30+08:00","publisher": {
+            "@type": "Organization",
+            "name": "kaku","logo": {
+                    "@type": "ImageObject",
+                    "url": "https:\/\/www.likakuli.com\/images\/avatar.png",
+                    "width":  528 ,
+                    "height":  560 
+                }},"author": {
+                "@type": "Person",
+                "name": "Kaku Li"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="/projects/"> 项目 </a><a class="menu-item" href="/friends/"> 友链 </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="kaku&#39;s blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>kaku&#39;s blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="/projects/" title="">项目</a><a class="menu-item" href="/friends/" title="">友链</a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2026-01-22">2026-01-22</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 4495 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 9 分钟&nbsp;<span id="/posts/k8sauthmechanism/" class="leancloud_visitors" data-flag-title="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转">
+                        <i class="far fa-eye fa-fw"></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
+                    </span>&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#kubernetes-认证机制深度解析从-token-到证书的自动轮转">Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转</a>
+      <ul>
+        <li><a href="#引言">引言</a></li>
+        <li><a href="#一两种认证方式概览">一、两种认证方式概览</a>
+          <ul>
+            <li><a href="#11-bearer-token-认证">1.1 Bearer Token 认证</a></li>
+            <li><a href="#12-tls-客户端证书认证">1.2 TLS 客户端证书认证</a></li>
+          </ul>
+        </li>
+        <li><a href="#二token-的完整生命周期">二、Token 的完整生命周期</a>
+          <ul>
+            <li><a href="#21-token-的类型">2.1 Token 的类型</a>
+              <ul>
+                <li><a href="#legacy-token传统-token">Legacy Token（传统 Token）</a></li>
+                <li><a href="#projected-token投影-token">Projected Token（投影 Token）</a></li>
+              </ul>
+            </li>
+            <li><a href="#22-token-的挂载机制">2.2 Token 的挂载机制</a></li>
+            <li><a href="#23-token-的自动更新机制">2.3 Token 的自动更新机制</a></li>
+            <li><a href="#24-客户端如何处理-token-更新">2.4 客户端如何处理 Token 更新</a>
+              <ul>
+                <li><a href="#文件更新机制">文件更新机制</a></li>
+                <li><a href="#client-go-的-token-读取">client-go 的 Token 读取</a></li>
+                <li><a href="#informer-的处理">Informer 的处理</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li><a href="#三客户端证书的完整生命周期">三、客户端证书的完整生命周期</a>
+          <ul>
+            <li><a href="#31-证书轮转的触发">3.1 证书轮转的触发</a></li>
+            <li><a href="#32-getclientcertificate-机制">3.2 GetClientCertificate 机制</a></li>
+            <li><a href="#33-证书更新后的连接处理">3.3 证书更新后的连接处理</a></li>
+            <li><a href="#34-csr-流程">3.4 CSR 流程</a></li>
+          </ul>
+        </li>
+        <li><a href="#四两种机制的深度对比">四、两种机制的深度对比</a>
+          <ul>
+            <li><a href="#41-本质区别">4.1 本质区别</a></li>
+            <li><a href="#42-实现机制对比">4.2 实现机制对比</a>
+              <ul>
+                <li><a href="#token-轮转实现">Token 轮转实现</a></li>
+                <li><a href="#客户端证书轮转实现">客户端证书轮转实现</a></li>
+              </ul>
+            </li>
+            <li><a href="#43-为什么需要不同的机制">4.3 为什么需要不同的机制？</a>
+              <ul>
+                <li><a href="#tls-握手的限制">TLS 握手的限制</a></li>
+                <li><a href="#http-header-的灵活性">HTTP Header 的灵活性</a></li>
+              </ul>
+            </li>
+            <li><a href="#44-性能影响对比">4.4 性能影响对比</a></li>
+          </ul>
+        </li>
+        <li><a href="#五inclusterconfig-的工作原理">五、InClusterConfig 的工作原理</a>
+          <ul>
+            <li><a href="#51-为什么只需要-token-和-ca">5.1 为什么只需要 Token 和 CA？</a></li>
+            <li><a href="#52-tls-握手仍然会发生">5.2 TLS 握手仍然会发生</a></li>
+            <li><a href="#53-为什么只能在集群内使用">5.3 为什么只能在集群内使用？</a></li>
+          </ul>
+        </li>
+        <li><a href="#六实际应用场景">六、实际应用场景</a>
+          <ul>
+            <li><a href="#61-pod-内应用使用-token">6.1 Pod 内应用使用 Token</a></li>
+            <li><a href="#62-kubelet-使用客户端证书">6.2 Kubelet 使用客户端证书</a></li>
+            <li><a href="#63-混合使用">6.3 混合使用</a></li>
+          </ul>
+        </li>
+        <li><a href="#七最佳实践">七、最佳实践</a>
+          <ul>
+            <li><a href="#71-token-使用建议">7.1 Token 使用建议</a></li>
+            <li><a href="#72-证书使用建议">7.2 证书使用建议</a></li>
+            <li><a href="#73-故障排查">7.3 故障排查</a></li>
+          </ul>
+        </li>
+        <li><a href="#八总结">八、总结</a>
+          <ul>
+            <li><a href="#81-核心要点">8.1 核心要点</a></li>
+            <li><a href="#82-技术亮点">8.2 技术亮点</a></li>
+            <li><a href="#83-实践建议">8.3 实践建议</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h1 id="kubernetes-认证机制深度解析从-token-到证书的自动轮转">Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转</h1>
+<blockquote>
+<p>你是否好奇过：为什么 Pod 内的应用只需要 Token 就能访问 API Server？为什么 Kubelet 使用客户端证书而不是 Token？当 Token 或证书更新后，正在运行的客户端是如何自动切换的？本文将深入解析 Kubernetes 认证机制的完整生命周期，揭示这些设计背后的原理。</p>
+</blockquote>
+<h2 id="引言">引言</h2>
+<p>在 Kubernetes 集群中，安全认证是保障集群安全的第一道防线。无论是 Pod 内的应用访问 API Server，还是 Kubelet 这样的系统组件，都需要通过认证来证明自己的身份。</p>
+<p>Kubernetes 提供了多种认证方式，其中 <strong>Bearer Token</strong> 和 <strong>TLS 客户端证书</strong> 都支持自动轮转，但它们的实现机制却大相径庭。本文将深入解析这两种认证方式的完整生命周期，揭示它们的设计原理和实现细节。</p>
+<p><strong>你将学到</strong>：</p>
+<ul>
+<li>Token 和客户端证书的本质区别</li>
+<li>两种认证方式的自动轮转机制</li>
+<li>客户端如何处理认证凭证的更新</li>
+<li>InClusterConfig 的工作原理</li>
+<li>实际应用中的最佳实践</li>
+</ul>
+<h2 id="一两种认证方式概览">一、两种认证方式概览</h2>
+<h3 id="11-bearer-token-认证">1.1 Bearer Token 认证</h3>
+<p><strong>使用场景</strong>：Pod 内的应用访问 API Server</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>应用层认证（HTTP Header）</li>
+<li>短期有效（默认 1 小时 7 秒）</li>
+<li>自动刷新机制</li>
+<li>通过 Projected Volume 挂载到 Pod</li>
+</ul>
+<p><strong>典型使用</strong>：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">config</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">rest</span><span class="p">.</span><span class="nf">InClusterConfig</span><span class="p">()</span>  <span class="c1">// 自动使用 Token
+</span><span class="c1"></span><span class="nx">clientset</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">kubernetes</span><span class="p">.</span><span class="nf">NewForConfig</span><span class="p">(</span><span class="nx">config</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="12-tls-客户端证书认证">1.2 TLS 客户端证书认证</h3>
+<p><strong>使用场景</strong>：Kubelet、Kube-proxy 等系统组件</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>传输层认证（TLS 握手）</li>
+<li>长期有效（通常数月）</li>
+<li>通过 CSR（Certificate Signing Request）自动轮转</li>
+<li>存储在节点文件系统</li>
+</ul>
+<p><strong>典型使用</strong>：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="c"># Kubelet 配置</span><span class="w">
+</span><span class="w"></span><span class="nt">rotateCertificates</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w"></span><span class="nt">certDirectory</span><span class="p">:</span><span class="w"> </span><span class="l">/var/lib/kubelet/pki</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h2 id="二token-的完整生命周期">二、Token 的完整生命周期</h2>
+<h3 id="21-token-的类型">2.1 Token 的类型</h3>
+<p>Kubernetes 中存在两种主要的 Service Account Token：</p>
+<h4 id="legacy-token传统-token">Legacy Token（传统 Token）</h4>
+<ul>
+<li><strong>存储方式</strong>：存储在 Secret 中</li>
+<li><strong>过期时间</strong>：<strong>没有过期时间</strong>（除非 Secret 被删除）</li>
+<li><strong>Issuer</strong>：<code>kubernetes/serviceaccount</code></li>
+<li><strong>状态</strong>：逐步被淘汰，新版本推荐使用 Projected Token</li>
+</ul>
+<h4 id="projected-token投影-token">Projected Token（投影 Token）</h4>
+<ul>
+<li><strong>生成方式</strong>：通过 TokenRequest API 动态生成</li>
+<li><strong>过期时间</strong>：<strong>有明确的过期时间</strong>（默认 1 小时 7 秒）</li>
+<li><strong>Issuer</strong>：<code>kubernetes.io/serviceaccount</code></li>
+<li><strong>状态</strong>：现代 Kubernetes 推荐的标准方式</li>
+</ul>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="token.png"
+        data-srcset="/posts/k8sauthmechanism/token.png, token.png 1.5x, /posts/k8sauthmechanism/token.png 2x"
+        data-sizes="auto"
+        alt="/posts/k8sauthmechanism/token.png"
+        title="Token" /></p>
+<h3 id="22-token-的挂载机制">2.2 Token 的挂载机制</h3>
+<p>当 Pod 创建时，如果没有明确禁用，Kubernetes 会自动挂载 Token：</p>
+<p><strong>挂载流程</strong>：</p>
+<ol>
+<li><strong>Admission 阶段</strong>：ServiceAccount Admission Controller 修改 Pod Spec</li>
+<li><strong>Volume 创建</strong>：添加 Projected 类型的 Volume</li>
+<li><strong>文件挂载</strong>：挂载到 <code>/var/run/secrets/kubernetes.io/serviceaccount/</code></li>
+</ol>
+<p><strong>挂载内容</strong>：</p>
+<ul>
+<li><code>token</code>：Service Account Token</li>
+<li><code>ca.crt</code>：集群 CA 证书</li>
+<li><code>namespace</code>：Pod 所在命名空间</li>
+</ul>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="token_mount.png"
+        data-srcset="/posts/k8sauthmechanism/token_mount.png, token_mount.png 1.5x, /posts/k8sauthmechanism/token_mount.png 2x"
+        data-sizes="auto"
+        alt="/posts/k8sauthmechanism/token_mount.png"
+        title="Token_Mount" /></p>
+<h3 id="23-token-的自动更新机制">2.3 Token 的自动更新机制</h3>
+<p>Token Manager 负责管理 Token 的生命周期：</p>
+<p><strong>更新触发条件</strong>：</p>
+<ul>
+<li>Token 使用时间超过 24 小时，或</li>
+<li>Token 剩余有效期少于 20%（加上随机抖动）</li>
+</ul>
+<p><strong>更新流程</strong>：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Token Manager 的更新逻辑
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Manager</span><span class="p">)</span> <span class="nf">GetServiceAccountToken</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">authenticationv1</span><span class="p">.</span><span class="nx">TokenRequest</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 1. 检查缓存
+</span><span class="c1"></span>    <span class="nx">ctr</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+    
+    <span class="c1">// 2. 判断是否需要刷新
+</span><span class="c1"></span>    <span class="k">if</span> <span class="nx">ok</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">m</span><span class="p">.</span><span class="nf">requiresRefresh</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">ctr</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">ctr</span><span class="p">,</span> <span class="kc">nil</span>  <span class="c1">// 返回缓存的 Token
+</span><span class="c1"></span>    <span class="p">}</span>
+    
+    <span class="c1">// 3. 获取新 Token
+</span><span class="c1"></span>    <span class="nx">tr</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">getToken</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">namespace</span><span class="p">,</span> <span class="nx">tr</span><span class="p">)</span>
+    
+    <span class="c1">// 4. 更新缓存
+</span><span class="c1"></span>    <span class="nx">m</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">tr</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nx">tr</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>文件更新机制</strong>：</p>
+<ul>
+<li>Projected Volume 使用 <strong>AtomicWriter</strong> 实现原子更新</li>
+<li>通过符号链接的原子重命名实现文件更新</li>
+<li>应用可以监控 <code>..data</code> 符号链接的变化</li>
+</ul>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="Token_refresh.png"
+        data-srcset="/posts/k8sauthmechanism/Token_refresh.png, Token_refresh.png 1.5x, /posts/k8sauthmechanism/Token_refresh.png 2x"
+        data-sizes="auto"
+        alt="/posts/k8sauthmechanism/Token_refresh.png"
+        title="Token_Refresh" /></p>
+<h3 id="24-客户端如何处理-token-更新">2.4 客户端如何处理 Token 更新</h3>
+<p>这是很多开发者关心的问题：当 Token 更新后，正在使用旧 Token 的客户端（如 Informer）会如何处理？</p>
+<h4 id="文件更新机制">文件更新机制</h4>
+<p>Projected Volume 使用符号链接实现原子更新：</p>
+<ul>
+<li>用户可见文件：<code>/var/run/secrets/kubernetes.io/serviceaccount/token</code> → <code>..data/token</code></li>
+<li>数据目录：<code>..data</code> → <code>..2024_01_01_12_00_00.12345678/</code></li>
+<li>通过重命名符号链接实现原子切换</li>
+</ul>
+<h4 id="client-go-的-token-读取">client-go 的 Token 读取</h4>
+<p>client-go 使用两层机制处理 Token：</p>
+<ol>
+<li>
+<p><strong>fileTokenSource</strong>：</p>
+<ul>
+<li>每次调用 <code>Token()</code> 时<strong>重新读取文件</strong></li>
+<li>不缓存文件内容，确保获取最新 Token</li>
+</ul>
+</li>
+<li>
+<p><strong>cachingTokenSource</strong>：</p>
+<ul>
+<li>提供缓存机制，减少文件 I/O</li>
+<li>缓存时间短（1 分钟），确保及时刷新</li>
+<li>缓存过期时自动重新读取文件</li>
+</ul>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="Token_Source.png"
+        data-srcset="/posts/k8sauthmechanism/Token_Source.png, Token_Source.png 1.5x, /posts/k8sauthmechanism/Token_Source.png 2x"
+        data-sizes="auto"
+        alt="/posts/k8sauthmechanism/Token_Source.png"
+        title="Token_Source" /></p>
+</li>
+</ol>
+<h4 id="informer-的处理">Informer 的处理</h4>
+<p>当 Token 更新后，Informer 通过以下机制自动处理：</p>
+<ol>
+<li><strong>自动重连</strong>：Watch 连接断开后自动重新建立</li>
+<li><strong>401 错误处理</strong>：收到 401 时清除缓存，强制重新读取 Token</li>
+<li><strong>无缝切换</strong>：整个过程对应用透明，不会丢失事件</li>
+</ol>
+<p><strong>关键设计</strong>：</p>
+<ul>
+<li>缓存时间短（1 分钟），确保及时感知 Token 更新</li>
+<li>401 错误时强制清除缓存</li>
+<li>通过 ResourceVersion 恢复 Watch 事件</li>
+</ul>
+<h2 id="三客户端证书的完整生命周期">三、客户端证书的完整生命周期</h2>
+<h3 id="31-证书轮转的触发">3.1 证书轮转的触发</h3>
+<p>Kubelet 的客户端证书轮转在以下情况触发：</p>
+<ol>
+<li><strong>证书即将过期</strong>：剩余有效期少于 1/3</li>
+<li><strong>证书不存在</strong>：首次启动或证书丢失</li>
+<li><strong>强制轮转</strong>：使用 Bootstrap 证书时立即轮转</li>
+</ol>
+<h3 id="32-getclientcertificate-机制">3.2 GetClientCertificate 机制</h3>
+<p>这是客户端证书轮转的核心机制：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置 GetClientCertificate 回调
+</span><span class="c1"></span><span class="nx">tlsConfig</span><span class="p">.</span><span class="nx">GetClientCertificate</span> <span class="p">=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">requestInfo</span> <span class="o">*</span><span class="nx">tls</span><span class="p">.</span><span class="nx">CertificateRequestInfo</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">tls</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 每次 TLS 握手时调用
+</span><span class="c1"></span>    <span class="nx">cert</span> <span class="o">:=</span> <span class="nx">clientCertificateManager</span><span class="p">.</span><span class="nf">Current</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nx">cert</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="o">&amp;</span><span class="nx">tls</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">{</span><span class="nx">Certificate</span><span class="p">:</span> <span class="kc">nil</span><span class="p">},</span> <span class="kc">nil</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">cert</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>关键点</strong>：</p>
+<ul>
+<li><code>GetClientCertificate</code> 是 <strong>Go 标准库 <code>crypto/tls</code> 包提供的回调接口</strong></li>
+<li>在<strong>每次 TLS 握手时</strong>被调用</li>
+<li>允许动态获取证书，而不是在连接建立时固定</li>
+</ul>
+<h3 id="33-证书更新后的连接处理">3.3 证书更新后的连接处理</h3>
+<p>这是客户端证书轮转的关键步骤：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 检测证书更新
+</span><span class="c1"></span><span class="nx">checkNewCertificateAndRotate</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">curr</span> <span class="o">:=</span> <span class="nx">clientCertificateManager</span><span class="p">.</span><span class="nf">Current</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="nx">curr</span> <span class="o">==</span> <span class="kc">nil</span> <span class="o">||</span> <span class="nx">lastCert</span> <span class="o">==</span> <span class="nx">curr</span> <span class="p">{</span>
+        <span class="k">return</span>  <span class="c1">// 证书未更新
+</span><span class="c1"></span>    <span class="p">}</span>
+    
+    <span class="c1">// 证书已更新，关闭所有连接
+</span><span class="c1"></span>    <span class="nx">klog</span><span class="p">.</span><span class="nf">InfoS</span><span class="p">(</span><span class="s">&#34;Certificate rotation detected, shutting down client connections&#34;</span><span class="p">)</span>
+    <span class="nx">d</span><span class="p">.</span><span class="nf">CloseAll</span><span class="p">()</span>  <span class="c1">// 关闭所有 TCP 连接
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>为什么必须关闭连接？</strong></p>
+<p>因为 TLS 握手在连接建立时完成，已建立的连接使用握手时的证书。要使用新证书，必须：</p>
+<ol>
+<li>关闭所有现有连接</li>
+<li>强制重新进行 TLS 握手</li>
+<li>新握手时调用 <code>GetClientCertificate</code> 获取新证书</li>
+</ol>
+<p><img
+        class="lazyload"
+        src="/svg/loading.min.svg"
+        data-src="Cert_reload.png"
+        data-srcset="/posts/k8sauthmechanism/Cert_reload.png, Cert_reload.png 1.5x, /posts/k8sauthmechanism/Cert_reload.png 2x"
+        data-sizes="auto"
+        alt="/posts/k8sauthmechanism/Cert_reload.png"
+        title="Cert_Reload" /></p>
+<h3 id="34-csr-流程">3.4 CSR 流程</h3>
+<p>证书轮转通过 CSR（Certificate Signing Request）实现：</p>
+<ol>
+<li><strong>生成 CSR</strong>：Kubelet 生成私钥和 CSR</li>
+<li><strong>提交 CSR</strong>：通过 API Server 的 CSR API 提交</li>
+<li><strong>等待批准</strong>：CSR Controller 自动批准（或手动批准）</li>
+<li><strong>获取证书</strong>：下载签名后的证书</li>
+<li><strong>更新文件</strong>：更新本地证书文件</li>
+</ol>
+<h2 id="四两种机制的深度对比">四、两种机制的深度对比</h2>
+<h3 id="41-本质区别">4.1 本质区别</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Bearer Token</th>
+<th>TLS 客户端证书</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>认证层次</strong></td>
+<td>应用层（HTTP Header）</td>
+<td>传输层（TLS 握手）</td>
+</tr>
+<tr>
+<td><strong>认证时机</strong></td>
+<td>HTTP 请求时</td>
+<td>TLS 握手时</td>
+</tr>
+<tr>
+<td><strong>更新方式</strong></td>
+<td>文件更新 + 重新读取</td>
+<td>关闭连接 + 重新握手</td>
+</tr>
+<tr>
+<td><strong>Go 机制</strong></td>
+<td>文件系统 + HTTP Header</td>
+<td>GetClientCertificate 回调</td>
+</tr>
+<tr>
+<td><strong>连接影响</strong></td>
+<td>不需要关闭连接</td>
+<td>必须关闭连接</td>
+</tr>
+<tr>
+<td><strong>更新频率</strong></td>
+<td>高（Token 有效期短）</td>
+<td>低（证书有效期长）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-实现机制对比">4.2 实现机制对比</h3>
+<h4 id="token-轮转实现">Token 轮转实现</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 1. Token Manager 管理 Token
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Manager</span><span class="p">)</span> <span class="nf">GetServiceAccountToken</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="nx">m</span><span class="p">.</span><span class="nf">requiresRefresh</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">ctr</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">tr</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">getToken</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1">// 获取新 Token
+</span><span class="c1"></span>        <span class="nx">m</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">tr</span><span class="p">)</span>  <span class="c1">// 更新缓存
+</span><span class="c1"></span>    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 2. 文件系统更新（Projected Volume）
+</span><span class="c1">// 原子性地更新符号链接
+</span><span class="c1"></span>
+<span class="c1">// 3. 客户端读取（每次请求时）
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ts</span> <span class="o">*</span><span class="nx">fileTokenSource</span><span class="p">)</span> <span class="nf">Token</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><span class="nx">oauth2</span><span class="p">.</span><span class="nx">Token</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">tokb</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">ReadFile</span><span class="p">(</span><span class="nx">ts</span><span class="p">.</span><span class="nx">path</span><span class="p">)</span>  <span class="c1">// 重新读取文件
+</span><span class="c1"></span>    <span class="k">return</span> <span class="o">&amp;</span><span class="nx">oauth2</span><span class="p">.</span><span class="nx">Token</span><span class="p">{</span><span class="nx">AccessToken</span><span class="p">:</span> <span class="nb">string</span><span class="p">(</span><span class="nx">tokb</span><span class="p">)},</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>特点</strong>：</p>
+<ul>
+<li>✅ 不需要关闭连接</li>
+<li>✅ 在现有连接上更新 HTTP Header</li>
+<li>✅ 更新频率高，但开销小</li>
+</ul>
+<h4 id="客户端证书轮转实现">客户端证书轮转实现</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 1. 设置 GetClientCertificate 回调
+</span><span class="c1"></span><span class="nx">tlsConfig</span><span class="p">.</span><span class="nx">GetClientCertificate</span> <span class="p">=</span> <span class="kd">func</span><span class="p">(</span><span class="o">*</span><span class="nx">tls</span><span class="p">.</span><span class="nx">CertificateRequestInfo</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">tls</span><span class="p">.</span><span class="nx">Certificate</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">clientCertificateManager</span><span class="p">.</span><span class="nf">Current</span><span class="p">(),</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// 2. 检测证书更新
+</span><span class="c1"></span><span class="k">go</span> <span class="nx">wait</span><span class="p">.</span><span class="nf">Until</span><span class="p">(</span><span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">curr</span> <span class="o">:=</span> <span class="nx">clientCertificateManager</span><span class="p">.</span><span class="nf">Current</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nx">curr</span> <span class="o">!=</span> <span class="nx">lastCert</span> <span class="p">{</span>
+        <span class="nx">d</span><span class="p">.</span><span class="nf">CloseAll</span><span class="p">()</span>  <span class="c1">// 关闭所有连接
+</span><span class="c1"></span>    <span class="p">}</span>
+<span class="p">},</span> <span class="mi">10</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">,</span> <span class="nx">stopCh</span><span class="p">)</span>
+
+<span class="c1">// 3. 新连接自动使用新证书
+</span><span class="c1">// GetClientCertificate 在每次握手时调用
+</span></code></pre></td></tr></table>
+</div>
+</div><p><strong>特点</strong>：</p>
+<ul>
+<li>⚠️ 必须关闭连接</li>
+<li>⚠️ 需要重新进行 TLS 握手</li>
+<li>✅ 更新频率低，但一次性开销大</li>
+</ul>
+<h3 id="43-为什么需要不同的机制">4.3 为什么需要不同的机制？</h3>
+<h4 id="tls-握手的限制">TLS 握手的限制</h4>
+<p><strong>问题</strong>：</p>
+<ul>
+<li>TLS 握手在连接建立时完成</li>
+<li>已建立的连接使用握手时的证书</li>
+<li><strong>无法在已建立的连接上更换证书</strong></li>
+</ul>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>关闭所有连接</li>
+<li>强制重新握手</li>
+<li>新握手时使用新证书</li>
+</ul>
+<h4 id="http-header-的灵活性">HTTP Header 的灵活性</h4>
+<p><strong>优势</strong>：</p>
+<ul>
+<li>HTTP Header 在每个请求中发送</li>
+<li>可以随时更新 Header 内容</li>
+<li>不需要重新建立连接</li>
+</ul>
+<p><strong>实现</strong>：</p>
+<ul>
+<li>Token 文件更新后，应用重新读取</li>
+<li>新请求使用新 Token</li>
+<li>旧请求继续使用旧 Token（直到过期）</li>
+</ul>
+<h3 id="44-性能影响对比">4.4 性能影响对比</h3>
+<p><strong>客户端证书轮转</strong>：</p>
+<ul>
+<li>⚠️ <strong>连接中断</strong>：所有连接被关闭</li>
+<li>⚠️ <strong>重新握手开销</strong>：需要重新进行 TLS 握手</li>
+<li>✅ <strong>一次性开销</strong>：轮转频率低（通常数月一次）</li>
+</ul>
+<p><strong>Token 轮转</strong>：</p>
+<ul>
+<li>✅ <strong>无连接中断</strong>：连接保持打开</li>
+<li>✅ <strong>无握手开销</strong>：不需要重新握手</li>
+<li>⚠️ <strong>文件 I/O</strong>：需要读取文件（有缓存优化）</li>
+</ul>
+<h2 id="五inclusterconfig-的工作原理">五、InClusterConfig 的工作原理</h2>
+<h3 id="51-为什么只需要-token-和-ca">5.1 为什么只需要 Token 和 CA？</h3>
+<p>很多开发者疑惑：为什么 <code>InClusterConfig</code> 只需要 Token 和 CA，不需要客户端证书的私钥？</p>
+<p><strong>答案</strong>：</p>
+<ul>
+<li><strong>Token 本身就是完整的认证凭证</strong>：Bearer Token 通过 HTTP Header 发送，本身就是认证凭证</li>
+<li><strong>不需要私钥</strong>：Token 验证在 API Server 端使用<strong>公钥</strong>进行，客户端只需要提供 Token</li>
+<li><strong>CA 的作用</strong>：用于验证 API Server 的 TLS 证书，确保连接到正确的服务器</li>
+</ul>
+<p><strong>对比 TLS 客户端证书</strong>：</p>
+<ul>
+<li>TLS 客户端证书：需要<strong>私钥</strong>（用于 TLS 握手时的签名）</li>
+<li>Bearer Token：<strong>不需要私钥</strong>（Token 本身已包含签名，服务器用公钥验证）</li>
+</ul>
+<h3 id="52-tls-握手仍然会发生">5.2 TLS 握手仍然会发生</h3>
+<p><strong>重要理解</strong>：即使没有客户端证书，TLS 握手仍然会发生！</p>
+<p><strong>原因</strong>：</p>
+<ol>
+<li><strong>HTTPS 协议要求</strong>：<code>InClusterConfig</code> 使用 <code>https://</code> 协议，必须进行 TLS 握手</li>
+<li><strong>CA 的作用</strong>：用于验证 API Server 的 TLS 证书</li>
+<li><strong>客户端证书是可选的</strong>：没有客户端证书不影响 TLS 握手，只是不发送客户端证书</li>
+</ol>
+<p><strong>完整流程</strong>：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">1. TCP 连接建立
+2. TLS 握手开始
+3. 服务器发送证书
+4. 客户端使用 CA 验证服务器证书 ✅
+5. （可选）客户端发送客户端证书 ❌ InClusterConfig 没有
+6. TLS 握手完成，加密连接建立 ✅
+7. HTTP 请求发送（在加密连接中）
+8. Authorization Header 包含 Bearer Token ✅
+9. API Server 验证 Token ✅
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="53-为什么只能在集群内使用">5.3 为什么只能在集群内使用？</h3>
+<p><code>InClusterConfig</code> 通过检查环境变量来判断是否在集群内：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">host</span><span class="p">,</span> <span class="nx">port</span> <span class="o">:=</span> <span class="nx">os</span><span class="p">.</span><span class="nf">Getenv</span><span class="p">(</span><span class="s">&#34;KUBERNETES_SERVICE_HOST&#34;</span><span class="p">),</span> <span class="nx">os</span><span class="p">.</span><span class="nf">Getenv</span><span class="p">(</span><span class="s">&#34;KUBERNETES_SERVICE_PORT&#34;</span><span class="p">)</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">host</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nb">len</span><span class="p">(</span><span class="nx">port</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">ErrNotInCluster</span>  <span class="c1">// 返回错误
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>原因</strong>：</p>
+<ul>
+<li><code>KUBERNETES_SERVICE_HOST</code> 和 <code>KUBERNETES_SERVICE_PORT</code> 由 <strong>kubelet</strong> 在创建 Pod 时自动注入</li>
+<li>Token 文件 <code>/var/run/secrets/kubernetes.io/serviceaccount/token</code> 由 <strong>Projected Volume</strong> 挂载</li>
+<li>这些资源在集群外不存在</li>
+</ul>
+<h2 id="六实际应用场景">六、实际应用场景</h2>
+<h3 id="61-pod-内应用使用-token">6.1 Pod 内应用使用 Token</h3>
+<p><strong>典型场景</strong>：Pod 内的应用需要访问 Kubernetes API</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 在 Pod 内使用
+</span><span class="c1"></span><span class="nx">config</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">rest</span><span class="p">.</span><span class="nf">InClusterConfig</span><span class="p">()</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="c1">// 如果不在集群内，会返回 ErrNotInCluster
+</span><span class="c1"></span>    <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">.</span><span class="nf">Error</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="nx">clientset</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">kubernetes</span><span class="p">.</span><span class="nf">NewForConfig</span><span class="p">(</span><span class="nx">config</span><span class="p">)</span>
+<span class="c1">// 使用 clientset 访问 API
+</span></code></pre></td></tr></table>
+</div>
+</div><p><strong>优势</strong>：</p>
+<ul>
+<li>零配置，自动发现</li>
+<li>Token 自动轮转</li>
+<li>符合 Kubernetes 最佳实践</li>
+</ul>
+<h3 id="62-kubelet-使用客户端证书">6.2 Kubelet 使用客户端证书</h3>
+<p><strong>典型场景</strong>：Kubelet 需要与 API Server 通信</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="c"># Kubelet 配置</span><span class="w">
+</span><span class="w"></span><span class="nt">rotateCertificates</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="w"></span><span class="nt">certDirectory</span><span class="p">:</span><span class="w"> </span><span class="l">/var/lib/kubelet/pki</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p><strong>优势</strong>：</p>
+<ul>
+<li>传输层认证，更安全</li>
+<li>适合长期连接</li>
+<li>证书有效期长，轮转频率低</li>
+</ul>
+<h3 id="63-混合使用">6.3 混合使用</h3>
+<p>在实际场景中，两种方式可以同时使用：</p>
+<ul>
+<li><strong>TLS 客户端证书</strong>：用于节点级别的认证（Kubelet、Kube-proxy）</li>
+<li><strong>Bearer Token</strong>：用于 Pod 内应用的认证</li>
+</ul>
+<p>两者<strong>互补</strong>而非替代：</p>
+<ul>
+<li>TLS 提供<strong>传输安全</strong>（加密 + 服务器身份验证）</li>
+<li>Token 提供<strong>应用层身份认证</strong>（客户端身份验证）</li>
+</ul>
+<h2 id="七最佳实践">七、最佳实践</h2>
+<h3 id="71-token-使用建议">7.1 Token 使用建议</h3>
+<ol>
+<li><strong>使用 Projected Token</strong>：新部署优先使用 Projected Token</li>
+<li><strong>合理设置过期时间</strong>：根据应用需求设置合适的过期时间</li>
+<li><strong>禁用不必要的自动挂载</strong>：对于不需要访问 API Server 的 Pod，禁用自动挂载</li>
+<li><strong>处理 Token 过期</strong>：应用需要正确处理 Token 过期和刷新</li>
+</ol>
+<h3 id="72-证书使用建议">7.2 证书使用建议</h3>
+<ol>
+<li><strong>启用自动轮转</strong>：生产环境必须启用证书自动轮转</li>
+<li><strong>配置 Bootstrap</strong>：使用 Bootstrap 机制支持自动化部署</li>
+<li><strong>监控证书状态</strong>：定期检查证书 TTL 和轮转状态</li>
+<li><strong>设置告警</strong>：对证书过期和轮转失败设置告警</li>
+</ol>
+<h3 id="73-故障排查">7.3 故障排查</h3>
+<p><strong>Token 相关问题</strong>：</p>
+<ul>
+<li>Token 未挂载：检查 Pod 和 ServiceAccount 的 <code>automountServiceAccountToken</code> 设置</li>
+<li>Token 过期：检查 Token 的过期时间和 Token Manager 状态</li>
+<li>Token 刷新失败：检查 API Server 连接和 ServiceAccount 权限</li>
+</ul>
+<p><strong>证书相关问题</strong>：</p>
+<ul>
+<li>证书轮转失败：检查 CSR 状态、Approver 日志、网络连接</li>
+<li>证书过期：检查证书管理器状态，手动批准 CSR</li>
+<li>连接问题：检查证书更新后的连接关闭机制</li>
+</ul>
+<h2 id="八总结">八、总结</h2>
+<h3 id="81-核心要点">8.1 核心要点</h3>
+<ol>
+<li>
+<p><strong>两种认证方式都支持自动轮转</strong>，但实现机制不同：</p>
+<ul>
+<li><strong>Token</strong>：应用层认证，通过文件更新实现，不需要关闭连接</li>
+<li><strong>客户端证书</strong>：传输层认证，通过 GetClientCertificate 回调实现，需要关闭连接</li>
+</ul>
+</li>
+<li>
+<p><strong>本质区别</strong>：</p>
+<ul>
+<li>Token 在 <strong>HTTP 请求时</strong>认证，可以随时更新</li>
+<li>客户端证书在 <strong>TLS 握手时</strong>认证，已建立的连接无法更新</li>
+</ul>
+</li>
+<li>
+<p><strong>设计考虑</strong>：</p>
+<ul>
+<li>Token 适合 Pod 内应用，更新频繁但开销小</li>
+<li>客户端证书适合系统组件，更新频率低但需要重新握手</li>
+</ul>
+</li>
+</ol>
+<h3 id="82-技术亮点">8.2 技术亮点</h3>
+<ol>
+<li>
+<p><strong>GetClientCertificate 机制</strong>：</p>
+<ul>
+<li>Go 标准库提供的 TLS 回调接口</li>
+<li>允许动态获取证书</li>
+<li>每次握手时调用，确保使用最新证书</li>
+</ul>
+</li>
+<li>
+<p><strong>AtomicWriter 机制</strong>：</p>
+<ul>
+<li>通过符号链接实现原子文件更新</li>
+<li>支持多个进程同时读取</li>
+<li>避免文件更新的竞态条件</li>
+</ul>
+</li>
+<li>
+<p><strong>两层安全机制</strong>：</p>
+<ul>
+<li>TLS 层：传输加密 + 服务器身份验证</li>
+<li>应用层：客户端身份认证（Token）</li>
+</ul>
+</li>
+</ol>
+<h3 id="83-实践建议">8.3 实践建议</h3>
+<ul>
+<li><strong>Pod 内应用</strong>：使用 <code>InClusterConfig</code>，自动使用 Token</li>
+<li><strong>系统组件</strong>：使用客户端证书，启用自动轮转</li>
+<li><strong>开发测试</strong>：可以使用 kubeconfig 文件，即使是在集群内</li>
+</ul>
+<p>理解这些机制有助于：</p>
+<ul>
+<li>更好地设计应用架构</li>
+<li>快速排查认证相关问题</li>
+<li>优化应用的性能和安全性</li>
+</ul>
+<hr>
+<p><strong>参考资料</strong>：</p>
+<ul>
+<li><a href="https://kubernetes.io/docs/concepts/security/service-accounts/" target="_blank" rel="noopener noreffer">Kubernetes Service Account Tokens</a></li>
+<li><a href="https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/" target="_blank" rel="noopener noreffer">Kubelet Certificate Rotation</a></li>
+<li><a href="https://pkg.go.dev/crypto/tls" target="_blank" rel="noopener noreffer">Go crypto/tls Package</a></li>
+</ul>
+</div><div class="post-reward">
+  <input type="checkbox" name="reward" id="reward" hidden />
+  <label class="reward-button" for="reward">赞赏支持</label>
+  <div class="qr-code">
+    
+    <label class="qr-code-image" for="reward">
+        <img class="image" src="/media/reward/wechat.jpg">
+        <span>微信打赏</span>
+      </label>
+    
+  </div>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2026-01-22</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://www.likakuli.com/posts/k8sauthmechanism/" data-title="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转" data-hashtags="kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://www.likakuli.com/posts/k8sauthmechanism/" data-hashtag="kubernetes"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 WhatsApp" data-sharer="whatsapp" data-url="https://www.likakuli.com/posts/k8sauthmechanism/" data-title="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Line" data-sharer="line" data-url="https://www.likakuli.com/posts/k8sauthmechanism/" data-title="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://www.likakuli.com/posts/k8sauthmechanism/" data-title="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Myspace" data-sharer="myspace" data-url="https://www.likakuli.com/posts/k8sauthmechanism/" data-title="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.14.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="分享到 Blogger" data-sharer="blogger" data-url="https://www.likakuli.com/posts/k8sauthmechanism/" data-title="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Evernote" data-sharer="evernote" data-url="https://www.likakuli.com/posts/k8sauthmechanism/" data-title="Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/posts/labelselector/" class="prev" rel="prev" title="labelselector 2则性能优化"><i class="fas fa-angle-left fa-fw"></i>labelselector 2则性能优化</a></div>
+</div>
+<div id="comments"><div id="valine" class="comment"></div><noscript>
+                Please enable JavaScript to view the comments powered by <a href="https://valine.js.org/">Valine</a>.
+            </noscript></div></article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2026</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="/lib/valine/valine.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.css"><script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill%2CArray.prototype.find%2CArray.from%2CIntersectionObserver%2CMath.sign%2CObject.assign%2CPromise%2CObject.entries%2CElement.prototype.closest%2CrequestAnimationFrame%2CCustomEvent%2Chtml5shiv%2CObject.values%2Cfetch%2CElement.prototype.after"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/object-fit-images@3.2.4/dist/ofi.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/twemoji@13.0.0/dist/twemoji.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.2.0/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.2.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.2.0/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/copy-tex.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/mhchem.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":10},"comment":{"valine":{"appId":"jR3DqfbcO7kal9wBOdhcpYgx-gzGzoHsz","appKey":"p3vIbO2osYNG5viDCFifFS1m","avatar":"mp","el":"#valine","emojiCDN":"https://cdn.jsdelivr.net/npm/emoji-datasource-google@5.0.1/img/google/64/","emojiMaps":{"100":"1f4af.png","alien":"1f47d.png","anger":"1f4a2.png","angry":"1f620.png","anguished":"1f627.png","astonished":"1f632.png","black_heart":"1f5a4.png","blue_heart":"1f499.png","blush":"1f60a.png","bomb":"1f4a3.png","boom":"1f4a5.png","broken_heart":"1f494.png","brown_heart":"1f90e.png","clown_face":"1f921.png","cold_face":"1f976.png","cold_sweat":"1f630.png","confounded":"1f616.png","confused":"1f615.png","cry":"1f622.png","crying_cat_face":"1f63f.png","cupid":"1f498.png","dash":"1f4a8.png","disappointed":"1f61e.png","disappointed_relieved":"1f625.png","dizzy":"1f4ab.png","dizzy_face":"1f635.png","drooling_face":"1f924.png","exploding_head":"1f92f.png","expressionless":"1f611.png","face_vomiting":"1f92e.png","face_with_cowboy_hat":"1f920.png","face_with_hand_over_mouth":"1f92d.png","face_with_head_bandage":"1f915.png","face_with_monocle":"1f9d0.png","face_with_raised_eyebrow":"1f928.png","face_with_rolling_eyes":"1f644.png","face_with_symbols_on_mouth":"1f92c.png","face_with_thermometer":"1f912.png","fearful":"1f628.png","flushed":"1f633.png","frowning":"1f626.png","ghost":"1f47b.png","gift_heart":"1f49d.png","green_heart":"1f49a.png","grimacing":"1f62c.png","grin":"1f601.png","grinning":"1f600.png","hankey":"1f4a9.png","hear_no_evil":"1f649.png","heart":"2764-fe0f.png","heart_decoration":"1f49f.png","heart_eyes":"1f60d.png","heart_eyes_cat":"1f63b.png","heartbeat":"1f493.png","heartpulse":"1f497.png","heavy_heart_exclamation_mark_ornament":"2763-fe0f.png","hole":"1f573-fe0f.png","hot_face":"1f975.png","hugging_face":"1f917.png","hushed":"1f62f.png","imp":"1f47f.png","innocent":"1f607.png","japanese_goblin":"1f47a.png","japanese_ogre":"1f479.png","joy":"1f602.png","joy_cat":"1f639.png","kiss":"1f48b.png","kissing":"1f617.png","kissing_cat":"1f63d.png","kissing_closed_eyes":"1f61a.png","kissing_heart":"1f618.png","kissing_smiling_eyes":"1f619.png","laughing":"1f606.png","left_speech_bubble":"1f5e8-fe0f.png","love_letter":"1f48c.png","lying_face":"1f925.png","mask":"1f637.png","money_mouth_face":"1f911.png","nauseated_face":"1f922.png","nerd_face":"1f913.png","neutral_face":"1f610.png","no_mouth":"1f636.png","open_mouth":"1f62e.png","orange_heart":"1f9e1.png","partying_face":"1f973.png","pensive":"1f614.png","persevere":"1f623.png","pleading_face":"1f97a.png","pouting_cat":"1f63e.png","purple_heart":"1f49c.png","rage":"1f621.png","relaxed":"263a-fe0f.png","relieved":"1f60c.png","revolving_hearts":"1f49e.png","right_anger_bubble":"1f5ef-fe0f.png","robot_face":"1f916.png","rolling_on_the_floor_laughing":"1f923.png","scream":"1f631.png","scream_cat":"1f640.png","see_no_evil":"1f648.png","shushing_face":"1f92b.png","skull":"1f480.png","skull_and_crossbones":"2620-fe0f.png","sleeping":"1f634.png","sleepy":"1f62a.png","slightly_frowning_face":"1f641.png","slightly_smiling_face":"1f642.png","smile":"1f604.png","smile_cat":"1f638.png","smiley":"1f603.png","smiley_cat":"1f63a.png","smiling_face_with_3_hearts":"1f970.png","smiling_imp":"1f608.png","smirk":"1f60f.png","smirk_cat":"1f63c.png","sneezing_face":"1f927.png","sob":"1f62d.png","space_invader":"1f47e.png","sparkling_heart":"1f496.png","speak_no_evil":"1f64a.png","speech_balloon":"1f4ac.png","star-struck":"1f929.png","stuck_out_tongue":"1f61b.png","stuck_out_tongue_closed_eyes":"1f61d.png","stuck_out_tongue_winking_eye":"1f61c.png","sunglasses":"1f60e.png","sweat":"1f613.png","sweat_drops":"1f4a6.png","sweat_smile":"1f605.png","thinking_face":"1f914.png","thought_balloon":"1f4ad.png","tired_face":"1f62b.png","triumph":"1f624.png","two_hearts":"1f495.png","unamused":"1f612.png","upside_down_face":"1f643.png","weary":"1f629.png","white_frowning_face":"2639-fe0f.png","white_heart":"1f90d.png","wink":"1f609.png","woozy_face":"1f974.png","worried":"1f61f.png","yawning_face":"1f971.png","yellow_heart":"1f49b.png","yum":"1f60b.png","zany_face":"1f92a.png","zipper_mouth_face":"1f910.png","zzz":"1f4a4.png"},"enableQQ":true,"highlight":true,"lang":"zh-cn","pageSize":10,"placeholder":"你的评论 ...","recordIP":true,"visitor":true}},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true},"math":{"delimiters":[{"display":true,"left":"$$","right":"$$"},{"display":true,"left":"\\[","right":"\\]"},{"display":false,"left":"$","right":"$"},{"display":false,"left":"\\(","right":"\\)"}],"strict":false},"search":{"algoliaAppID":"V5KLQ7KY3O","algoliaIndex":"likakuli.com","algoliaSearchKey":"0059ae9418c944729d3c056aeda34e3a","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"},"twemoji":true};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'UA-118805314-2', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=UA-118805314-2" async></script></body>
+</html>

@@ -29,7 +29,7 @@ c.client.Get().
 
 特指使用 client-go informer 时的数据流
 
-![informer](https://www.likakuli.com/posts/informer1/informer.svg)
+![informer](https://www.likakuli.net/posts/informer1/informer.svg)
 
 ## 服务端
 
@@ -280,7 +280,7 @@ cacher 是在 kube-apiserver 启动时就开始运行的，对应到 watch 请�
 2. 6）被 Push：加入到 cacher.watchers 后就不停地被 push；
 3. 7）干到干不动：启动一个 goroutine 调用 `processInterval` 来进行核心逻辑处理；
 
-![cacher](https://www.likakuli.com/posts/cacher/cacher.svg)
+![cacher](https://www.likakuli.net/posts/cacher/cacher.svg)
 
 ### 小结
 

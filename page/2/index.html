@@ -102,6 +102,11 @@
         alt="/avatar.png"
         title="/avatar.png" /></a></div><h1 class="home-title">李鹤</h1><h2 class="home-subtitle"><div id="id-1" class="typeit"></div></h2><div class="links"><a href="https://github.com/likakuli" title="GitHub" target="_blank" rel="noopener noreffer me"><i class="fab fa-github-alt fa-fw"></i></a><a href="mailto:1154584512@qq.com" title="Email" rel=" me"><i class="far fa-envelope fa-fw"></i></a><a href="/index.xml" title="RSS" target="_blank" rel="noopener noreffer me"><i class="fas fa-rss fa-fw"></i></a></div></div>
 <article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
+        <a href="/posts/k8s-consistentread/">k8s List 一致性读</a>
+    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2024-06-05">2024-06-05</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>源码分析</a></span></div><div class="content">历史文章 k8s stale read ListWatch 到 WatchList 原理 一致性读按严格程度划分，k8s 支持的顺序一致性，而 etcd 支持的是更严格的线性一致性。详情可以参考这篇文章 https://</div><div class="post-footer">
+        <a href="/posts/k8s-consistentread/">阅读全文</a><div class="post-tags">
+                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
         <a href="/posts/k8s-ns/">f**king k8s - pod namespace</a>
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2024-05-17">2024-05-17</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>原理分析</a></span></div><div class="content">不定期分享 k8s 里面各种坑，Just 避雷 结论 太长不看版：在拦截 pod 创建请求时，在业务逻辑中不要直接依赖 admission request 的 pod namespace 属性。可以使用 adminssion request 的 namespa</div><div class="post-footer">
         <a href="/posts/k8s-ns/">阅读全文</a><div class="post-tags">
@@ -125,11 +130,6 @@
         <a href="/posts/k8sapiserverpanic/">kube-apiserver 又 Panic 了 - handler</a>
     </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2024-01-30">2024-01-30</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>原理分析</a></span></div><div class="content">Kube-apiserver 不止 OOM，还可能 Panic。 现象 Kube-apiserver 在处理外部请求时发生不可恢复的报错，直接 Fatal 退出运行。看日志调用堆栈，会发现 concurrent map iteration and map write 的字样。这是 golang 检</div><div class="post-footer">
         <a href="/posts/k8sapiserverpanic/">阅读全文</a><div class="post-tags">
-                <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
-</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h1 class="single-title" itemprop="name headline">
-        <a href="/posts/k8slist/">k8s 越来越复杂了吗？</a>
-    </h1><div class="post-meta"><span class="post-author"><a href="/" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>Kaku Li</a></span>&nbsp;<span class="post-publish">发布于 <time datetime="2024-01-21">2024-01-21</time></span>&nbsp;<span class="post-category">收录于 <a href="/categories/%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/"><i class="far fa-folder fa-fw"></i>原理分析</a></span></div><div class="content">从一个看似简单的功能说明 k8s 确实越来越复杂了。 约定 k8s list 返回结果中的元素集合是按照字母顺序从 a 到 z 升序排列的。 原因 这个约定存在的原因是为了保持开</div><div class="post-footer">
-        <a href="/posts/k8slist/">阅读全文</a><div class="post-tags">
                 <i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/kubernetes/">kubernetes</a></div></div>
 </article><ul class="pagination"><li class="page-item ">
                     <span class="page-link">
@@ -156,7 +156,7 @@
                 </li></ul></div></div>
             </main><footer class="footer">
         <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.88.1">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
-                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2025</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2018 - 2026</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="/" target="_blank">kaku</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
         </div>
     </footer></div>
 
