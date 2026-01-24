@@ -4,7 +4,14 @@
         <link>https://www.likakuli.com/posts/</link>
         <description>所有文章 | kaku&#39;s blog</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>1154584512@qq.com (kaku)</managingEditor>
-            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Thu, 22 Jan 2026 21:13:24 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>1154584512@qq.com (kaku)</webMaster><lastBuildDate>Sat, 24 Jan 2026 21:56:33 &#43;0800</lastBuildDate><atom:link href="https://www.likakuli.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>AI开始写代码了，程序员该做什么？</title>
+    <link>https://www.likakuli.com/posts/aicoding/</link>
+    <pubDate>Sat, 24 Jan 2026 21:56:33 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://www.likakuli.com/posts/aicoding/</guid>
+    <description><![CDATA[AI开始写代码了，程序员该做什么？ 从编写每一行代码，到为 AI 编写&quot;作战条例&quot;，一场静默的变革正在发生 深夜，屏幕上闪烁的光标]]></description>
+</item><item>
     <title>Kubernetes 认证机制深度解析：从 Token 到证书的自动轮转</title>
     <link>https://www.likakuli.com/posts/k8sauthmechanism/</link>
     <pubDate>Thu, 22 Jan 2026 21:13:24 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://www.likakuli.com/posts/k8seventlost3/</guid>
     <description><![CDATA[现象 v1.27 的 K8s，在 kube-apiserver 的日志中会看到 &ldquo;etcd event received with PrevKv=nil&rdquo; 的字样，资源对象被删除后在 Etcd 中已经不存在了但在 Reflector store 中仍然存在，可以在 Informer 或者 watchCache 中看到对应的对象，依]]></description>
-</item><item>
-    <title>k8s watch 丢事件 - 2</title>
-    <link>https://www.likakuli.com/posts/k8seventlost2/</link>
-    <pubDate>Sat, 09 Mar 2024 18:06:23 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://www.likakuli.com/posts/k8seventlost2/</guid>
-    <description><![CDATA[前一篇已经描述了较老版本中存在的丢事件的问题，本篇继续描述另外一种。 现象 v1.27 的 K8s，在 kube-apiserver 的日志中会看到 &ldquo;etcd event received with PrevKv=nil&rdquo; 的字样，资源对象被删除后在 Etcd]]></description>
 </item></channel>
 </rss>
